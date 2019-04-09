@@ -10,6 +10,8 @@
   --pep_len '$length'
 
   --rank_filter '$rank_filter'
+
+  --mgf '$mgf'
   </command>
   <inputs>
 
@@ -152,6 +154,8 @@
     </param>
 
     <param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
+
+    <param name="mgf" type="data" label="Select an MGF file" format="mgf" />
 
     
   </inputs>
