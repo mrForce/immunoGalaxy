@@ -8,6 +8,8 @@
   #end for
 
   --pep_len '$length'
+
+  --rank_filter '$rank_filter'
   </command>
   <inputs>
 
@@ -148,6 +150,10 @@
       <option value="12"></option>
       <option value="13"></option>
     </param>
+
+    <param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
+
+    
   </inputs>
   <outputs>
     <data format="tabular" name="output" />
