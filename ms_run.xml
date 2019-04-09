@@ -1,0 +1,40 @@
+
+
+<tool id="fa_gc_content_1" name="Compute GC content" version="0.1.0">
+  <description>for each sequence in a file</description>
+  <command interpreter="python">runPipeline.py --proteome $proteome</command>
+  <inputs>
+
+    <conditional name="referenceSource">
+          <param name="TranscriptomeSource" type="select" label="Will you use a protein fasta file from your history or use a built-in reference proteome?">
+            <option value="indexed">Use a built-in reference</option>
+            <option value="history">Use reference from the history</option>
+          </param>
+          <when value="indexed">
+            <param name="index" type="select" label="Select a reference dataset" help="If your reference of interest is not listed, contact the Galaxy team">
+              <options from_data_table="Proteomes" />
+            </param>
+          </when>
+          <when value="history">
+            <param name="proteome" type="data" format="fasta"  label="Select protein fasta file from your history" />
+          </when>  <!-- history -->
+        </conditional>  <!-- referenceSource -->
+  </inputs>
+  <outputs>
+    <data format="tabular" name="output" />
+  </outputs>
+
+  <tests>
+    <test>
+      <param name="input" value="fa_gc_content_input.fa"/>
+      <output name="out_file1" file="fa_gc_content_output.txt"/>
+    </test>
+  </tests>
+
+  <help>
+This tool computes GC content from a FASTA file.
+  </help>
+
+</tool>
+
+
