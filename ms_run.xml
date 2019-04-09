@@ -12,6 +12,8 @@
   --rank_filter '$rank_filter'
 
   --mgf '$mgf'
+
+  --frag_method '$frag_method'
   </command>
   <inputs>
 
@@ -157,7 +159,12 @@
 
     <param name="mgf" type="data" label="Select an MGF file" format="mgf" />
 
-    
+    <param name="frag_method" type="select" label="Select the fragmentation method">
+      <option value="0">As written in spectrum, or CID by default if no info</option>
+      <option value="1">CID</option>
+      <option value="2">ETD</option>
+      <option value="3">HCD</option>
+    </param>
   </inputs>
   <outputs>
     <data format="tabular" name="output" />
