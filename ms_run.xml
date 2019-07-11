@@ -1,10 +1,16 @@
 
 
 <tool id="fa_gc_content_1" name="Run MSGF+ on a NetMHC filtered proteome" version="0.1.0">
-  <command interpreter="python">runPipeline.py --proteome '$referenceSource.proteome'
+  <command interpreter="python">runPipeline.py
 
   #for $r in $mhcalleles
-  --allele '${r.thing.allele}'
+  #for $x in $__app__.tool_data_tables['Alleles'].get_fields()
+  #if str($x[0]) == str($r.allele.value)
+  --allele $x[0]
+  --project $x[2]
+  #break
+  #end if
+  #end for
   #end for
 
   --pep_len '$length'
@@ -21,134 +27,15 @@
   </command>
   <inputs>
 
-    <conditional name="referenceSource">
-      <param name="source" type="select" label="Will you use a protein fasta file from your history or use a built-in reference proteome?">
-        <option value="indexed">Use a built-in reference</option>
-        <option value="history">Use reference from the history</option>
-      </param>
-      <when value="indexed">
-        <param name="proteome" type="select" label="Select a reference dataset" help="If your reference of interest is not listed, contact the Galaxy team">
-          <options from_data_table="Proteomes" />
-        </param>
-      </when>
-      <when value="history">
-        <param name="proteome" type="data" format="fasta"  label="Select protein fasta file from your history" />
-      </when>  <!-- history -->
-    </conditional>  <!-- referenceSource -->
-
+    
     <repeat name="mhcalleles" title="Select MHC Alleles">
-      <conditional name="thing">
-	<param name="organism"  type="select" >
-	  <option value="human">human</option>
-	  <option value="mouse">mouse</option>
-	</param>
-	<when value="human">
-	  <param name="allele" type="select" label="Select MHC Allele">
-	    <option value="HLA-A0101">HLA-A0101</option>
-	    <option value="HLA-A0201">HLA-A0201</option>
-	    <option value="HLA-A0202">HLA-A0202</option>
-	    <option value="HLA-A0203">HLA-A0203</option>
-	    <option value="HLA-A0205">HLA-A0205</option>
-	    <option value="HLA-A0206">HLA-A0206</option>
-	    <option value="HLA-A0207">HLA-A0207</option>
-	    <option value="HLA-A0211">HLA-A0211</option>
-	    <option value="HLA-A0212">HLA-A0212</option>
-	    <option value="HLA-A0216">HLA-A0216</option>
-	    <option value="HLA-A0217">HLA-A0217</option>
-	    <option value="HLA-A0219">HLA-A0219</option>
-	    <option value="HLA-A0250">HLA-A0250</option>
-	    <option value="HLA-A0301">HLA-A0301</option>
-	    <option value="HLA-A0302">HLA-A0302</option>
-	    <option value="HLA-A0319">HLA-A0319</option>
-	    <option value="HLA-A1101">HLA-A1101</option>
-	    <option value="HLA-A2301">HLA-A2301</option>
-	    <option value="HLA-A2402">HLA-A2402</option>
-	    <option value="HLA-A2403">HLA-A2403</option>
-	    <option value="HLA-A2501">HLA-A2501</option>
-	    <option value="HLA-A2601">HLA-A2601</option>
-	    <option value="HLA-A2602">HLA-A2602</option>
-	    <option value="HLA-A2603">HLA-A2603</option>
-	    <option value="HLA-A2902">HLA-A2902</option>
-	    <option value="HLA-A3001">HLA-A3001</option>
-	    <option value="HLA-A3002">HLA-A3002</option>
-	    <option value="HLA-A3101">HLA-A3101</option>
-	    <option value="HLA-A3201">HLA-A3201</option>
-	    <option value="HLA-A3207">HLA-A3207</option>
-	    <option value="HLA-A3215">HLA-A3215</option>
-	    <option value="HLA-A3301">HLA-A3301</option>
-	    <option value="HLA-A6601">HLA-A6601</option>
-	    <option value="HLA-A6801">HLA-A6801</option>
-	    <option value="HLA-A6802">HLA-A6802</option>
-	    <option value="HLA-A6823">HLA-A6823</option>
-	    <option value="HLA-A6901">HLA-A6901</option>
-	    <option value="HLA-A8001">HLA-A8001</option>
-	    <option value="HLA-B0702">HLA-B0702</option>
-	    <option value="HLA-B0801">HLA-B0801</option>
-	    <option value="HLA-B0802">HLA-B0802</option>
-	    <option value="HLA-B0803">HLA-B0803</option>
-	    <option value="HLA-B1401">HLA-B1401</option>
-	    <option value="HLA-B1402">HLA-B1402</option>
-	    <option value="HLA-B1501">HLA-B1501</option>
-	    <option value="HLA-B1502">HLA-B1502</option>
-	    <option value="HLA-B1503">HLA-B1503</option>
-	    <option value="HLA-B1509">HLA-B1509</option>
-	    <option value="HLA-B1517">HLA-B1517</option>
-	    <option value="HLA-B1801">HLA-B1801</option>
-	    <option value="HLA-B2705">HLA-B2705</option>
-	    <option value="HLA-B2720">HLA-B2720</option>
-	    <option value="HLA-B3501">HLA-B3501</option>
-	    <option value="HLA-B3503">HLA-B3503</option>
-	    <option value="HLA-B3701">HLA-B3701</option>
-	    <option value="HLA-B3801">HLA-B3801</option>
-	    <option value="HLA-B3901">HLA-B3901</option>
-	    <option value="HLA-B4001">HLA-B4001</option>
-	    <option value="HLA-B4002">HLA-B4002</option>
-	    <option value="HLA-B4013">HLA-B4013</option>
-	    <option value="HLA-B4201">HLA-B4201</option>
-	    <option value="HLA-B4402">HLA-B4402</option>
-	    <option value="HLA-B4403">HLA-B4403</option>
-	    <option value="HLA-B4501">HLA-B4501</option>
-	    <option value="HLA-B4506">HLA-B4506</option>
-	    <option value="HLA-B4601">HLA-B4601</option>
-	    <option value="HLA-B4801">HLA-B4801</option>
-	    <option value="HLA-B5101">HLA-B5101</option>
-	    <option value="HLA-B5301">HLA-B5301</option>
-	    <option value="HLA-B5401">HLA-B5401</option>
-	    <option value="HLA-B5701">HLA-B5701</option>
-	    <option value="HLA-B5703">HLA-B5703</option>
-	    <option value="HLA-B5801">HLA-B5801</option>
-	    <option value="HLA-B5802">HLA-B5802</option>
-	    <option value="HLA-B7301">HLA-B7301</option>
-	    <option value="HLA-B8101">HLA-B8101</option>
-	    <option value="HLA-B8301">HLA-B8301</option>
-	    <option value="HLA-C0303">HLA-C0303</option>
-	    <option value="HLA-C0401">HLA-C0401</option>
-	    <option value="HLA-C0501">HLA-C0501</option>
-	    <option value="HLA-C0602">HLA-C0602</option>
-	    <option value="HLA-C0701">HLA-C0701</option>
-	    <option value="HLA-C0702">HLA-C0702</option>
-	    <option value="HLA-C0802">HLA-C0802</option>
-	    <option value="HLA-C1203">HLA-C1203</option>
-	    <option value="HLA-C1402">HLA-C1402</option>
-	    <option value="HLA-C1502">HLA-C1502</option>
-	    <option value="HLA-E0101">HLA-E0101</option>
-	    <option value="HLA-E0103">HLA-E0103</option>
+      <param name="allele" type="select" label="Select an allele">
+        <options from_data_table="Alleles" />
+      </param>
+    </repeat>
 
-	  </param>
-	</when>
-	<when value="mouse">
-	  <param name="allele" type="select" label="Select MHC Allele">
-	    <option value="H-2-Db">H-2-Db</option>
-	    <option value="H-2-Dd">H-2-Dd</option>
-	    <option value="H-2-Kb">H-2-Kb</option>
-	    <option value="H-2-Kd">H-2-Kd</option>
-	    <option value="H-2-Kk">H-2-Kk</option>
-	    <option value="H-2-Ld">H-2-Ld</option>
-	  </param>
-	</when>
-      </conditional>
-
-
+    <repeat name="proteins" title="Add additional protein FASTA files">
+      <param name="fasta" type="data" label="Select a FASTA file" format="fasta" />
     </repeat>
     <param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
       <option value="8"></option>

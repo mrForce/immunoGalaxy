@@ -2,11 +2,13 @@
 import sys
 import argparse
 import subprocess
+import shutil
 import os
 import uuid
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--proteome', type=str)
+parser.add_argument('--project', type='str')
+parser.add_argument('--proteome', action='append')
 parser.add_argument('--allele', action='append')
 parser.add_argument('--pep_len', type=str)
 parser.add_argument('--rank_filter', type=str)
@@ -19,10 +21,11 @@ parser.add_argument('--output', type=str)
 args = parser.parse_args()
 tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
 
-
 project_directory = os.path.join(os.getcwd(), 'project')
 
-    
+#assert all the same proteome
+assert(len(set(args.proteome)) == 1)
+proteome = args.proteome[0]
 print('current working: ' + os.getcwd())
 print('listdir')
 print(os.listdir('.'))
@@ -49,7 +52,12 @@ assert(p.wait() == 0)
 
 
 fasta_link = os.path.join(project_directory, 'proteome.fasta')
-os.link(args.proteome, fasta_link)
+print('args.proteome')
+print(args.proteome)
+with open(fasta_link, 'w') as f:
+    for x in args.proteome:
+        with open(x, 'r') as g:
+            shutil.copyfileobj(g, f)
 p = subprocess.Popen(['python3', 'AddFASTA.py', project_directory, fasta_link, 'proteome'], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
