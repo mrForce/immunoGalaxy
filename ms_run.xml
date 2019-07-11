@@ -14,6 +14,10 @@
   #end for
   #end for
 
+  #for $p in $proteins
+  --additional_proteome $p
+  #end for
+  
   --pep_len '$length'
 
   --rank_filter '$rank_filter'

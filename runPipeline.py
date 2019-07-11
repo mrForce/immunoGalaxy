@@ -7,9 +7,10 @@ import os
 import uuid
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--project', type='str')
-parser.add_argument('--proteomes', action='append')
+parser.add_argument('--base_project', action='append')
+parser.add_argument('--base_proteome', action='append')
 parser.add_argument('--allele', action='append')
+parser.add_argument('--additional_proteome', action='append')
 parser.add_argument('--pep_len', type=str)
 parser.add_argument('--rank_filter', type=str)
 parser.add_argument('--frag_method', type=str)
@@ -25,7 +26,10 @@ for x in args.allele:
     allele_list.append('--allele')
     allele_list.append(x)
 project_directory = os.path.join(os.getcwd(), 'project')
-p = subprocess.Popen(['python3', 'CopyProject.py', project_directory] + allele_list, cwd=tools_location, stderr=sys.stdout.fileno())
+assert(len(set(args.base_project)) == 1)
+assert(len(set(args.proteomes)) == 1)
+base_project = args.base_project[0]
+p = subprocess.Popen(['python3', 'CopyProject.py', base_project, project_directory] + allele_list, cwd=tools_location, stderr=sys.stdout.fileno())
 
 filtered_netmhc_names = []
 assert(p.wait() == 0)
@@ -63,11 +67,9 @@ assert(p.wait() == 0)
 
 
 fasta_link = os.path.join(project_directory, 'proteome.fasta')
-print('args.proteomes')
-print(args.proteomes)
-if args.proteomes:
+if args.additional_proteome:
     with open(fasta_link, 'w') as f:
-        for x in args.proteome:
+        for x in args.additional_proteome:
             with open(x, 'r') as g:
                 shutil.copyfileobj(g, f)
     p = subprocess.Popen(['python3', 'AddFASTA.py', project_directory, fasta_link, 'proteome'], cwd=tools_location, stderr=sys.stdout.fileno())
