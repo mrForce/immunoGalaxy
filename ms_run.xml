@@ -8,6 +8,7 @@
   #if str($x[0]) == str($r.allele.value)
   --allele $x[0]
   --project $x[2]
+  --organism $x[3]
   #break
   #end if
   #end for

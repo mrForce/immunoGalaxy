@@ -8,7 +8,7 @@ import uuid
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--project', type='str')
-parser.add_argument('--proteome', action='append')
+parser.add_argument('--proteomes', action='append')
 parser.add_argument('--allele', action='append')
 parser.add_argument('--pep_len', type=str)
 parser.add_argument('--rank_filter', type=str)
@@ -20,12 +20,23 @@ parser.add_argument('--output', type=str)
 
 args = parser.parse_args()
 tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
-
+allele_list = []
+for x in args.allele:
+    allele_list.append('--allele')
+    allele_list.append(x)
 project_directory = os.path.join(os.getcwd(), 'project')
+p = subprocess.Popen(['python3', 'CopyProject.py', project_directory] + allele_list, cwd=tools_location, stderr=sys.stdout.fileno())
 
-#assert all the same proteome
-assert(len(set(args.proteome)) == 1)
-proteome = args.proteome[0]
+filtered_netmhc_names = []
+assert(p.wait() == 0)
+for allele in args.allele:
+    for pep_len in args.pep_len.split(','):
+        netmhc_name = 'Human' + pep_len + 'Mers_' + allele
+        p = subprocess.Popen(['python3', 'FilterNetMHC.py', project_directory, netmhc_name, args.rank, netmhc_name + '_filtered'], cwd=tools_location, stderr=sys.stdout.fileno())
+        assert(p.wait() == 0)
+        filtered_netmhc_names.append('--FilteredNetMHC')
+        filtered_netmhc_names.append(netmhc_name + '_filtered')
+
 print('current working: ' + os.getcwd())
 print('listdir')
 print(os.listdir('.'))
@@ -33,15 +44,15 @@ print(os.listdir('.'))
 add_tools = lambda x: os.path.join(tools_location, x)
 
 
-p = subprocess.Popen(['python3', 'Initialize.py', project_directory, '../pipeline_config.ini', '../unimod.xml'], cwd=tools_location, stderr=sys.stdout.fileno())
+#p = subprocess.Popen(['python3', 'Initialize.py', project_directory, '../pipeline_config.ini', '../unimod.xml'], cwd=tools_location, stderr=sys.stdout.fileno())
 
-assert(p.wait() == 0)
+#assert(p.wait() == 0)
 
-
+"""
 for x in args.allele:
     p = subprocess.Popen(['python3', 'AddHLA.py', project_directory, x], cwd=tools_location, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
-
+"""
 
 mgf_link = os.path.join(project_directory, 'thing.mgf')
 os.link(args.mgf, mgf_link)
@@ -52,30 +63,33 @@ assert(p.wait() == 0)
 
 
 fasta_link = os.path.join(project_directory, 'proteome.fasta')
-print('args.proteome')
-print(args.proteome)
-with open(fasta_link, 'w') as f:
-    for x in args.proteome:
-        with open(x, 'r') as g:
-            shutil.copyfileobj(g, f)
-p = subprocess.Popen(['python3', 'AddFASTA.py', project_directory, fasta_link, 'proteome'], cwd=tools_location, stderr=sys.stdout.fileno())
-assert(p.wait() == 0)
-
-
-for x in args.pep_len.split(','):
-    x = x.strip()
-    p = subprocess.Popen(['python3', 'KChop.py', project_directory, 'proteome', x, 'proteome' + x], cwd=tools_location, stderr=sys.stdout.fileno())
+print('args.proteomes')
+print(args.proteomes)
+if args.proteomes:
+    with open(fasta_link, 'w') as f:
+        for x in args.proteome:
+            with open(x, 'r') as g:
+                shutil.copyfileobj(g, f)
+    p = subprocess.Popen(['python3', 'AddFASTA.py', project_directory, fasta_link, 'proteome'], cwd=tools_location, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
-
-
-for x in args.allele:
-    for y in args.pep_len.split(','):
-        y = y.strip()        
-        p = subprocess.Popen(['python3', 'RunNetMHC.py', project_directory, 'proteome' + y, x, args.rank_filter], cwd=tools_location, stderr=sys.stdout.fileno())
+    for x in args.pep_len.split(','):
+        x = x.strip()
+        p = subprocess.Popen(['python3', 'KChop.py', project_directory, 'proteome', x, 'proteome' + x], cwd=tools_location, stderr=sys.stdout.fileno())
         assert(p.wait() == 0)
 
 
-p = subprocess.Popen(['python3', 'CreateTargetSetFromAllNetMHC.py', project_directory, 'thing'], cwd=tools_location, stderr=sys.stdout.fileno())
+    for x in args.allele:
+        for y in args.pep_len.split(','):
+            y = y.strip()        
+            p = subprocess.Popen(['python3', 'RunNetMHC.py', project_directory, 'proteome' + y, x, args.rank_filter], cwd=tools_location, stderr=sys.stdout.fileno())
+            assert(p.wait() == 0)
+            netmhc_name = 'proteome' + y + '_' + x
+            filtered_netmhc_name = netmhc_name + '_' + args.rank_filter
+            filtered_netmhc_names.append('--FilteredNetMHC')
+            filtered_netmhc_names.append(filtered_netmhc_name)
+
+
+p = subprocess.Popen(['python3', 'CreateTargetSet.py', project_directory] + filtered_netmhc_names, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
 p = subprocess.Popen(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'TargetSet', 'thing', 'index'], cwd=tools_location, stderr=sys.stdout.fileno())
