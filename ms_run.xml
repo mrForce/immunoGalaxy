@@ -15,7 +15,7 @@
   #end for
 
   #for $p in $proteins
-  --additional_proteome $p
+  --additional_proteome '$p'
   #end for
   
   --pep_len '$length'
