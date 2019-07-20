@@ -20,6 +20,15 @@ parser.add_argument('--output', type=str)
 
 
 args = parser.parse_args()
+print('allele')
+print(args.allele)
+print('additional proteome')
+print(args.additional_proteome)
+print('pep len')
+print(args.pep_len)
+print('output')
+print(args.output)
+
 tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
 allele_list = []
 for x in args.allele:
@@ -58,11 +67,12 @@ for x in args.allele:
     assert(p.wait() == 0)
 """
 
-#mgf_link = os.path.join(project_directory, 'thing.mgf')
-#os.link(args.mgf, mgf_link)
+mgf_link = os.path.join(project_directory, 'thing.mgf')
+
+os.symlink(args.mgf, mgf_link)
 
 
-p = subprocess.Popen(['python3', 'AddMGF.py', project_directory, args.mgf, 'mgf', '8', args.frag_method, args.instrument], cwd=tools_location, stderr=sys.stdout.fileno())
+p = subprocess.Popen(['python3', 'AddMGF.py', project_directory, mgf_link, 'mgf', '8', args.frag_method, args.instrument], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
 
