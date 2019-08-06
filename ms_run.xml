@@ -27,7 +27,7 @@
 
   --instrument '$instrument'
 
-  --output '$output'
+  --output '$output' > $Run 2 >&1
   </command>
   <inputs>
 
@@ -69,6 +69,7 @@
   </inputs>
   <outputs>
     <data format="tabular" name="output" />
+    <data name="Run" format="log" label="The log file" />
   </outputs>
 
   <tests>
