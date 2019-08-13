@@ -1,6 +1,6 @@
 
 
-<tool id="fa_gc_content_1" name="Run MSGF+ on a NetMHC filtered proteome" version="0.1.0">
+<tool id="fa_gc_content_2" name="Filter pipeline output by q-value" version="0.1.0">
   <command interpreter="python">runPipeline.py
 
   #for $r in $mhcalleles
