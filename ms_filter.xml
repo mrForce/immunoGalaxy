@@ -13,7 +13,7 @@
     <param name="threshold" type="float" min="0" max="1" value="0.05" label="Q Value Threshold" />
   </inputs>
   <outputs>
-    <data format="data" name="output" />
+    <data format="txt" name="output" />
   </outputs>
 
 
