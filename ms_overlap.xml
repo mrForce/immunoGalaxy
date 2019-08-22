@@ -1,0 +1,33 @@
+
+
+<tool id="fa_gc_content_3" name="Upload a file with peptides, and create a venn diagram of overlap with tool output" version="0.1.0">
+  <command interpreter="python">overlap.py
+
+  --gal_input '$input'
+  --uploaded '$uploaded'
+  --output '$output'
+  </command>
+  <inputs>
+
+    <param name="input" type="data" label="Select Filter Q Value output" format="txt" />
+    <param name="uploaded" type="data" label="Select list of peptides" format="txt" />
+  </inputs>
+  <outputs>
+    <data format="png" name="output" />
+  </outputs>
+
+
+  <tests>
+    <test>
+      <param name="input" value="fa_gc_content_input.fa"/>
+      <output name="out_file1" file="fa_gc_content_output.txt"/>
+    </test>
+  </tests>         
+  
+  <help>
+    This tool computes GC content from a FASTA file.
+  </help>
+
+</tool>
+
+
