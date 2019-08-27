@@ -3,17 +3,25 @@
 <tool id="fa_gc_content_3" name="Upload a file with peptides, and create a venn diagram of overlap with tool output" version="0.1.0">
   <command interpreter="python">overlap.py
 
-  --gal_input '$input'
-  --uploaded '$uploaded'
+  --sample_one '$one'
+  --sample_two '$two'
   --output '$output'
+  --union '$union'
+  --intersection '$intersection'
+  --sample_one_unique '$sample_one_unique'
+  --sample_two_unique '$sample_two_unique'
   </command>
   <inputs>
 
-    <param name="input" type="data" label="Select Filter Q Value output" format="txt" />
-    <param name="uploaded" type="data" label="Select list of peptides" format="txt" />
+    <param name="one" type="data" label="Select sample 1" format="txt" />
+    <param name="two" type="data" label="Select sample 2" format="txt" />
   </inputs>
   <outputs>
     <data format="png" name="output" />
+    <data format="tabular" name="intersection" />
+    <data format="tabular" name="union" />
+    <data format="tabular" name="sample_one_unique" />
+    <data format="tabular" name="sample_two_unique" />
   </outputs>
 
 
