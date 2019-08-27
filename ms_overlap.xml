@@ -18,10 +18,10 @@
   </inputs>
   <outputs>
     <data format="png" name="output" />
-    <data format="tabular" name="intersection" />
-    <data format="tabular" name="union" />
-    <data format="tabular" name="sample_one_unique" />
-    <data format="tabular" name="sample_two_unique" />
+    <data format="log" name="intersection" label="Intersection" />
+    <data format="log" name="union"  label="Union" />
+    <data format="log" name="sample_one_unique" label="Peptides unique to sample 1" />
+    <data format="log" name="sample_two_unique" label="Peptides unique to sample 2" />
   </outputs>
 
 
