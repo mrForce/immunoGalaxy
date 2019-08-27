@@ -11,7 +11,6 @@ parser.add_argument('--sample_two', type=str)
 parser.add_argument('--output', type=str)
 parser.add_argument('--union', type=str)
 parser.add_argument('--intersection', type=str)
-parser.add_argument('--union', type=str)
 parser.add_argument('--sample_one_unique', type=str)
 parser.add_argument('--sample_two_unique', type=str)
 
