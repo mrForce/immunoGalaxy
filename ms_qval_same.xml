@@ -4,7 +4,7 @@
   <command interpreter="python3">qval_same.py
 
   #for $r in $runs
-  --run $r
+  --run $r.run.value
   #end for
   --output '$output'
   </command>
