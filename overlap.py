@@ -29,10 +29,10 @@ with open(args.sample_two, 'r') as f:
             two.add(line)
 
 venn2([one, two], ['Sample 1', 'Sample 2'])
-matplotlib.pyplot.savefig(args.output)
+matplotlib.pyplot.savefig(args.output, format='png')
 
 with open(args.union, 'w') as f:
-    for x in list(one + two):
+    for x in list(one.union(two)):
         f.write(x + '\n')
 with open(args.intersection, 'w') as f:
     for x in list(one.intersection(two)):
