@@ -1,0 +1,35 @@
+
+
+<tool id="fa_gc_content_4" name="Check if peptide q-values are the same between runs of MSGF+/Percolator" version="0.1.0">
+  <command interpreter="python3">qval_same.py
+
+  #for $r in $runs
+  --run $r
+  #end for
+  --output '$output'
+  </command>
+  <inputs>
+
+    <repeat name="runs" title="Select runs">
+      <param name="run" type="data" label="Select a run" format="tabular" />
+    </repeat>
+  </inputs>
+  <outputs>
+    <data format="log" name="output" />
+  </outputs>
+
+
+  <tests>
+    <test>
+      <param name="input" value="fa_gc_content_input.fa"/>
+      <output name="out_file1" file="fa_gc_content_output.txt"/>
+    </test>
+  </tests>         
+  
+  <help>
+    This tool computes GC content from a FASTA file.
+  </help>
+
+</tool>
+
+
