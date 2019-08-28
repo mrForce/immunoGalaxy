@@ -3,7 +3,7 @@ import sys
 import argparse
 from collections import defaultdict
 parser = argparse.ArgumentParser()
-parser.add_argument('--run', action=append)
+parser.add_argument('--run', action='append')
 parser.add_argument('--output', type=str)
 
 args = parser.parse_args()
