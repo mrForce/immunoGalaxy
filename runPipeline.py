@@ -16,7 +16,7 @@ parser.add_argument('--frag_method', type=str)
 parser.add_argument('--instrument', type=str)
 parser.add_argument('--mgf', type=str)
 parser.add_argument('--output', type=str)
-
+parser.add_argument('--archive', type=str)
 
 
 args = parser.parse_args()
@@ -124,8 +124,8 @@ p = subprocess.Popen(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'T
 assert(p.wait() == 0)
 
 print('created msgfplus index')
-print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '4']))
-p = subprocess.Popen(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '4'], cwd=tools_location, stderr=sys.stdout.fileno())
+print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '1']))
+p = subprocess.Popen(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '1'], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 print('ran msgfplus search')
 
@@ -139,3 +139,10 @@ p = subprocess.Popen(['python3', 'ExportPeptidesWithQValues.py', project_directo
 assert(p.wait() == 0)
 print('ran peptides with q values')
 
+
+if args.archive:
+    print('project directory: %s' % project_directory)
+    print('archive: %s' % args.archive)
+    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'TargetSet'), os.path.join(project_directory, 'FilteredNetMHC')])
+    shutil.move(args.archive + '.zip', args.archive)
+    print('Zip file size: %d' % os.path.getsize(args.archive))

@@ -2,9 +2,9 @@
 
 <tool id="msgf_full" name="Run MSGF+ on Proteome" version="0.1.0">
   <command interpreter="python3">runFullPipeline.py
-  #for $x in $__app__.tool_data_tables['Alleles'].get_fields()
-  #if str($x[1]) == str($proteome.organism.value)
-  --base_project $x[1]
+  #for $x in $__app__.tool_data_tables['Proteomes'].get_fields
+  #if $x[0] == str($proteome.value)
+  --base_project $x[2]
   #break
   #end if
   #end for
@@ -16,6 +16,8 @@
   --instrument '$instrument'
 
   --output '$output'
+  
+  --archive '$Archive'
   
   &gt; $Log 2&gt;&amp;1
   </command>
@@ -45,6 +47,7 @@
   <outputs>
     <data format="tabular" name="output" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
+    <data name="Archive" format="zip" label="Archive" />
   </outputs>
 
 
