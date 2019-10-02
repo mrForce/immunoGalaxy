@@ -1,0 +1,98 @@
+
+
+<tool id="fa_gc_content_1" name="Run MSGF+ on a NetMHC filtered proteome" version="0.1.0">
+  <command interpreter="python3">runPipeline.py
+
+  #for $r in $mhcalleles
+  #for $x in $__app__.tool_data_tables['Alleles'].get_fields()
+  #if str($x[0]) == str($r.allele.value)
+  --allele $x[0]
+  --base_project $x[2]
+  #break
+  #end if
+  #end for
+  #end for
+
+  #for $p in $proteins
+  --additional_proteome '$p.fasta'
+  #end for
+  
+  --pep_len '$length'
+
+  --rank_filter '$rank_filter'
+
+  --mgf '$mgf'
+
+  --frag_method '$frag_method'
+
+  --instrument '$instrument'
+
+  --fdr '$fdr'
+  
+  --peptides '$peptides'
+
+  --archive '$Archive'
+  
+  &gt; $Log 2&gt;&amp;1
+  </command>
+  <inputs>
+
+    
+    <repeat name="mhcalleles" title="Select MHC Alleles">
+      <param name="allele" type="select" label="Select an allele">
+        <options from_data_table="Alleles" />
+      </param>
+    </repeat>
+
+    <repeat name="proteins" title="Add additional protein FASTA files">
+      <param name="fasta" type="data" label="Select a FASTA file" format="fasta" />
+    </repeat>
+    <param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
+      <option value="8"></option>
+      <option value="9"></option>
+      <option value="10"></option>
+      <option value="11"></option>
+      <option value="12"></option>
+      <option value="13"></option>
+    </param>
+
+    <param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
+
+    <param name="mgf" type="data" label="Select an MGF file" format="mgf" />
+
+    <param name="frag_method" type="select" label="Select the fragmentation method">
+      <option value="0">CID</option>
+      <option value="1">ETD</option>
+      <option value="2">HCD</option>
+    </param>
+
+    <param name="instrument" type="select" label="Select the instrument">
+      <option value="0">Low res LCQ/LTQ</option>
+      <option value="1">High Res LCQ/LTQ</option>
+      <option value="2">TOF</option>
+      <option value="3">Q-Extractive</option>
+    </param>
+
+    <param name="fdr" type="float" min="0" max="100" value="1" label="Percent FDR cuttoff"/>
+  </inputs>
+  <outputs>
+    <data format="txt" name="peptides" />
+    <data name="Log" format="log"  label="Run MSGF+ Log" />
+    <data name="Archive" format="zip" label="Archive" />
+  </outputs>
+
+
+  <tests>
+    <test>
+      <param name="input" value="fa_gc_content_input.fa"/>
+      <output name="out_file1" file="fa_gc_content_output.txt"/>
+    </test>
+  </tests>         
+  
+  <help>
+    This tool computes GC content from a FASTA file.
+  </help>
+
+</tool>
+
+
