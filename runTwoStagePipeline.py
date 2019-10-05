@@ -28,8 +28,7 @@ print('additional proteome')
 print(args.additional_proteome)
 print('pep len')
 print(args.pep_len)
-print('output')
-print(args.output)
+
 
 tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
 allele_list = []
@@ -133,9 +132,9 @@ assert(p.wait() == 0)
 
 print('created msgfplus indices')
 print('Going to add percolator parameter file')
-with tempfile.TemporaryFile() as f:
-    f.write('top_matches=1\n')
-    p = subprocess.Popen(['python3', 'AddParamFile.py', project_directory, f.name, 'percolator'], cwd=tools_location, stderr=sys.stdout.fileno())
+with tempfile.NamedTemporaryFile() as f:
+    f.write(b'top_matches=1\n')
+    p = subprocess.Popen(['python3', 'AddParamFile.py', project_directory, 'percolator', f.name, 'percolator'], cwd=tools_location, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
 
 print('going to call RunIterativeMSGFPlusSearch. Command: %s' % ' '.join(['python3', 'RunIterativeMSGFPlusSearch.py', project_directory, 'mgf', fdr, 'iterative_search', 'index', 'filtered_index', '--use_percolator', 'percolator',  '--memory', '10000']))
@@ -144,7 +143,7 @@ assert(p.wait() == 0)
 print('ran iterative msgfplus search')
 
 print('going to call ExportPeptides. Command: %s' % ' '.join(['python3', 'ExportPeptides.py', project_directory, 'MSGFPlusIterativeSearch', 'iterative_search', args.peptides]))
-p = subprocess.Popen(['python3', 'ExportPeptides.py', project_directory, 'MSGFPlusIterativeSearch', 'iterative_search', args.peptides], cwd=tools_location, stderr=sys.stdout.fileno())
+p = subprocess.Popen(['python3', 'ExportPeptides.py', project_directory, 'MSGFPlusIterativeSearch', 'iterative_search', args.peptides, '--overwrite', 'True'], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
 
