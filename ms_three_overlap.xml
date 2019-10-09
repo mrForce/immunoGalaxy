@@ -1,6 +1,6 @@
 
 
-<tool id="fa_gc_content_25" name="Upload a file with peptides, and create a venn diagram of overlap with tool output" version="0.1.0">
+<tool id="fa_gc_content_25" name="Create Venn Diagram of three peptide sets" version="0.1.0">
   <command interpreter="python3">three_way_overlap.py
 
   --sample_one '$one'
@@ -26,7 +26,7 @@
     <param name="three_name" type="text" label="Sample 3 Name"/>
   </inputs>
   <outputs>
-    <data format="png" name="output" />
+    <data format="png" name="output" label="Venn Diagram between ${one.name}, ${two.name} and ${three.name}"/>
     <data format="log" name="intersection" label="Intersection" />
     <data format="log" name="union"  label="Union" />
     <data format="log" name="sample_one_unique" label="Peptides unique to sample 1" />

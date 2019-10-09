@@ -45,7 +45,7 @@
     </param>
   </inputs>
   <outputs>
-    <data format="tabular" name="output" />
+    <data format="tabular" name="output" label="Unfiltered search of ${mgf.name}"/>
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>

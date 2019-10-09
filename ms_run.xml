@@ -72,7 +72,7 @@
     </param>
   </inputs>
   <outputs>
-    <data format="tabular" name="output" />
+    <data format="tabular" name="output" label="Search of ${mgf.name} with NetMHC rank cutoff of ${rank_filter}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
