@@ -76,7 +76,7 @@
     <param name="fdr" type="float" min="0" max="100" value="1" label="Percent FDR cuttoff"/>
   </inputs>
   <outputs>
-    <data format="txt" name="peptides" />
+    <data format="txt" name="peptides" label="Two Stage Search of ${mgf.name} with NetMHC rank cutoff of ${rank_filter} and FDR of ${fdr}"/>
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
