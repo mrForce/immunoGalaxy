@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
 parser = argparse.ArgumentParser()
 parser.add_argument('--sample_one', type=str)
+parser.add_argument('--sample_one_name', type=str)
 parser.add_argument('--sample_two', type=str)
+parser.add_argument('--sample_two_name', type=str)
 parser.add_argument('--output', type=str)
 parser.add_argument('--union', type=str)
 parser.add_argument('--intersection', type=str)
@@ -28,7 +30,7 @@ with open(args.sample_two, 'r') as f:
         if len(line) > 0:
             two.add(line)
 
-venn2([one, two], ['Sample 1', 'Sample 2'])
+venn2([one, two], [args.sample_one_name, args.sample_two_name])
 matplotlib.pyplot.savefig(args.output, format='png')
 
 with open(args.union, 'w') as f:

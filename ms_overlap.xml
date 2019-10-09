@@ -4,7 +4,9 @@
   <command interpreter="python3">overlap.py
 
   --sample_one '$one'
+  --sample_one_name '$one_name'
   --sample_two '$two'
+  --sample_two_name '$two_name'
   --output '$output'
   --union '$union'
   --intersection '$intersection'
@@ -14,7 +16,9 @@
   <inputs>
 
     <param name="one" type="data" label="Select sample 1" format="txt" />
+    <param name="one_name" type="text" label="Give sample 1 a name"/>
     <param name="two" type="data" label="Select sample 2" format="txt" />
+    <param name="two_name" type="text" label="Give sample 2 a name"/>
   </inputs>
   <outputs>
     <data format="png" name="output" />
