@@ -1,17 +1,20 @@
 
 
-<tool id="fa_gc_content_3" name="Upload a file with peptides, and create a venn diagram of overlap with tool output" version="0.1.0">
-  <command interpreter="python3">overlap.py
+<tool id="fa_gc_content_25" name="Upload a file with peptides, and create a venn diagram of overlap with tool output" version="0.1.0">
+  <command interpreter="python3">three_way_overlap.py
 
   --sample_one '$one'
   --sample_one_name '$one_name'
   --sample_two '$two'
   --sample_two_name '$two_name'
+  --sample_three '$three'
+  --sample_three_name '$three_name'
   --output '$output'
   --union '$union'
   --intersection '$intersection'
   --sample_one_unique '$sample_one_unique'
   --sample_two_unique '$sample_two_unique'
+  --sample_three_unique '$sample_three_unique'
   </command>
   <inputs>
 
@@ -19,6 +22,8 @@
     <param name="one_name" type="text" label="Sample 1 Name"/>
     <param name="two" type="data" label="Select sample 2" format="txt" />
     <param name="two_name" type="text" label="Sample 2 Name"/>
+    <param name="three" type="data" label="Select sample 3" format="txt" />
+    <param name="three_name" type="text" label="Sample 3 Name"/>
   </inputs>
   <outputs>
     <data format="png" name="output" />
@@ -26,6 +31,7 @@
     <data format="log" name="union"  label="Union" />
     <data format="log" name="sample_one_unique" label="Peptides unique to sample 1" />
     <data format="log" name="sample_two_unique" label="Peptides unique to sample 2" />
+    <data format="log" name="sample_one_three" label="Peptides unique to sample 3" />
   </outputs>
 
 
