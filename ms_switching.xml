@@ -1,0 +1,27 @@
+
+
+<tool id="ms_check_switching" name="Check Switching" version="0.1.0">
+  <command interpreter="python3">checkSwitching.py
+  --unfiltered_archive '$UnfilteredArchive'
+  --filtered_archive '$FilteredArchive'
+  --fdr '$fdr'
+
+  --switch_plot '$switch_plot'
+  --spectra_overlap_plot '$spectra_overlap_plot'
+  &gt; $Log 2&gt;&amp;1
+  </command>
+  <inputs>
+
+    <param name="UnfilteredArchive" type="data" label="Archive of unfiltered search" format="zip" />
+    <param name="FilteredArchive" type="data" label="Archive of filtered search" format="zip" />
+    
+    <param name="fdr" type="float" min="0" max="100" value="1" label="PSM Q-value cutoff"/>
+  </inputs>
+  <outputs>
+    <data format="png" name="switch_plot" label="For spectra matched in both the filtered and unfiltered searches at Q-val cutoff, fraction that switched peptide?"/>
+    <data format="png" name="spectra_overlap_plot" label="At the Q-val cutoff, what's the overlap in matched spectra between the two searches?"/>
+    <data name="Log" format="log"  label="checkSwitching log" />
+  </outputs>
+</tool>
+
+
