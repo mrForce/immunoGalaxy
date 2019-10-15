@@ -51,8 +51,9 @@ def create_qq(scores_dict, peptides, length, output_location):
     plt.ylim((background_scores[0], background_scores[-1]))
     plt.xlabel('Discovered %d-mer Scores' % length)
     plt.ylabel('Background %d-mer Scores' % length)
-    plt.savefig(output_location)
-
+    plt.title('n = %d' % len(foreground_scores))
+    plt.savefig(output_location, format='png')
+    plt.clf()
 parser = argparse.ArgumentParser()
 parser.add_argument('--allele', type=str)
 parser.add_argument('--base_project', type=str)
@@ -64,17 +65,19 @@ parser.add_argument('--output_ten_mers', type=str)
 args = parser.parse_args()
 
 eight = tempfile.NamedTemporaryFile()
+eight_name = eight.name
 nine = tempfile.NamedTemporaryFile()
+nine_name = nine.name
 ten = tempfile.NamedTemporaryFile()
-
+ten_name = ten.name
 base_project = args.base_project
 
 tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
-p = subprocess.Popen(['python3', 'ExportNetMHCScores.py', base_project, args.allele, '8', eight.name], cwd=tools_location, stderr=sys.stdout.fileno())
+p = subprocess.Popen(['python3', 'ExportNetMHCScores.py', base_project, args.allele, '8', eight_name], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
-p = subprocess.Popen(['python3', 'ExportNetMHCScores.py', base_project, args.allele, '9', nine.name], cwd=tools_location, stderr=sys.stdout.fileno())
+p = subprocess.Popen(['python3', 'ExportNetMHCScores.py', base_project, args.allele, '9', nine_name], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
-p = subprocess.Popen(['python3', 'ExportNetMHCScores.py', base_project, args.allele, '10', ten.name], cwd=tools_location, stderr=sys.stdout.fileno())
+p = subprocess.Popen(['python3', 'ExportNetMHCScores.py', base_project, args.allele, '10', ten_name], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 peptides = set()
 with open(args.peptides, 'r') as f:
@@ -87,11 +90,11 @@ with open(args.peptides, 'r') as f:
             else:
                 print('Peptide: %s removed, because it contained non-protein character' % cleaned)
 print('Collected: %d peptides' % len(peptides))
-eight_dict = read_scores_as_dict(eight.name)
+eight_dict = read_scores_as_dict(eight_name)
 eight.close()
-nine_dict = read_scores_as_dict(nine.name)
+nine_dict = read_scores_as_dict(nine_name)
 nine.close()
-ten_dict = read_scores_as_dict(ten.name)
+ten_dict = read_scores_as_dict(ten_name)
 ten.close()
 create_qq(eight_dict, peptides, 8, args.output_eight_mers)
 create_qq(nine_dict, peptides, 9, args.output_nine_mers)

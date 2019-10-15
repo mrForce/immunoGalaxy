@@ -1,7 +1,7 @@
 <tool id="compare_netmhc_scores" name="Compare NetMHC Scores between discovered peptides and whole proteome" version="0.1.0">
   <command interpreter="python3">netmhcScoreDistribution.py
   #for $x in $__app__.tool_data_tables['Alleles'].get_fields()
-  #if str($x[0]) == str(allele.value)
+  #if str($x[0]) == str($allele.value)
   --allele $x[0]
   --base_project $x[2]
   #break
@@ -27,7 +27,7 @@
     <data format="png" name="output_eight_mers" label="Distribution of 8-mer scores in ${peptides.name}" />
     <data format="png" name="output_nine_mers" label="Distribution of 9-mer scores in ${peptides.name}" />
     <data format="png" name="output_ten_mers" label="Distribution of 10-mer scores in ${peptides.name}" />
-    <data name="Log" format="log"  label="Run MSGF+ Log" />
+    <data name="Log" format="log"  label="NetMHC Score Distrution Log" />
   </outputs>
 
 
