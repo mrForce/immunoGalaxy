@@ -29,9 +29,9 @@
     <data format="png" name="output" label="Venn Diagram between ${one.name}, ${two.name} and ${three.name}"/>
     <data format="log" name="intersection" label="Intersection" />
     <data format="log" name="union"  label="Union" />
-    <data format="log" name="sample_one_unique" label="Peptides unique to sample 1" />
-    <data format="log" name="sample_two_unique" label="Peptides unique to sample 2" />
-    <data format="log" name="sample_one_three" label="Peptides unique to sample 3" />
+    <data format="log" name="sample_one_unique" label="Peptides unique to ${one_name}" />
+    <data format="log" name="sample_two_unique" label="Peptides unique to ${two_name}" />
+    <data format="log" name="sample_three_unique" label="Peptides unique to ${three_name}" />
   </outputs>
 
 

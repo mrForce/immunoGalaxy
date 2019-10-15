@@ -2,6 +2,7 @@
 from scipy import stats
 import argparse
 import matplotlib
+import math
 from Bio.Alphabet import IUPAC
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -10,6 +11,7 @@ import sys
 import tempfile
 import subprocess
 import re
+import os
 def read_scores_as_dict(file_path):
     d = dict()
     with open(file_path, 'r') as f:
@@ -33,21 +35,20 @@ def create_qq(scores_dict, peptides, length, output_location):
     for peptide in peptides:
         if len(peptide) == length:
             if peptide in scores_dict:
-                foreground_scores.append(scores_dict[peptide])
+                foreground_scores.append(math.log(scores_dict[peptide]))
             else:
                 print('peptide: %s of length %d not in scores_dict' % (peptide, length))
     for k, v in scores_dict.items():
         if len(k) == length:
-            background_scores.append(v)
+            background_scores.append(math.log(v))
     quants = list(np.linspace(0, 1, len(foreground_scores) + 2))[1:-1]
     assert(len(quants) == len(foreground_scores))
     background_scores = stats.mstats.mquantiles(background_scores, quants)
     background_scores.sort()
     foreground_scores.sort()
     plt.plot(foreground_scores, background_scores)
-    limit = max(foreground_scores[-1], background_scores[-1])
-    plt.xlim((0, limit))
-    plt.ylim((0, limit))
+    plt.xlim((foreground_scores[0], foreground_scores[-1]))
+    plt.ylim((background_scores[0], background_scores[-1]))
     plt.xlabel('Discovered %d-mer Scores' % length)
     plt.ylabel('Background %d-mer Scores' % length)
     plt.savefig(output_location)
@@ -93,5 +94,5 @@ nine.close()
 ten_dict = read_scores_as_dict(ten.name)
 ten.close()
 create_qq(eight_dict, peptides, 8, args.output_eight_mers)
-create_qq(eight_dict, peptides, 9, args.output_nine_mers)
-create_qq(eight_dict, peptides, 10, args.output_ten_mers)
+create_qq(nine_dict, peptides, 9, args.output_nine_mers)
+create_qq(ten_dict, peptides, 10, args.output_ten_mers)

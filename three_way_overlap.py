@@ -40,7 +40,7 @@ with open(args.sample_three, 'r') as f:
         if len(line) > 0:
             three.add(line)
 
-venn2([one, two, three], [args.sample_one_name, args.sample_two_name, args.sample_three_name])
+venn3([one, two, three], [args.sample_one_name, args.sample_two_name, args.sample_three_name])
 matplotlib.pyplot.savefig(args.output, format='png')
 
 with open(args.union, 'w') as f:
@@ -58,7 +58,7 @@ with open(args.sample_two_unique, 'w') as f:
         if x not in one and x not in three:
             f.write(x + '\n')
 
-with open(args.sample_there_unique, 'w') as f:
+with open(args.sample_three_unique, 'w') as f:
     for x in list(three):
         if x not in one and x not in two:
             f.write(x + '\n')
