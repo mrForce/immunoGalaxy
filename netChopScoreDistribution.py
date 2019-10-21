@@ -66,7 +66,8 @@ def run_netchop(proteome, peptides, netchop_location, directory):
                 assert(identity in sequences)
                 if position in sequences[identity][1]:
                     positive_scores.append(score)
-            
+                if position in sequences[identity][2]:
+                    control_scores.append(score)
     
         
             
