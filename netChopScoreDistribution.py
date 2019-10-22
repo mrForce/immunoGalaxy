@@ -104,11 +104,13 @@ parser.add_argument('--temp_directory', type=str)
 args = parser.parse_args()
 
 netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
+#netchop_location = '/home/jforce/netchop-3.1/netchop'
 peptides = []
 with open(args.peptides, 'r') as f:
     for x in f:
         if len(x.strip()) > 0:
-            peptides.append(x.strip())
+            cleaned = ptm_removal_regex.sub('', x.strip())
+            peptides.append(cleaned)
 assert(len(peptides) > 0)
 positive_scores, control_scores = run_netchop(args.proteome, peptides, netchop_location, args.temp_directory)
 create_qq(positive_scores, control_scores, args.qq_output)
