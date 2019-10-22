@@ -112,5 +112,8 @@ with open(args.peptides, 'r') as f:
             cleaned = ptm_removal_regex.sub('', x.strip())
             peptides.append(cleaned)
 assert(len(peptides) > 0)
-positive_scores, control_scores = run_netchop(args.proteome, peptides, netchop_location, args.temp_directory)
+temp_directory = os.getcwd()
+if args.temp_directory:
+    temp_directory = args.temp_directory
+positive_scores, control_scores = run_netchop(args.proteome, peptides, netchop_location, temp_directory)
 create_qq(positive_scores, control_scores, args.qq_output)
