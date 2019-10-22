@@ -88,7 +88,7 @@ def run_netchop(proteome, peptides, netchop_location, directory):
 
 
 ptm_removal_regex = re.compile('\[[^\]]*\]')
-def create_qq(positive_scores, control_scores, output_location):
+def create_qq(positive_scores, control_scores, output_location, num_peptides):
     assert(all([x <= 1.0 and x >= 0 for x in positive_scores]))
     assert(all([x <= 1.0 and x >= 0 for x in control_scores]))
     if len(positive_scores) < len(control_scores):
@@ -102,7 +102,7 @@ def create_qq(positive_scores, control_scores, output_location):
     plt.ylim((0, 1))
     plt.xlabel('Positive Scores')
     plt.ylabel('Control Scores')
-    plt.title('n = %d' % len(positive_scores))
+    plt.title('n = %d' % num_peptides)
     plt.savefig(output_location, format='png')
     plt.clf()
     
@@ -127,4 +127,4 @@ temp_directory = os.getcwd()
 if args.temp_directory:
     temp_directory = args.temp_directory
 positive_scores, control_scores = run_netchop(args.proteome, peptides, netchop_location, temp_directory)
-create_qq(positive_scores, control_scores, args.qq_output)
+create_qq(positive_scores, control_scores, args.qq_output, len(peptides))
