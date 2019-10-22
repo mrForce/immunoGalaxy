@@ -44,7 +44,7 @@ def run_netchop(proteome, peptides, netchop_location, directory):
             record.description = ''
             counter += 1
             positions_to_score = set(positions_to_score)
-            negative_positions = set(range(1, len(sequence) + 1)) - positions_to_score
+            negative_positions = set(range(8, len(sequence) + 1)) - positions_to_score
             #control_positions = set(random.sample(list(negative_positions), len(positions_to_score)))
             sequences[record.id] = [record, positions_to_score, negative_positions]
     sequences_values = list(sequences.values())
