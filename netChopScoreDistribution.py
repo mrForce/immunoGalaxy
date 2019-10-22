@@ -16,7 +16,6 @@ import os
 import random
 
 netchop_regex = re.compile('^(\s+(?P<pos>[0-9]+))(\s+[^\s]+){2}(\s+(?P<score>0\.[0-9]+))(\s+(?P<ident>.+))$')
-
 """
 Pass path to a FASTA file, containing proteome. Also pass a list of peptides.
 
@@ -46,8 +45,20 @@ def run_netchop(proteome, peptides, netchop_location, directory):
             counter += 1
             positions_to_score = set(positions_to_score)
             negative_positions = set(range(1, len(sequence) + 1)) - positions_to_score
-            control_positions = set(random.sample(list(negative_positions), len(positions_to_score)))
-            sequences[record.id] = (record, positions_to_score, control_positions)
+            #control_positions = set(random.sample(list(negative_positions), len(positions_to_score)))
+            sequences[record.id] = [record, positions_to_score, negative_positions]
+    sequences_values = list(sequences.values())
+    min_multiplier = len(sequences_values[0][2])/len(sequences_values[1][1])
+    for x in sequences_values:
+        ratio = int(len(x[2])/len(x[1]))
+        if min_multiplier > ratio:
+            min_multiplier = ratio
+
+    print('min multiplier: %d' % min_multiplier)
+    assert(min_multiplier > 0)
+    for k in sequences.keys():
+        random_positions = set(random.sample(list(sequences[k][2]), min_multiplier*len(sequences[k][1])))
+        sequences[k][2] = random_positions
     print('sequences')
     print(sequences)
     assert(sequences)
@@ -103,8 +114,8 @@ parser.add_argument('--temp_directory', type=str)
 
 args = parser.parse_args()
 
-netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
-#netchop_location = '/home/jforce/netchop-3.1/netchop'
+#netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
+netchop_location = '/home/jforce/netchop-3.1/netchop'
 peptides = []
 with open(args.peptides, 'r') as f:
     for x in f:
