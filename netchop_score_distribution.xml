@@ -1,6 +1,6 @@
 <tool id="compare_netchop_scores" name="Compare NetChop Scores at C-terminus between discovered peptides and a set of randomly selected positions" version="0.1.0">
   <command interpreter="python3">netChopScoreDistribution.py
-  --proteome '$proteome'
+  --proteome $proteome.value
   --peptides '$peptides'
   --qq_output '$qq_output'
   
@@ -8,7 +8,7 @@
   </command>
   <inputs>
     
-    <param name="allele" type="select" label="Select a proteome">
+    <param name="proteome" type="select" label="Select a proteome">
       <options from_data_table="Proteomes" />
     </param>
     <param name="peptides" type="data" label="Select peptide set from search" format="txt" />
