@@ -174,8 +174,8 @@ parser.add_argument('--temp_directory', type=str)
 
 args = parser.parse_args()
 
-#netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
-netchop_location = '/home/jforce/netchop-3.1/netchop'
+netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
+#netchop_location = '/home/jforce/netchop-3.1/netchop'
 peptides = []
 with open(args.peptides, 'r') as f:
     for x in f:
