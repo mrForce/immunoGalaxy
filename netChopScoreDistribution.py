@@ -99,6 +99,7 @@ def run_netchop(proteome, peptides, netchop_location, directory):
         for i in range(0, len(sequences[k][1])):
             selected_paste_positions[paste_random_positions[i]] = sequences[k][1][i][1]
         new_string, new_positions = interleave(sequences[k][0].seq, selected_paste_positions)
+        assert(len(new_positions) == len(list(selected_paste_positions.keys())))
         control_paste_sequences[k] = [SeqRecord(Seq(new_string), id=k), new_positions]
         sequences[k][1] = random_positions
     assert(sequences)
@@ -140,6 +141,7 @@ def run_netchop(proteome, peptides, netchop_location, directory):
                 assert(identity in control_paste_sequences)
                 if position in control_paste_sequences[identity][1]:
                     control_paste_peptide_scores.append(score)
+    assert(sum([len(x[1]) for x in control_paste_sequences]) == len(control_paste_peptide_scores))
     return (positive_scores, control_scores, control_paste_peptide_scores)
             
 
