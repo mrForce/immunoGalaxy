@@ -99,14 +99,8 @@ def run_netchop(proteome, peptides, netchop_location, directory):
         for i in range(0, len(sequences[k][1])):
             selected_paste_positions[paste_random_positions[i]] = sequences[k][1][i][1]
         new_string, new_positions = interleave(sequences[k][0].seq, selected_paste_positions)
-        print('new string')
-        print(new_string)
-        print('new positions')
-        print(new_positions)
         control_paste_sequences[k] = [SeqRecord(Seq(new_string), id=k), new_positions]
         sequences[k][1] = random_positions
-    print('sequences')
-    print(sequences)
     assert(sequences)
     output_path = os.path.join(directory, 'netchop_input.fasta')
     output_fp = open(output_path, 'w')
@@ -117,8 +111,6 @@ def run_netchop(proteome, peptides, netchop_location, directory):
 
     output_paste_path = os.path.join(directory, 'netchop_paste_input.fasta')
     output_paste_fp = open(output_paste_path, 'w')
-    for x in control_paste_sequences.values():
-        print(x[0].seq)
     SeqIO.write([x[0] for x in control_paste_sequences.values()], output_paste_fp, 'fasta')
     output_paste_fp.close()
     netchop_paste_output_path = os.path.join(directory, 'netchop_paste_output.txt')
@@ -197,6 +189,8 @@ if args.temp_directory:
 positive_scores, control_scores, control_paste_scores = run_netchop(args.proteome, peptides, netchop_location, temp_directory)
 print('control paste scores')
 print(control_paste_scores)
+print('control scores')
+print(control_scores)
 print('positive scores')
 print(positive_scores)
 create_qq(positive_scores, control_scores, control_paste_scores, args.qq_output, len(peptides))
