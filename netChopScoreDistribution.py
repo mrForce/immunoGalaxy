@@ -2,9 +2,12 @@
 from scipy import stats
 import argparse
 import matplotlib
+import collections
 import math
 from Bio.Alphabet import IUPAC
 from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,6 +17,40 @@ import subprocess
 import re
 import os
 import random
+
+
+"""
+source_string is a string.
+position_to_insert_map is a dictionary that maps a position to the string to insert at that position.
+
+Returns a tuple of the form (interleaved_string, positions)
+
+interleaved_string is the new string with the positions inserted.
+
+positions is the new locations of the keys of position_to_insert_map
+"""
+def interleave(source_string, position_to_insert_map):
+    components = []
+    temp = ''
+    for i in range(0, len(source_string)):
+        if i in position_to_insert_map:
+            components.append(temp)
+            components.append(position_to_insert_map[i])
+            temp = source_string[i]
+        else:
+            temp += source_string[i]
+    components.append(temp)
+    new_string = ''.join(components)
+    new_positions = []
+    offset = 0
+    for k, v in position_to_insert_map.items():
+        offset += len(v)
+        new_positions.append(offset + k)                             
+        
+    return (new_string, new_positions)
+
+
+
 
 netchop_regex = re.compile('^(\s+(?P<pos>[0-9]+))(\s+[^\s]+){2}(\s+(?P<score>0\.[0-9]+))(\s+(?P<ident>.+))$')
 """
@@ -37,28 +74,37 @@ def run_netchop(proteome, peptides, netchop_location, directory):
         for x in peptides:
             start = sequence.find(x, 0)
             while start > -1:
-                positions_to_score.append(start + len(x))
+                positions_to_score.append((start + len(x), x))
                 start = sequence.find(x, start + len(x))
         if positions_to_score:
             record.id = str(counter)
             record.description = ''
             counter += 1
-            positions_to_score = set(positions_to_score)
-            negative_positions = set(range(8, len(sequence) + 1)) - positions_to_score
-            #control_positions = set(random.sample(list(negative_positions), len(positions_to_score)))
-            sequences[record.id] = [record, positions_to_score, negative_positions]
+            negative_positions = set(range(8, len(sequence) + 1)) - set([x[0] for x in positions_to_score])
+            sequences[record.id] = [record, positions_to_score, set([x[0] for x in positions_to_score]), negative_positions]
     sequences_values = list(sequences.values())
-    min_multiplier = len(sequences_values[0][2])/len(sequences_values[1][1])
+    min_multiplier = int(len(sequences_values[0][3])/len(sequences_values[0][2]))
     for x in sequences_values:
-        ratio = int(len(x[2])/len(x[1]))
+        ratio = int(len(x[3])/len(x[2]))
         if min_multiplier > ratio:
             min_multiplier = ratio
 
     print('min multiplier: %d' % min_multiplier)
     assert(min_multiplier > 0)
+    control_paste_sequences = {}
     for k in sequences.keys():
-        random_positions = set(random.sample(list(sequences[k][2]), min_multiplier*len(sequences[k][1])))
-        sequences[k][2] = random_positions
+        random_positions = set(random.sample(list(sequences[k][3]), min_multiplier*len(sequences[k][2])))
+        paste_random_positions = random.sample(list(sequences[k][3]), len(sequences[k][1]))
+        selected_paste_positions = {}
+        for i in range(0, len(sequences[k][1])):
+            selected_paste_positions[paste_random_positions[i]] = sequences[k][1][i][1]
+        new_string, new_positions = interleave(sequences[k][0].seq, selected_paste_positions)
+        print('new string')
+        print(new_string)
+        print('new positions')
+        print(new_positions)
+        control_paste_sequences[k] = [SeqRecord(Seq(new_string), id=k), new_positions]
+        sequences[k][1] = random_positions
     print('sequences')
     print(sequences)
     assert(sequences)
@@ -68,8 +114,18 @@ def run_netchop(proteome, peptides, netchop_location, directory):
     output_fp.close()
     netchop_output_path = os.path.join(directory, 'netchop_output.txt')
     subprocess.run([netchop_location + ' ' + os.path.abspath(output_path) + ' > ' + os.path.abspath(netchop_output_path)], shell=True)
+
+    output_paste_path = os.path.join(directory, 'netchop_paste_input.fasta')
+    output_paste_fp = open(output_paste_path, 'w')
+    for x in control_paste_sequences.values():
+        print(x[0].seq)
+    SeqIO.write([x[0] for x in control_paste_sequences.values()], output_paste_fp, 'fasta')
+    output_paste_fp.close()
+    netchop_paste_output_path = os.path.join(directory, 'netchop_paste_output.txt')
+    subprocess.run([netchop_location + ' ' + os.path.abspath(output_paste_path) + ' > ' + os.path.abspath(netchop_paste_output_path)], shell=True)
     positive_scores = []
     control_scores = []
+    control_paste_peptide_scores = []
     with open(netchop_output_path, 'r') as f:
         for line in f:
             match = netchop_regex.match(line)
@@ -78,17 +134,26 @@ def run_netchop(proteome, peptides, netchop_location, directory):
                 score = float(match.group('score'))
                 identity = str(match.group('ident'))
                 assert(identity in sequences)
-                if position in sequences[identity][1]:
-                    positive_scores.append(score)
                 if position in sequences[identity][2]:
+                    positive_scores.append(score)
+                if position in sequences[identity][1]:
                     control_scores.append(score)
-    
-    return (positive_scores, control_scores)
+    with open(netchop_output_path, 'r') as f:
+        for line in f:
+            match = netchop_regex.match(line)
+            if match:
+                position = int(match.group('pos'))
+                score = float(match.group('score'))
+                identity = str(match.group('ident'))
+                assert(identity in control_paste_sequences)
+                if position in control_paste_sequences[identity][1]:
+                    control_paste_peptide_scores.append(score)
+    return (positive_scores, control_scores, control_paste_peptide_scores)
             
 
 
 ptm_removal_regex = re.compile('\[[^\]]*\]')
-def create_qq(positive_scores, control_scores, output_location, num_peptides):
+def create_qq(positive_scores, control_scores, control_paste_scores, output_location, num_peptides):
     assert(all([x <= 1.0 and x >= 0 for x in positive_scores]))
     assert(all([x <= 1.0 and x >= 0 for x in control_scores]))
     if len(positive_scores) < len(control_scores):
@@ -97,11 +162,14 @@ def create_qq(positive_scores, control_scores, output_location, num_peptides):
         control_scores = stats.mstats.mquantiles(control_scores, quants)
     control_scores.sort()
     positive_scores.sort()
-    plt.plot(positive_scores, control_scores)
+    control_paste_scores.sort()
+    plt.plot(positive_scores, control_scores, label='Random Position')
+    plt.plot(positive_scores, control_paste_scores, label='Random position with peptide pasting')
     plt.xlim((0, 1))
     plt.ylim((0, 1))
     plt.xlabel('Positive Scores')
     plt.ylabel('Control Scores')
+    plt.legend()
     plt.title('n = %d' % num_peptides)
     plt.savefig(output_location, format='png')
     plt.clf()
@@ -114,8 +182,8 @@ parser.add_argument('--temp_directory', type=str)
 
 args = parser.parse_args()
 
-netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
-#netchop_location = '/home/jforce/netchop-3.1/netchop'
+#netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
+netchop_location = '/home/jforce/netchop-3.1/netchop'
 peptides = []
 with open(args.peptides, 'r') as f:
     for x in f:
@@ -126,5 +194,9 @@ assert(len(peptides) > 0)
 temp_directory = os.getcwd()
 if args.temp_directory:
     temp_directory = args.temp_directory
-positive_scores, control_scores = run_netchop(args.proteome, peptides, netchop_location, temp_directory)
-create_qq(positive_scores, control_scores, args.qq_output, len(peptides))
+positive_scores, control_scores, control_paste_scores = run_netchop(args.proteome, peptides, netchop_location, temp_directory)
+print('control paste scores')
+print(control_paste_scores)
+print('positive scores')
+print(positive_scores)
+create_qq(positive_scores, control_scores, control_paste_scores, args.qq_output, len(peptides))
