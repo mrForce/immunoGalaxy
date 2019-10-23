@@ -141,7 +141,7 @@ def run_netchop(proteome, peptides, netchop_location, directory):
                 assert(identity in control_paste_sequences)
                 if position in control_paste_sequences[identity][1]:
                     control_paste_peptide_scores.append(score)
-    assert(sum([len(x[1]) for x in control_paste_sequences]) == len(control_paste_peptide_scores))
+    assert(sum([len(x[1]) for x in control_paste_sequences.values()]) == len(control_paste_peptide_scores))
     return (positive_scores, control_scores, control_paste_peptide_scores)
             
 
@@ -176,8 +176,8 @@ parser.add_argument('--temp_directory', type=str)
 
 args = parser.parse_args()
 
-netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
-#netchop_location = '/home/jforce/netchop-3.1/netchop'
+#netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
+netchop_location = '/home/jforce/netchop-3.1/netchop'
 peptides = []
 with open(args.peptides, 'r') as f:
     for x in f:
