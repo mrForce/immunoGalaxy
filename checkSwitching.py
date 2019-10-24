@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import shutil
 import csv
+from collections import Counter, namedtuple
 import io
 import os
 import uuid
@@ -30,22 +31,18 @@ args = parser.parse_args()
 assert(args.unfiltered_archive)
 assert(args.filtered_archive)
 assert(args.fdr)
+
 assert(args.plot)
+
 
 def plot_venn(search_one, search_two, output_location):
     """
-    search_one and search_two should both be lists of the form [(spectra, peptide)...]
+    search_one and search_two should both be dictionaries, mapping each scan to the peptide
     """
-    spectra_one = set([x[0] for x in search_one])
-    assert(len(spectra_one) == len(search_one))
-    spectra_two = set([x[0] for x in search_two])
-    assert(len(spectra_two) == len(search_two))
-    search_one_dict = dict(search_one)
-    print('search one dict')
-    print(search_one_dict)
-    search_two_dict = dict(search_two)
-    print('search two dict')
-    print(search_two_dict)
+    spectra_one = set(search_one.keys())
+    print('spectra one:')
+    print(spectra_one)
+    spectra_two = set(search_two.keys())
     common_spectra = spectra_one.intersection(spectra_two)
     print('common spectra')
     print(common_spectra)
@@ -54,7 +51,7 @@ def plot_venn(search_one, search_two, output_location):
     #the number of spectra shared between the two searches that match against the same peptide 
     concordant_spectra = 0
     for spectra in common_spectra:
-        if search_one_dict[spectra] == search_two_dict[spectra]:
+        if search_one[spectra] == search_two[spectra]:
             concordant_spectra += 1
         else:
             discordant_spectra += 1
@@ -93,28 +90,27 @@ def get_psms(zip_path, fdr_cutoff):
             if x.endswith('percolator.target.psms.txt'):
                 locations.append(x)
         assert(len(locations) == 1)
-        psms = []
+        psms = {}
         with f.open(locations[0], 'r') as psms_binary_file:
             psms_text_file = io.TextIOWrapper(psms_binary_file)
             psms_reader = csv.DictReader(psms_text_file, delimiter='\t')
             for row in psms_reader:
                 scan = row['scan']
                 q_val = float(row['percolator q-value'])
+                score = float(row['percolator score'])
                 peptide = row['sequence']
-                if q_val <= fdr_cutoff:
-                    psms.append((scan, peptide))
+                if q_val <= fdr_cutoff and (scan not in psms or psms[scan][0] < score):
+                    psms[scan] = (score, peptide)
+                    
 
-        return psms
+        return {k: v[1] for k,v in psms.items()}
 
 unfiltered_archive_path = args.unfiltered_archive
 filtered_archive_path = args.filtered_archive
-fdr = args.fdr
+fdr = args.fdr/100.0
 plot = args.plot
 unfiltered_psms = get_psms(unfiltered_archive_path, fdr)
 filtered_psms = get_psms(filtered_archive_path, fdr)
-
-def get_spectra(psms):
-    return set([x[0] for x in psms])
 
 
 plot_venn(unfiltered_psms, filtered_psms, plot)
