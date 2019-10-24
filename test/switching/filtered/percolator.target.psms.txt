@@ -1,0 +1,11 @@
+scan	percolator q-value	sequence
+1	0.005	ABC
+2	0.009	DEF
+3	0.009	GH
+4	0.009	I
+5	0.009	JK
+6	0.009	LMN
+7	0.009	OP
+8	0.009	QRS
+9	0.009	TUV
+10	0.009	WX

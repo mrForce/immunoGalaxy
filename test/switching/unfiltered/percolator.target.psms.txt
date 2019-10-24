@@ -1,0 +1,9 @@
+scan	percolator q-value	sequence
+11	0.009	ZZZ
+12	0.009	A
+1	0.009	DIFF
+2	0.009	DEF
+3	0.009	GH
+4	0.009	HELLO
+13	0.009	NTH
+14	0.009	ANNNNN
