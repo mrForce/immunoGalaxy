@@ -141,6 +141,7 @@ def run_netchop(proteome, peptides, netchop_location, directory):
                 assert(identity in control_paste_sequences)
                 if position in control_paste_sequences[identity][1]:
                     control_paste_peptide_scores.append(score)
+    assert(sum([len(x[1]) for x in control_paste_sequences.values()]) == len(positive_scores))
     assert(sum([len(x[1]) for x in control_paste_sequences.values()]) == len(control_paste_peptide_scores))
     return (positive_scores, control_scores, control_paste_peptide_scores)
             
