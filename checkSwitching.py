@@ -58,7 +58,7 @@ def plot_venn(search_one, search_two, output_location):
             concordant_spectra += 1
         else:
             discordant_spectra += 1
-            
+    
     circles = venn2_circles([spectra_one, spectra_two])
     sorted_circles = sorted(circles, key=lambda x: x.center[0])
     bigger_circle = max(circles, key=lambda x: x.radius)
