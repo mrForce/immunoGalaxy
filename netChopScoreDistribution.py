@@ -100,7 +100,7 @@ def run_netchop(proteome, peptides, netchop_location, directory):
             selected_paste_positions[paste_random_positions[i]] = sequences[k][1][i][1]
         new_string, new_positions = interleave(sequences[k][0].seq, selected_paste_positions)
         assert(len(new_positions) == len(list(selected_paste_positions.keys())))
-        control_paste_sequences[k] = [SeqRecord(Seq(new_string), id=k), new_positions]
+        control_paste_sequences[k] = [SeqRecord(Seq(new_string), id=k, description=''), new_positions]
         sequences[k][1] = random_positions
     assert(sequences)
     output_path = os.path.join(directory, 'netchop_input.fasta')
@@ -131,7 +131,7 @@ def run_netchop(proteome, peptides, netchop_location, directory):
                     positive_scores.append(score)
                 if position in sequences[identity][1]:
                     control_scores.append(score)
-    with open(netchop_output_path, 'r') as f:
+    with open(netchop_paste_output_path, 'r') as f:
         for line in f:
             match = netchop_regex.match(line)
             if match:
@@ -177,8 +177,8 @@ parser.add_argument('--temp_directory', type=str)
 
 args = parser.parse_args()
 
-#netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
-netchop_location = '/home/jforce/netchop-3.1/netchop'
+netchop_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/netchop-3.1/netchop'
+#netchop_location = '/home/jforce/netchop-3.1/netchop'
 peptides = []
 with open(args.peptides, 'r') as f:
     for x in f:
