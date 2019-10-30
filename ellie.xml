@@ -1,0 +1,32 @@
+
+
+<tool id="ellie_1" name="Create input for Ellie tool" version="0.1.0">
+  <command interpreter="python3">ellie.py
+
+  
+  --archive '$archive'
+  --positive_fdr '$fdr'
+  --positives_output '$positives'
+  --unknown_output '$unlabeled'
+  
+  &gt; $Log 2&gt;&amp;1
+  </command>
+  <inputs>
+    <param name="archive" type="data" label="Search Archive" format="zip" />
+    <param name="fdr" type="float" min="0" max="1" value="0.01" label="FDR" />
+  </inputs>
+  <outputs>
+    <data format="txt" name="positives" label="Positive PSMs" />
+    <data format="txt" name="unlabeled" label="Unlabeled PSMs" />
+    <data name="Log" format="log"  label="ellie log" />
+  </outputs>
+
+
+  
+  <help>
+    This tool creates input to Ellie's tool
+  </help>
+
+</tool>
+
+
