@@ -3,7 +3,9 @@
 import argparse
 import zipfile
 import os
+import sys
 import fnmatch
+import subprocess
 parser = argparse.ArgumentParser()
 parser.add_argument('--archive', type=str)
 parser.add_argument('--positive_fdr', type=float)
@@ -26,5 +28,5 @@ for path, dirs, files in os.walk('.', topdown=True):
     
 assert(project_path)
 
-p = subprocess.Popen(['python3', 'ExportElliePIN.py', os.path.join(os.getcwd(), project_path), 'search', str(args.positive_fdr), args.positives_output, args.unkown_output], cwd=tools_location, stderr=sys.stdout.fileno())        
+p = subprocess.Popen(['python3', 'ExportElliePIN.py', os.path.abspath(project_path), 'search', str(args.positive_fdr), args.positives_output, args.unknown_output], cwd=tools_location, stderr=sys.stdout.fileno())        
 assert(p.wait() == 0)
