@@ -51,10 +51,11 @@ def fdr_cutoff(entries, cutoff):
     else:
         return list(filter(lambda x: x['label'] == 1, unique_peptide_entries[0:(cutoff_index + 1)]))
     
-def parse_peptide(peptide, regex):
-    match = regex.match(peptide)
+def parse_peptide(peptide, peptide_regex, ptm_removal_regex):
+    match = peptide_regex.match(peptide)
     if match and match.group('peptide'):
-        return match.group('peptide')
+        matched_peptide = match.group('peptide')
+        return ptm_removal_regex.sub('', matched_peptide)
     else:
         return None
 args = parser.parse_args()
@@ -88,13 +89,14 @@ elif args.type == 'raw':
     elif args.raw_input_format == 'pin':
         pin_paths = [args.input]
     peptide_regex = re.compile('^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$')
+    ptm_removal_regex = re.compile('\[[^\]]*\]')
     with open(pin_paths[0], 'r') as f:
         reader = csv.DictReader(f, delimiter='\t')
         #in PIN file, row after the header row contains direction.
         reader.__next__()
         entries = []
         for row in reader:
-            peptide = parse_peptide(row['Peptide'], peptide_regex)
+            peptide = parse_peptide(row['Peptide'], peptide_regex, ptm_removal_regex)
             if peptide:
                 entries.append({'score': float(row['lnEValue']), 'label': int(row['Label']), 'peptide': peptide})
             else:
