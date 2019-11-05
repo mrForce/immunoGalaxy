@@ -4,10 +4,22 @@
   --input '$input'
   --threshold '$threshold'
   --output '$output'
+  --type '$input_type_selector'
   </command>
   <inputs>
 
-    <param name="input" type="data" label="Select pipeline output" format="tabular" />
+    <conditional name="input_type">
+      <param name="input_type_selector" type="select" label="Post Processing Type">
+	<option value="percolator" selected="true">Percolator</option>
+	<option value="raw">Raw MS-GF+</option>
+      </param>
+      <when value="percolator">
+	<param name="input" type="data" label="Select pipeline output" format="tabular" />
+      </when>
+      <when value="raw">
+	<param name="input" type="data" label="Select Project ZIP" format="zip" />
+      </when>
+    </conditional>
     <param name="threshold" type="float" min="0" max="1" value="0.05" label="Q Value Threshold" />
   </inputs>
   <outputs>
