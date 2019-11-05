@@ -14,6 +14,7 @@ parser.add_argument('--input', type=str)
 #peptide level Q-value cutoff
 parser.add_argument('--threshold', type=float)
 
+parser.add_argument('--raw_input_format', choices=['zip', 'pin'])
 
 def fdr_cutoff(entries, cutoff):
     """
@@ -70,19 +71,22 @@ if args.type == 'percolator':
                     if q_value <= args.threshold:
                         g.write(peptide + '\n')
 elif args.type == 'raw':
-    with zipfile.ZipFile(args.input, 'r') as zip_object:
-        zip_object.extractall()
     pin_paths = []
-    for path, dirs, files in os.walk('.', topdown=True):
-        if fnmatch.fnmatch(path, '*msgfplus_search_results*'):
-            filtered = fnmatch.filter(files, 'search.mzid.pin')
-            if filtered:
-                filtered_with_path = [os.path.join(path, x) for x in filtered]
-                print('filtered')
-                print(filtered_with_path)
-                pin_paths.extend(filtered_with_path)
-    #should only have 1 PIN
-    assert(len(pin_paths) == 1)
+    if args.raw_input_format == 'zip':
+        with zipfile.ZipFile(args.input, 'r') as zip_object:
+            zip_object.extractall()
+        for path, dirs, files in os.walk('.', topdown=True):
+            if fnmatch.fnmatch(path, '*msgfplus_search_results*'):
+                filtered = fnmatch.filter(files, 'search.mzid.pin')
+                if filtered:
+                    filtered_with_path = [os.path.join(path, x) for x in filtered]
+                    print('filtered')
+                    print(filtered_with_path)
+                    pin_paths.extend(filtered_with_path)
+        #should only have 1 PIN
+        assert(len(pin_paths) == 1)
+    elif args.raw_input_format == 'pin':
+        pin_paths = [args.input]
     peptide_regex = re.compile('^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$')
     with open(pin_paths[0], 'r') as f:
         reader = csv.DictReader(f, delimiter='\t')

@@ -1,10 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
 <tool id="fa_gc_content_2" name="Filter pipeline output by q-value" version="0.1.0">
-  <command interpreter="python">filter.py
-
-  --input '$input'
-  --threshold '$threshold'
+  <command interpreter="python3">filter.py
+  --type ${input_type.input_type_selector}
+  --threshold $threshold
   --output '$output'
-  --type '$input_type_selector'
+
+  #if str($input_type.input_type_selector) == "raw":
+  --input ${input_type.raw_input_format.input}
+  --raw_input_format ${input_type.raw_input_format.raw_input_format_selector}
+  #else
+  --input ${input_type.input}
+  #end if
   </command>
   <inputs>
 
@@ -17,13 +23,24 @@
 	<param name="input" type="data" label="Select pipeline output" format="tabular" />
       </when>
       <when value="raw">
-	<param name="input" type="data" label="Select Project ZIP" format="zip" />
+	<conditional name="raw_input_format">
+	  <param name="raw_input_format_selector" type="select" label="Input Type">
+	    <option value="zip" selected="true">Project ZIP</option>
+	    <option value="pin">PIN File</option>
+	  </param>
+	<when value="zip">
+	  <param name="input" type="data" label="Select Project ZIP" format="zip" />
+	</when>
+	<when value="pin">
+	  <param name="input" type="data" label="Select PIN" format="txt" />
+	</when>
+	</conditional>
       </when>
     </conditional>
     <param name="threshold" type="float" min="0" max="1" value="0.05" label="Q Value Threshold" />
   </inputs>
   <outputs>
-    <data format="txt" name="output" label="FDR filter ${threshold} on ${input.name}" />
+    <data format="txt" name="output" label="FDR filter ${threshold} on" />
   </outputs>
 
 
