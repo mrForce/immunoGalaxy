@@ -1,5 +1,3 @@
-
-
 <tool id="fa_gc_content_2" name="Filter pipeline output by q-value" version="0.1.0">
   <command interpreter="python">filter.py
 
