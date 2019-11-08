@@ -6,9 +6,12 @@ import zipfile
 import fnmatch
 import re
 import csv
+import subprocess
+import sys
 parser = argparse.ArgumentParser()
 #if percolator, then use the output of the search, which is from percolator. If 'raw', then unpack ZIP file, and compute (peptide level) Q-values ourself.
 parser.add_argument('--type', choices=['percolator', 'raw'])
+parser.add_argument('--qval_compute', choices=['msgf', 'custom'])
 parser.add_argument('--output', type=str)
 parser.add_argument('--input', type=str)
 #peptide level Q-value cutoff
@@ -76,16 +79,37 @@ elif args.type == 'raw':
     if args.raw_input_format == 'zip':
         with zipfile.ZipFile(args.input, 'r') as zip_object:
             zip_object.extractall()
-        for path, dirs, files in os.walk('.', topdown=True):
-            if fnmatch.fnmatch(path, '*msgfplus_search_results*'):
-                filtered = fnmatch.filter(files, 'search.mzid.pin')
+        if args.qval_compute == 'msgf':
+            #tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
+            tools_location = '/home/jforce/git/tidePipeline'
+            project_directory = ''
+            with zipfile.ZipFile(args.input, 'r') as zip_object:
+                zip_object.extractall()
+            for path, dirs, files in os.walk('.', topdown=True):            
+                filtered = fnmatch.filter(files, 'database.db')
                 if filtered:
-                    filtered_with_path = [os.path.join(path, x) for x in filtered]
-                    print('filtered')
-                    print(filtered_with_path)
-                    pin_paths.extend(filtered_with_path)
-        #should only have 1 PIN
-        assert(len(pin_paths) == 1)
+                    project_directory = os.path.abspath(path)
+                    break
+            print('project directory')
+            print(project_directory)
+            p = subprocess.Popen(['python3', 'FilterQValue.py', project_directory, 'msgf', 'search', str(args.threshold), 'filtered_search', '--peptide_q_value'], cwd=tools_location, stderr=sys.stdout.fileno())
+            assert(p.wait() == 0)
+            p = subprocess.Popen(['python3', 'ExportPeptides.py', project_directory, 'FilteredSearchResult', 'filtered_search', os.path.abspath(args.output)], cwd=tools_location, stderr=sys.stdout.fileno())
+            assert(p.wait() == 0)
+            sys.exit()
+        elif args.qval_compute == 'custom':
+            for path, dirs, files in os.walk('.', topdown=True):
+                if fnmatch.fnmatch(path, '*msgfplus_search_results*'):
+                    filtered = fnmatch.filter(files, 'search.mzid.pin')
+                    if filtered:
+                        filtered_with_path = [os.path.join(path, x) for x in filtered]
+                        print('filtered')
+                        print(filtered_with_path)
+                        pin_paths.extend(filtered_with_path)
+            #should only have 1 PIN
+            print('pin paths')
+            print(pin_paths)
+            assert(len(pin_paths) == 1)
     elif args.raw_input_format == 'pin':
         pin_paths = [args.input]
     peptide_regex = re.compile('^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$')

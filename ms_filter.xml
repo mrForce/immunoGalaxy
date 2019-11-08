@@ -4,11 +4,11 @@
   --type ${input_type.input_type_selector}
   --threshold $threshold
   --output '$output'
-
   #if str($input_type.input_type_selector) == "raw":
   --input ${input_type.raw_input_format.input}
   --raw_input_format ${input_type.raw_input_format.raw_input_format_selector}
-  #else
+  --qval_compute ${input_type.raw_input_format.msgf_qval}
+  #else:
   --input ${input_type.input}
   #end if
   </command>
@@ -30,6 +30,10 @@
 	  </param>
 	<when value="zip">
 	  <param name="input" type="data" label="Select Project ZIP" format="zip" />
+	  <param name="msgf_qval" type="select" label="Choose Q-value method">
+	    <option value="msgf" selected="true">MSGF+</option>
+	    <option value="custom">Custom</option>
+	  </param>
 	</when>
 	<when value="pin">
 	  <param name="input" type="data" label="Select PIN" format="txt" />
