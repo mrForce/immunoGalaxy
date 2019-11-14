@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tool id="ellie_custom_filter" name="Filter TSV(s) by FDR and Q-value cutoffs" version="0.1.0">
+  <command interpreter="python3">custom_filter.py
+  --peptide_column $peptide_column
+  --score_column $score_column
+  --score_direction $score_direction_selector
+  --psm_fdr_output $
+  --threshold $threshold
+  --psm_fdr_output '$psm_fdr'
+  --psm_q_output '$psm_q'
+  --peptide_fdr_output '$peptide_fdr'
+  --peptide_q_output '$peptide_q'
+  #if str($input_type.input_type_selector) == "label":
+  --combined_input_file ${input_type.input_format}
+  --label_column ${input_type.label_column}
+  --target_value ${input_type.target_value}
+  --decoy_value ${input_type.decoy_value}  
+  #else:
+  --target_file ${input_type.target_file}
+  --decoy_file ${input_type.decoy_file}
+  #end if
+  </command>
+  <inputs>
+
+    <conditional name="input_type">
+      <param name="input_type_selector" type="select" label="Select how targets and decoys are distinguished">
+	<option value="label" selected="true">Column with label</option>
+	<option value="seperate">Seperate files for targets and decoys</option>
+      </param>
+      <when value="label">
+	<param name="input_file" type="data" label="Input File" format="txt" />
+	<param name="label_column" type="text" label="Label Column" />
+	<param name="target_value" type="text" label="Target Label" />
+	<param name="decoy_value" type="text" label="Decoy Label" />
+      </when>
+      <when value="seperate">
+	<param name="target_file" type="data" label="Target File" format="txt" />
+	<param name="decoy_file" type="data" label="Decoy File" format="txt" />
+      </when>
+    </conditional>
+    <param name="peptide_column" type="text" label="Peptide Column" />
+    <param name="score_column" type="text" label="Score Column" />
+    <param name="score_direction_selector" type="select" label="Select the score direction">
+      <option value="+" selected="true">Higher better</option>
+      <option value="-">Lower better</option>
+    </param>    
+    <param name="threshold" type="float" min="0" max="1" value="0.01" label="FDR/Q Value Threshold" />
+  </inputs>
+  <outputs>
+    <data format="txt" name="psm_fdr" label="PSM-level FDR Filter of ${threshold}" />
+    <data format="txt" name="psm_q" label="PSM-level Q-Value Filter of ${threshold}" />
+    <data format="txt" name="peptide_fdr" label="Peptide-level FDR Filter of ${threshold}" />
+    <data format="txt" name="peptide_q" label="Peptide-level Q-value Filter of ${threshold}" />
+  </outputs>
+
+
+  <tests>
+    <test>
+      <param name="input" value="fa_gc_content_input.fa"/>
+      <output name="out_file1" file="fa_gc_content_output.txt"/>
+    </test>
+  </tests>         
+  
+  <help>
+    This tool computes GC content from a FASTA file.
+  </help>
+
+</tool>
+
+
