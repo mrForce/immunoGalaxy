@@ -20,7 +20,7 @@
   #end if
   </command>
   <inputs>
-
+    <param name="name" type="text" label="Type in a name for job" />
     <conditional name="input_type">
       <param name="input_type_selector" type="select" label="Select how targets and decoys are distinguished">
 	<option value="label" selected="true">Column with label</option>
@@ -46,10 +46,10 @@
     <param name="threshold" type="float" min="0" max="1" value="0.01" label="FDR/Q Value Threshold" />
   </inputs>
   <outputs>
-    <data format="txt" name="psm_fdr" label="PSM-level FDR Filter of ${threshold}" />
-    <data format="txt" name="psm_q" label="PSM-level Q-Value Filter of ${threshold}" />
-    <data format="txt" name="peptide_fdr" label="Peptide-level FDR Filter of ${threshold}" />
-    <data format="txt" name="peptide_q" label="Peptide-level Q-value Filter of ${threshold}" />
+    <data format="txt" name="psm_fdr" label="${name} PSM-level FDR Filter" />
+    <data format="txt" name="psm_q" label="${name} PSM-level Q-Value Filter" />
+    <data format="txt" name="peptide_fdr" label="${name} Peptide-level FDR Filter" />
+    <data format="txt" name="peptide_q" label="${name} Peptide-level Q-value Filter" />
   </outputs>
 
 
