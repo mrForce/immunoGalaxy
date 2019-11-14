@@ -95,6 +95,7 @@ parser.add_argument('--peptide_column', help='Which column contains the peptide'
 parser.add_argument('--score_column', help='Which column contains the score')
 parser.add_argument('--score_direction', help='+ if a higher score is better, - if a lower score is better', choices=['+', '-'])
 parser.add_argument('--threshold', help='FDR/Q-value cutoff', type=float)
+parser.add_argument('--skip_first_row', help='sometimes after the header row, there will be another row with additional crap in it we need to skip', action='store_true')
 parser.add_argument('--psm_fdr_output')
 parser.add_argument('--psm_q_output')
 parser.add_argument('--peptide_fdr_output')
@@ -138,7 +139,7 @@ else:
     assert(args.target_file)
     assert(args.decoy_file)
 
-def read_tsv_file(input_path, arguments, file_type, fieldnames = None):
+def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_first_row = False):
     rows = []
     assert(file_type is FileType.COMBINED or file_type is FileType.TARGET or file_type is FileType.DECOY)
     with open(input_path, 'r') as f:
@@ -153,6 +154,8 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None):
         assert(arguments.score_column in fieldnames)
         if file_type is FileType.COMBINED:
             assert(arguments.label_column in fieldnames)
+        if skip_first_row:
+            first_row = reader.__next__()
         for row in reader:
             assert(arguments.peptide_column in row)
             assert(arguments.score_column in row)
@@ -173,10 +176,10 @@ fieldnames = None
 rows = []
 
 if args.combined_input_file:
-    rows, fieldnames = read_tsv_file(args.combined_input_file, args, FileType.COMBINED, None)
+    rows, fieldnames = read_tsv_file(args.combined_input_file, args, FileType.COMBINED, None, skip_first_row = args.skip_first_row)
 else:
-    target_rows, fieldnames = read_tsv_file(args.target_file, args, FileType.TARGET, None)
-    decoy_rows, decoy_fieldnames = read_tsv_file(args.decoy_file, args, FileType.DECOY, fieldnames)
+    target_rows, fieldnames = read_tsv_file(args.target_file, args, FileType.TARGET, None, skip_first_row = args.skip_first_row)
+    decoy_rows, decoy_fieldnames = read_tsv_file(args.decoy_file, args, FileType.DECOY, fieldnames, skip_first_row = args.skip_first_row)
     rows = target_rows + decoy_rows
 assert(rows)
 assert(fieldnames)

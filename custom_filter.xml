@@ -5,6 +5,9 @@
   --score_column '$score_column'
   --score_direction $score_direction_selector
   --threshold $threshold
+  #if str($input_type.skip_first_row) == "yes":
+  --skip_first_row
+  #end if
   --psm_fdr_output '$psm_fdr'
   --psm_q_output '$psm_q'
   --peptide_fdr_output '$peptide_fdr'
@@ -37,6 +40,10 @@
 	<param name="decoy_file" type="data" label="Decoy File" format="txt" />
       </when>
     </conditional>
+    <param name="skip_first_row" type="select" label="Skip first row after header row?" multiple="false" display="checkboxes">
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+    </param>
     <param name="peptide_column" type="text" label="Peptide Column" />
     <param name="score_column" type="text" label="Score Column" />
     <param name="score_direction_selector" type="select" label="Select the score direction">
