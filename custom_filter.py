@@ -76,9 +76,7 @@ def fdr_cutoff(entries, cutoff, score_direction, cutoff_type, peptide_unique = T
         if fdr < cutoff:
             indices.extend(temp_indices)
             temp_indices = []
-            for entry in group_list:
-                if entry['label'] == 1:
-                    indices.append(entry['index'])
+
     return indices
     
 def parse_peptide(peptide, peptide_regex, ptm_removal_regex = None):
