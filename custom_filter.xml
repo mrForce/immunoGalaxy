@@ -5,7 +5,7 @@
   --score_column '$score_column'
   --score_direction $score_direction_selector
   --threshold $threshold
-  #if str($input_type.skip_first_row) == "yes":
+  #if str($skip_first_row) == "yes":
   --skip_first_row
   #end if
   --psm_fdr_output '$psm_fdr'
@@ -40,7 +40,7 @@
 	<param name="decoy_file" type="data" label="Decoy File" format="txt" />
       </when>
     </conditional>
-    <param name="skip_first_row" type="select" label="Skip first row after header row?" multiple="false" display="checkboxes">
+    <param name="skip_first_row" type="select" label="Skip first row after header row?">
       <option value="yes">Yes</option>
       <option value="no">No</option>
     </param>

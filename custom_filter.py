@@ -148,7 +148,7 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_f
             assert(set(reader.fieldnames).issubset(fieldnames))
             assert(set(reader.fieldnames).issuperset(fieldnames))
         else:
-            fieldnames = set(reader.fieldnames)
+            fieldnames = list(reader.fieldnames)
             assert(fieldnames)
         assert(arguments.peptide_column in fieldnames)
         assert(arguments.score_column in fieldnames)
@@ -159,17 +159,24 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_f
         for row in reader:
             assert(arguments.peptide_column in row)
             assert(arguments.score_column in row)
+            row_copy = dict(row)
+            if None in row_copy:
+                #then there are more fields than fieldnames. Stuff the rest into the last field
+                last_field = fieldnames[-1]
+                last_field_element = row_copy[last_field]
+                row_copy[last_field] = [last_field_element] + row_copy[None]
+                row_copy.pop(None)
             label = None
             if file_type is FileType.COMBINED:
-                assert(arguments.label_column in row)
-                assert(row[arguments.label_column] == arguments.target_label or row[arguments.label_column] == arguments.decoy_label)
-                label = 1 if row[arguments.label_column] == arguments.target_label else -1
+                assert(arguments.label_column in row_copy)
+                assert(row_copy[arguments.label_column] == arguments.target_label or row_copy[arguments.label_column] == arguments.decoy_label)
+                label = 1 if row_copy[arguments.label_column] == arguments.target_label else -1
             elif file_type is FileType.TARGET:
                 label = 1
             elif file_type is FileType.DECOY:
                 label = -1
             assert(label == -1 or label == 1)
-            rows.append(Row(row, label))
+            rows.append(Row(row_copy, label))
     return (rows, fieldnames)
 
 fieldnames = None
@@ -211,7 +218,14 @@ def write_rows(rows, fieldnames, output_path):
         writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter='\t')
         writer.writeheader()
         for row in rows:
-            writer.writerow(row)
+            try:
+                writer.writerow(row)
+            except ValueError as v:
+                print('value error')
+                print(v)
+                print('row')
+                print(row)
+                assert(False)
 write_rows(psm_fdr_rows, fieldnames, args.psm_fdr_output)
 write_rows(psm_q_value_rows, fieldnames, args.psm_q_output)
 
