@@ -52,6 +52,7 @@ def fdr_cutoff(entries, cutoff, score_direction, cutoff_type, peptide_unique = T
     num_targets = 0
     num_decoys = 1
     indices = []
+    temp_indices = []
     for score, group in itertools.groupby(unique_peptide_entries, key=lambda x: float(x['score'])):
         group_list = list(group)
         print('group list')
@@ -61,6 +62,7 @@ def fdr_cutoff(entries, cutoff, score_direction, cutoff_type, peptide_unique = T
                 num_decoys += 1
             elif entry['label'] == 1:
                 num_targets += 1
+                temp_indices.append(entry['index'])
             else:
                 print('label: %d is an invalid value' % entry['label'])
                 assert(False)
@@ -72,6 +74,8 @@ def fdr_cutoff(entries, cutoff, score_direction, cutoff_type, peptide_unique = T
             print('breaking out')
             break
         if fdr < cutoff:
+            indices.extend(temp_indices)
+            temp_indices = []
             for entry in group_list:
                 if entry['label'] == 1:
                     indices.append(entry['index'])
