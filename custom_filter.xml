@@ -11,7 +11,7 @@
   --peptide_fdr_output '$peptide_fdr'
   --peptide_q_output '$peptide_q'
   #if str($input_type.input_type_selector) == "label":
-  --combined_input_file ${input_type.input_format}
+  --combined_input_file ${input_type.input_file}
   --label_column ${input_type.label_column}
   --target_value ${input_type.target_value}
   --decoy_value ${input_type.decoy_value}  
