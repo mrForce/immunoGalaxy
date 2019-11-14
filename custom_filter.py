@@ -62,7 +62,7 @@ def fdr_cutoff(entries, cutoff, score_direction, cutoff_type, peptide_unique = T
             elif entry['label'] == 1:
                 num_targets += 1
             else:
-                print('label needs to be 1 or -1')
+                print('label: %d is an invalid value' % entry['label'])
                 assert(False)
         if num_targets == 0:
             fdr = 1.0
@@ -76,34 +76,6 @@ def fdr_cutoff(entries, cutoff, score_direction, cutoff_type, peptide_unique = T
                 if entry['label'] == 1:
                     indices.append(entry['index'])
     return indices
-"""
-    num_targets = 0
-    num_decoys = 1
-    cutoff_index = -1
-    print('length of unique_peptide_entries: %d', len(unique_peptide_entries))
-    for i in range(0, len(unique_peptide_entries)):
-        entry = unique_peptide_entries[i]
-        if entry['label'] == -1:
-            num_decoys += 1
-        elif entry['label'] == 1:
-            num_targets += 1
-        if num_targets == 0:
-            fdr = 1.0
-        else:
-            fdr = 1.0*num_decoys/num_targets
-        if cutoff_type is CutoffType.FDR and fdr >= cutoff:
-            print('breaking out')
-            break
-        if fdr < cutoff:
-            cutoff_index = i
-    print('num_targets: %d' % num_targets)
-    print('num decoys: %d' % num_decoys)
-    print('cutoff index: %d' % cutoff_index)
-    if cutoff_index == -1:
-        return []
-    else:
-        return [x['index']  for x in unique_peptide_entries[0:(cutoff_index + 1)] if x['label'] == 1]
-"""
     
 def parse_peptide(peptide, peptide_regex, ptm_removal_regex = None):
     match = peptide_regex.match(peptide)
@@ -134,7 +106,13 @@ parser.add_argument('--decoy_label')
 parser.add_argument('--target_file')
 parser.add_argument('--decoy_file')
 
-
+"""
+A wrapper around the dict. This is so we can specify the label without modifying the row contents
+"""
+class Row:
+    def __init__(self, row, label):
+        self.row = row
+        self.label = label
 
 args = parser.parse_args()
 assert(args.peptide_column)
@@ -176,16 +154,17 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None):
         for row in reader:
             assert(arguments.peptide_column in row)
             assert(arguments.score_column in row)
-            row_copy = dict(row)
+            label = None
             if file_type is FileType.COMBINED:
-                assert(arguments.label_column in row_copy)
-                assert(row_copy[arguments.label_column] == arguments.target_label or row_copy[arguments.label_column] == arguments.decoy_label)
-                row_copy['label'] = 1 if row_copy[arguments.label_column] == arguments.target_label else -1
+                assert(arguments.label_column in row)
+                assert(row[arguments.label_column] == arguments.target_label or row[arguments.label_column] == arguments.decoy_label)
+                label = 1 if row[arguments.label_column] == arguments.target_label else -1
             elif file_type is FileType.TARGET:
-                row_copy['label'] = 1
+                label = 1
             elif file_type is FileType.DECOY:
-                row_copy['label'] = -1
-            rows.append(row_copy)
+                label = -1
+            assert(label == -1 or label == 1)
+            rows.append(Row(row, label))
     return (rows, fieldnames)
 
 fieldnames = None
@@ -200,24 +179,26 @@ else:
 assert(rows)
 assert(fieldnames)
 parsed_peptide_rows = []
-for row in rows:
-    parsed_peptide_rows.append({'peptide': parse_peptide(row[args.peptide_column], peptide_regex, ptm_removal_regex), 'label': row['label'], 'score': float(row[args.score_column])})
+for row_object in rows:
+    row = row_object.row
+    label = row_object.label
+    parsed_peptide_rows.append({'peptide': parse_peptide(row[args.peptide_column], peptide_regex, ptm_removal_regex), 'label': label, 'score': float(row[args.score_column])})
 
 assert(parsed_peptide_rows)
 
 psm_fdr_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.FDR, False)
-psm_fdr_rows = [rows[i] for i in psm_fdr_indices]
+psm_fdr_rows = [rows[i].row for i in psm_fdr_indices]
 
 
 psm_q_value_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.Q_VALUE, False)
-psm_q_value_rows = [rows[i] for i in psm_q_value_indices]
+psm_q_value_rows = [rows[i].row for i in psm_q_value_indices]
 
 
 peptide_fdr_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.FDR)
-peptide_fdr_rows = [rows[i] for i in peptide_fdr_indices]
+peptide_fdr_rows = [rows[i].row for i in peptide_fdr_indices]
 
 peptide_q_value_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.Q_VALUE)
-peptide_q_value_rows = [rows[i] for i in peptide_q_value_indices]
+peptide_q_value_rows = [rows[i].row for i in peptide_q_value_indices]
 
 
 def write_rows(rows, fieldnames, output_path):
