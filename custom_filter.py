@@ -10,6 +10,11 @@ import sys
 class CutoffType(Enum):
     Q_VALUE = 1
     FDR = 2
+
+class FileType(Enum):
+    COMBINED = 1
+    TARGET = 2
+    DECOY = 3
 def fdr_cutoff(entries, cutoff, score_direction, cutoff_type, peptide_unique = True):
     """
     entries should be a list of dictionaries, each of the form {'score':, 'label':, 'peptide':}
@@ -108,34 +113,55 @@ def parse_peptide(peptide, peptide_regex, ptm_removal_regex = None):
         return ptm_removal_regex.sub('', peptide)
     else:
         return peptide
-print(sys.argv)
-sys.exit()
 peptide_regex = re.compile('^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$')
 ptm_removal_regex = re.compile('\[[^\]]*\]')
 
-parser = argparse.ArgumentParser(description='Given TSV file(s), a peptide column, score column, score direction, target/decoy column, FDR threshold, and output directory, apply the peptide level FDR threshold with slight variations. The first variant is whether or not to remove PTMs before removing peptide duplicates. The second variant is whether to use the first (FDR) or last threshold crossing (Q-value). Output files should be target rows from input TSV file(s) that pass the FDR/Q-value threshold')
-parser.add_argument('peptide_column', help='Which column contains the peptide')
-parser.add_argument('score_column', help='Which column contains the score')
-parser.add_argument('score_direction', help='+ if a higher score is better, - if a lower score is better', choices=['+', '-'])
-parser.add_argument('label_column', help='Column that indicates if the row is for a target match (is a 1), or a decoy match (is a -1)')
-parser.add_argument('threshold', help='FDR/Q-value cutoff', type=float)
-parser.add_argument('output_directory', help='Where to put the output files')
-parser.add_argument('input_file', help='Combined targets/decoys file. Or, if seperated, specify a decoys file and treat this as targets')
-parser.add_argument('--decoy_input_file')
+parser = argparse.ArgumentParser(description='Given TSV file(s), a peptide column, score column, score direction, target/decoy column, FDR threshold, and output directory, apply the peptide level FDR threshold with slight variations. The second variant is whether to use the first (FDR) or last threshold crossing (Q-value). Output files should be target rows from input TSV file(s) that pass the FDR/Q-value threshold')
+parser.add_argument('--peptide_column', help='Which column contains the peptide')
+parser.add_argument('--score_column', help='Which column contains the score')
+parser.add_argument('--score_direction', help='+ if a higher score is better, - if a lower score is better', choices=['+', '-'])
+parser.add_argument('--threshold', help='FDR/Q-value cutoff', type=float)
+parser.add_argument('--psm_fdr_output')
+parser.add_argument('--psm_q_output')
+parser.add_argument('--peptide_fdr_output')
+parser.add_argument('--peptide_q_output')
+#if combined file input, the following options apply
+parser.add_argument('--combined_input_file')
+parser.add_argument('--label_column')
+parser.add_argument('--target_label')
+parser.add_argument('--decoy_label')
+#if seperate files input, the following options apply
+parser.add_argument('--target_file')
+parser.add_argument('--decoy_file')
+
+
 
 args = parser.parse_args()
-fieldnames = None
-rows = []
-input_files = [args.input_file]
-need_label_column = True
-on_decoy_file = False
-if args.decoy_input_file:
-    input_files.append(args.decoy_input_file)
-    need_label_column = False
-    args.label_column = 'label'
+assert(args.peptide_column)
+assert(args.score_column)
+assert(args.score_direction)
+assert(args.threshold)
+assert(args.psm_fdr_output)
+assert(args.psm_q_output)
+assert(args.peptide_fdr_output)
+assert(args.peptide_q_output)
+if args.combined_input_file:
+    assert(args.label_column)
+    assert(args.target_label)
+    assert(args.decoy_label)
+    assert(args.target_file is None)
+    assert(args.decoy_file is None)
+else:
+    assert(args.label_column is None)
+    assert(args.target_label is None)
+    assert(args.decoy_label is None)
+    assert(args.target_file)
+    assert(args.decoy_file)
 
-for input_file in input_files:
-    with open(input_file, 'r') as f:
+def read_tsv_file(input_path, arguments, file_type, fieldnames = None):
+    rows = []
+    assert(file_type is FileType.COMBINED or file_type is FileType.TARGET or file_type is FileType.DECOY)
+    with open(input_path, 'r') as f:
         reader = csv.DictReader(f, delimiter='\t')
         if fieldnames:
             assert(set(reader.fieldnames).issubset(fieldnames))
@@ -143,58 +169,56 @@ for input_file in input_files:
         else:
             fieldnames = set(reader.fieldnames)
             assert(fieldnames)
+        assert(arguments.peptide_column in fieldnames)
+        assert(arguments.score_column in fieldnames)
+        if file_type is FileType.COMBINED:
+            assert(arguments.label_column in fieldnames)
         for row in reader:
-            assert(args.peptide_column in row)
-            assert(args.score_column in row)
+            assert(arguments.peptide_column in row)
+            assert(arguments.score_column in row)
             row_copy = dict(row)
-            if need_label_column:
-                assert(args.label_column in row)
-                assert(row[args.label_column] in ['1', '-1'])
-            else:
-                row_copy['label'] = -1 if on_decoy_file else 1
+            if file_type is FileType.COMBINED:
+                assert(arguments.label_column in row_copy)
+                assert(row_copy[arguments.label_column] == arguments.target_label or row_copy[arguments.label_column] == arguments.decoy_label)
+                row_copy['label'] = 1 if row_copy[arguments.label_column] == arguments.target_label else -1
+            elif file_type is FileType.TARGET:
+                row_copy['label'] = 1
+            elif file_type is FileType.DECOY:
+                row_copy['label'] = -1
             rows.append(row_copy)
-    if not need_label_column:
-        on_decoy_file = True
+    return (rows, fieldnames)
+
+fieldnames = None
+rows = []
+
+if args.combined_input_file:
+    rows, fieldnames = read_tsv_file(args.combined_input_file, args, FileType.COMBINED, None)
+else:
+    target_rows, fieldnames = read_tsv_file(args.target_file, args, FileType.TARGET, None)
+    decoy_rows, decoy_fieldnames = read_tsv_file(args.decoy_file, args, FileType.DECOY, fieldnames)
+    rows = target_rows + decoy_rows
+assert(rows)
 assert(fieldnames)
-print('fieldnames')
-print(fieldnames)
-
-if not os.path.isdir(args.output_directory):
-    #make sure output_directory isn't a file
-    assert(not os.path.exists(args.output_directory))
-    os.mkdir(args.output_directory)
-    assert(os.path.isdir(args.output_directory))
-
-
-
 parsed_peptide_rows = []
-rows_no_parsed_peptide = []
 for row in rows:
-    parsed_peptide_rows.append({'peptide': parse_peptide(row[args.peptide_column], peptide_regex, ptm_removal_regex), 'label': int(row[args.label_column]), 'score': float(row[args.score_column])})
-    rows_no_parsed_peptide.append({'peptide': parse_peptide(row[args.peptide_column], peptide_regex), 'label': int(row[args.label_column]), 'score': float(row[args.score_column])})
+    parsed_peptide_rows.append({'peptide': parse_peptide(row[args.peptide_column], peptide_regex, ptm_removal_regex), 'label': row['label'], 'score': float(row[args.score_column])})
 
+assert(parsed_peptide_rows)
 
-#PSM level FDR
-print('psm fdr')
-psm_fdr_indices = fdr_cutoff(rows_no_parsed_peptide, args.threshold, args.score_direction, CutoffType.FDR, False)
+psm_fdr_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.FDR, False)
 psm_fdr_rows = [rows[i] for i in psm_fdr_indices]
-print('psm q value')
-psm_q_value_indices = fdr_cutoff(rows_no_parsed_peptide, args.threshold, args.score_direction, CutoffType.Q_VALUE, False)
+
+
+psm_q_value_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.Q_VALUE, False)
 psm_q_value_rows = [rows[i] for i in psm_q_value_indices]
 
 
-#FDR with parsing
-fdr_with_parsing_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.FDR)
-fdr_with_parsing_rows = [rows[i] for i in fdr_with_parsing_indices]
-#Q-value with parsing
-q_value_with_parsing_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.Q_VALUE)
-q_value_with_parsing_rows = [rows[i] for i in q_value_with_parsing_indices]
-#FDR without parsing
-fdr_no_parsing_indices = fdr_cutoff(rows_no_parsed_peptide, args.threshold, args.score_direction, CutoffType.FDR)
-fdr_no_parsing_rows = [rows[i] for i in fdr_no_parsing_indices]
-#Q-value without parsing
-q_value_no_parsing_indices = fdr_cutoff(rows_no_parsed_peptide, args.threshold, args.score_direction, CutoffType.Q_VALUE)
-q_value_no_parsing_rows = [rows[i] for i in q_value_no_parsing_indices]
+peptide_fdr_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.FDR)
+peptide_fdr_rows = [rows[i] for i in peptide_fdr_indices]
+
+peptide_q_value_indices = fdr_cutoff(parsed_peptide_rows, args.threshold, args.score_direction, CutoffType.Q_VALUE)
+peptide_q_value_rows = [rows[i] for i in peptide_q_value_indices]
+
 
 def write_rows(rows, fieldnames, output_path):
     with open(output_path, 'w+') as f:
@@ -202,9 +226,8 @@ def write_rows(rows, fieldnames, output_path):
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
-write_rows(fdr_with_parsing_rows, fieldnames, os.path.join(args.output_directory, 'fdr_with_parsing.txt'))
-write_rows(psm_fdr_rows, fieldnames, os.path.join(args.output_directory, 'psm_fdr.txt'))
-write_rows(psm_q_value_rows, fieldnames, os.path.join(args.output_directory, 'psm_q_value.txt'))
-write_rows(q_value_with_parsing_rows, fieldnames, os.path.join(args.output_directory, 'q_value_with_parsing.txt'))
-write_rows(fdr_no_parsing_rows, fieldnames, os.path.join(args.output_directory, 'fdr_no_parsing.txt'))
-write_rows(q_value_no_parsing_rows, fieldnames, os.path.join(args.output_directory, 'q_value_no_parsing.txt'))
+write_rows(psm_fdr_rows, fieldnames, args.psm_fdr_output)
+write_rows(psm_q_value_rows, fieldnames, args.psm_q_output)
+
+write_rows(peptide_fdr_rows, fieldnames, args.peptide_fdr_output)
+write_rows(peptide_q_value_rows, fieldnames, args.peptide_q_output)

@@ -4,7 +4,6 @@
   --peptide_column $peptide_column
   --score_column $score_column
   --score_direction $score_direction_selector
-  --psm_fdr_output $
   --threshold $threshold
   --psm_fdr_output '$psm_fdr'
   --psm_q_output '$psm_q'
@@ -13,8 +12,8 @@
   #if str($input_type.input_type_selector) == "label":
   --combined_input_file ${input_type.input_file}
   --label_column ${input_type.label_column}
-  --target_value ${input_type.target_value}
-  --decoy_value ${input_type.decoy_value}  
+  --target_label ${input_type.target_label}
+  --decoy_label ${input_type.decoy_label}  
   #else:
   --target_file ${input_type.target_file}
   --decoy_file ${input_type.decoy_file}
@@ -30,8 +29,8 @@
       <when value="label">
 	<param name="input_file" type="data" label="Input File" format="txt" />
 	<param name="label_column" type="text" label="Label Column" />
-	<param name="target_value" type="text" label="Target Label" />
-	<param name="decoy_value" type="text" label="Decoy Label" />
+	<param name="target_label" type="text" label="Target Label" />
+	<param name="decoy_label" type="text" label="Decoy Label" />
       </when>
       <when value="seperate">
 	<param name="target_file" type="data" label="Target File" format="txt" />
