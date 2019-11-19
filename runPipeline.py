@@ -102,7 +102,7 @@ if args.additional_proteome:
             y = y.strip()
             netmhc_name = 'proteome' + y + '_' + x
             print('going to call RunNetMHC. Command: %s' % ' '.join(['python3', 'RunNetMHC.py', project_directory, 'proteome' + y, x, args.rank_filter]))
-            p = subprocess.Popen(['python3', 'RunNetMHC.py', project_directory, 'proteome' + y, x, args.rank_filter], cwd=tools_location, stderr=sys.stdout.fileno())
+            p = subprocess.Popen(['python3', 'RunNetMHC.py', project_directory, 'proteome' + y, x], cwd=tools_location, stderr=sys.stdout.fileno())
             assert(p.wait() == 0)
             print('going to call FilterNetMHC. Command: %s' % ' '.join(['python3', 'FilterNetMHC.py', project_directory, netmhc_name, args.rank_filter, netmhc_name + '_filtered']))
             p = subprocess.Popen(['python3', 'FilterNetMHC.py', project_directory, netmhc_name, args.rank_filter, netmhc_name + '_filtered'], cwd=tools_location, stderr=sys.stdout.fileno())

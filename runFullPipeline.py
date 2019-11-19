@@ -7,7 +7,8 @@ import os
 import uuid
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--base_project', action='append')
+parser.add_argument('--base_project', type=str)
+parser.add_argument('--additional_proteome', action='append')
 parser.add_argument('--frag_method', type=str)
 parser.add_argument('--instrument', type=str)
 parser.add_argument('--mgf', type=str)
@@ -23,8 +24,8 @@ print(args.base_project)
 tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
 #p = subprocess.Popen(['ls', '-R', os.getcwd()], stdout=sys.stdout.fileno())
 project_directory = os.path.join(os.getcwd(), 'project', 'project')
-assert(len(set(args.base_project)) == 1)
-base_project = args.base_project[0]
+assert(args.base_project)
+base_project = args.base_project
 print('going to copy project')
 p = subprocess.Popen(['python3', 'CopyProject.py', base_project, project_directory], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
@@ -50,6 +51,8 @@ mgf_link = os.path.join(project_directory, 'thing.mgf')
 
 os.symlink(args.mgf, mgf_link)
 
+
+
 print('going to call AddMGF. Command: %s' % ' '.join(['python3', 'AddMGF.py', project_directory, mgf_link, 'mgf', '8', args.frag_method, args.instrument]))
 p = subprocess.Popen(['python3', 'AddMGF.py', project_directory, mgf_link, 'mgf', '8', args.frag_method, args.instrument], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
@@ -57,6 +60,8 @@ assert(p.wait() == 0)
 
 
 print('going to call CreateMSGFPlusIndex. Command: %s' % ' '.join(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'FASTA', 'proteome', 'index']))
+
+
 p = subprocess.Popen(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'FASTA', 'human', 'index'], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
