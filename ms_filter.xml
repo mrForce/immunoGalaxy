@@ -14,6 +14,7 @@
   </command>
   <inputs>
 
+    <param name="name" type="text" label="Enter a name"/>
     <conditional name="input_type">
       <param name="input_type_selector" type="select" label="Post Processing Type">
 	<option value="percolator" selected="true">Percolator</option>
@@ -44,7 +45,7 @@
     <param name="threshold" type="float" min="0" max="1" value="0.05" label="Q Value Threshold" />
   </inputs>
   <outputs>
-    <data format="txt" name="output" label="FDR filter ${threshold} on" />
+    <data format="txt" name="output" label="${name}" />
   </outputs>
 
 

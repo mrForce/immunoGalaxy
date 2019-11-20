@@ -80,8 +80,8 @@ elif args.type == 'raw':
         with zipfile.ZipFile(args.input, 'r') as zip_object:
             zip_object.extractall()
         if args.qval_compute == 'msgf':
-            #tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
-            tools_location = '/home/jforce/git/tidePipeline'
+            tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
+            #tools_location = '/home/jforce/git/tidePipeline'
             project_directory = ''
             with zipfile.ZipFile(args.input, 'r') as zip_object:
                 zip_object.extractall()
@@ -92,9 +92,12 @@ elif args.type == 'raw':
                     break
             print('project directory')
             print(project_directory)
+            
             p = subprocess.Popen(['python3', 'FilterQValue.py', project_directory, 'msgf', 'search', str(args.threshold), 'filtered_search', '--peptide_q_value'], cwd=tools_location, stderr=sys.stdout.fileno())
             assert(p.wait() == 0)
-            p = subprocess.Popen(['python3', 'ExportPeptides.py', project_directory, 'FilteredSearchResult', 'filtered_search', os.path.abspath(args.output)], cwd=tools_location, stderr=sys.stdout.fileno())
+            print('output')
+            print(os.path.abspath(args.output))
+            p = subprocess.Popen(['python3', 'ExportPeptides.py', project_directory, 'FilteredSearchResult', 'filtered_search', os.path.abspath(args.output), '--overwrite', 'True'], cwd=tools_location, stderr=sys.stdout.fileno())
             assert(p.wait() == 0)
             sys.exit()
         elif args.qval_compute == 'custom':
