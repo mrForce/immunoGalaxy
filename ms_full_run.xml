@@ -1,5 +1,3 @@
-
-
 <tool id="msgf_full" name="Run MSGF+ on Proteome" version="0.1.0">
   <command interpreter="python3">runFullPipeline.py
   #for $x in $__app__.tool_data_tables['Proteomes'].get_fields
