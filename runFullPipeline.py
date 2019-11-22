@@ -8,19 +8,21 @@ import uuid
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--base_project', type=str)
-parser.add_argument('--additional_proteome', action='append')
+#parser.add_argument('--additional_proteome', action='append')
 parser.add_argument('--frag_method', type=str)
 parser.add_argument('--instrument', type=str)
 parser.add_argument('--mgf', type=str)
 parser.add_argument('--output', type=str)
 parser.add_argument('--archive', type=str)
-
+parser.add_argument('--num_matches_per_spectrum', type=int)
 
 args = parser.parse_args()
 print('output')
 print(args.output)
 print('base project')
 print(args.base_project)
+assert(args.num_matches_per_spectrum)
+assert(args.num_matches_per_spectrum > 0)
 tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
 #p = subprocess.Popen(['ls', '-R', os.getcwd()], stdout=sys.stdout.fileno())
 project_directory = os.path.join(os.getcwd(), 'project', 'project')
@@ -72,7 +74,7 @@ assert(p.wait() == 0)
 print('ran msgfplus search')
 
 print('going to call RunPercolator. Command: %s' % ' '.join(['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator']))
-p = subprocess.Popen(['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator'], cwd=tools_location, stderr=sys.stdout.fileno())
+p = subprocess.Popen(['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator', '--num_matches_per_spectrum', str(args.num_matches_per_spectrum)], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
 print('ran percolator')

@@ -18,7 +18,8 @@
   --output '$output'
   
   --archive '$Archive'
-  
+
+  --num_matches_per_spectrum $num_matches_per_spectrum
   &gt; $Log 2&gt;&amp;1
   </command>
   <inputs>
@@ -43,6 +44,8 @@
       <option value="2">TOF</option>
       <option value="3">Q-Extractive</option>
     </param>
+
+    <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" />
   </inputs>
   <outputs>
     <data format="tabular" name="output" label="Unfiltered search of ${mgf.name}"/>
