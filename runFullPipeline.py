@@ -69,7 +69,7 @@ assert(p.wait() == 0)
 
 print('created msgfplus index')
 print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '4']))
-p = subprocess.Popen(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '4'], cwd=tools_location, stderr=sys.stdout.fileno())
+p = subprocess.Popen(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum)], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 print('ran msgfplus search')
 
