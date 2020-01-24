@@ -7,6 +7,7 @@ import os
 import uuid
 parser = argparse.ArgumentParser()
 
+
 parser.add_argument('--base_project', action='append')
 parser.add_argument('--allele', action='append')
 parser.add_argument('--additional_proteome', action='append')
@@ -17,7 +18,7 @@ parser.add_argument('--instrument', type=str)
 parser.add_argument('--mgf', type=str)
 parser.add_argument('--output', type=str)
 parser.add_argument('--archive', type=str)
-
+parser.add_argument('--num_matches_per_spectrum', type=int)
 
 args = parser.parse_args()
 print('allele')
@@ -116,18 +117,23 @@ if args.additional_proteome:
 print('filtered netmhc')
 print(filtered_netmhc_names)
 
-print('going to call CreateTargetSet. Command: %s' % ' '.join(['python3', 'CreateTargetSet.py', project_directory, 'thing'] + filtered_netmhc_names))
-p = subprocess.Popen(['python3', 'CreateTargetSet.py', project_directory, 'thing'] + filtered_netmhc_names, cwd=tools_location, stderr=sys.stdout.fileno())
-assert(p.wait() == 0)
-print('created target set')
+if filtered_netmhc_names:
+    print('going to call CreateTargetSet. Command: %s' % ' '.join(['python3', 'CreateTargetSet.py', project_directory, 'thing'] + filtered_netmhc_names))
+    p = subprocess.Popen(['python3', 'CreateTargetSet.py', project_directory, 'thing'] + filtered_netmhc_names, cwd=tools_location, stderr=sys.stdout.fileno())
+    assert(p.wait() == 0)
+    print('created target set')
 
-print('going to call CreateMSGFPlusIndex. Command: %s' % ' '.join(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'TargetSet', 'thing', 'index']))
-p = subprocess.Popen(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'TargetSet', 'thing', 'index'], cwd=tools_location, stderr=sys.stdout.fileno())
-assert(p.wait() == 0)
-
+    print('going to call CreateMSGFPlusIndex. Command: %s' % ' '.join(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'TargetSet', 'thing', 'index']))
+    p = subprocess.Popen(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'TargetSet', 'thing', 'index'], cwd=tools_location, stderr=sys.stdout.fileno())
+    assert(p.wait() == 0)
+else:
+    print('going to call CreateMSGFPlusIndex. Command: %s' % ' '.join(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'FASTA', 'proteome', 'index']))
+    p = subprocess.Popen(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'FASTA', 'human', 'index'], cwd=tools_location, stderr=sys.stdout.fileno())
+    assert(p.wait() == 0)
+    
 print('created msgfplus index')
-print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '1']))
-p = subprocess.Popen(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '1'], cwd=tools_location, stderr=sys.stdout.fileno())
+print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum)]))
+p = subprocess.Popen(['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search',  '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum)], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 print('ran msgfplus search')
 

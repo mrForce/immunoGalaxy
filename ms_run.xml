@@ -35,26 +35,13 @@
   </command>
   <inputs>
 
-    
-    <repeat name="mhcalleles" title="Select MHC Alleles">
-      <param name="allele" type="select" label="Select an allele">
-        <options from_data_table="Alleles" />
-      </param>
-    </repeat>
+    <param name="proteome" type="select" label="Select a proteome">
+      <options from_data_table="Proteomes" />
+    </param>
 
     <repeat name="proteins" title="Add additional protein FASTA files">
       <param name="fasta" type="data" label="Select a FASTA file" format="fasta" />
     </repeat>
-    <param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
-      <option value="8"></option>
-      <option value="9"></option>
-      <option value="10"></option>
-      <option value="11"></option>
-      <option value="12"></option>
-      <option value="13"></option>
-    </param>
-
-    <param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
 
     <param name="mgf" type="data" label="Select an MGF file" format="mgf" />
 
@@ -70,6 +57,30 @@
       <option value="2">TOF</option>
       <option value="3">Q-Extractive</option>
     </param>
+
+    <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" />
+    <conditional name="search_type">
+      <param name="search_type_selector" type="select" label="Choose search type">
+	<option value="unfiltered" selected="true">Unfiltered Search</option>
+	<option value="filtered">Filtered Search</option>
+      </param>
+      <when value="filtered">
+	 <repeat name="mhcalleles" title="Select MHC Alleles">
+	  <param name="allele" type="select" label="Select an allele">	    
+            <options from_data_table="Alleles" />
+	  </param>
+	</repeat>
+	<param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
+	  <option value="8"></option>
+	  <option value="9"></option>
+	  <option value="10"></option>
+	  <option value="11"></option>
+	  <option value="12"></option>
+	  <option value="13"></option>
+	</param>
+	<param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
+      </when>
+    </conditional>
   </inputs>
   <outputs>
     <data format="tabular" name="output" label="Search of ${mgf.name} with NetMHC rank cutoff of ${rank_filter}" />
