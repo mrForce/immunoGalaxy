@@ -8,7 +8,7 @@ import uuid
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--base_project', type=str)
-#parser.add_argument('--additional_proteome', action='append')
+parser.add_argument('--additional_proteome', action='append')
 parser.add_argument('--frag_method', type=str)
 parser.add_argument('--instrument', type=str)
 parser.add_argument('--mgf', type=str)
@@ -51,9 +51,33 @@ for x in args.allele:
 
 mgf_link = os.path.join(project_directory, 'thing.mgf')
 
+fasta_link = os.path.join(project_directory, 'proteome.fasta')
+if args.additional_proteome:
+    with open(fasta_link, 'w') as f:
+        for x in args.additional_proteome:
+            with open(x, 'r') as g:
+                shutil.copyfileobj(g, f)
+    print('going to call AddFASTA. Command: %s' % ' '.join(['python3', 'AddFASTA.py', project_directory, fasta_link, 'proteome']))
+    p = subprocess.Popen(['python3', 'AddFASTA.py', project_directory, fasta_link, 'proteome'], cwd=tools_location, stderr=sys.stdout.fileno())
+    
 os.symlink(args.mgf, mgf_link)
-
-
+proteome = 'proteome'
+if args.additional_proteome:
+    i = 0
+    additional_fasta_names = []
+    for additional_fasta in args.additional_proteome:
+        name = '%d_add' % i
+        additional_fasta_names.append(name)
+        i += 1
+        command = ['python3', 'AddFASTA.py', project_directory, additional_fasta, name]
+        print('going to call AddFASTA. Command: %s' % ' '.join(command))
+        p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
+        assert(p.wait() == 0)
+    command = ['python3', 'ConcatFASTA.py', project_directory, 'cproteome', 'proteome'] + additional_fasta_names
+    print('going to call ConcatFASTA. Command: %s' % ' '.join(command))
+    p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
+    assert(p.wait() == 0)
+    proteome = 'cproteome'
 
 print('going to call AddMGF. Command: %s' % ' '.join(['python3', 'AddMGF.py', project_directory, mgf_link, 'mgf', '8', args.frag_method, args.instrument]))
 p = subprocess.Popen(['python3', 'AddMGF.py', project_directory, mgf_link, 'mgf', '8', args.frag_method, args.instrument], cwd=tools_location, stderr=sys.stdout.fileno())
@@ -61,8 +85,8 @@ assert(p.wait() == 0)
 
 
 
-print('going to call CreateMSGFPlusIndex. Command: %s' % ' '.join(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'FASTA', 'proteome', 'index']))
-p = subprocess.Popen(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'FASTA', 'human', 'index'], cwd=tools_location, stderr=sys.stdout.fileno())
+print('going to call CreateMSGFPlusIndex. Command: %s' % ' '.join(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'FASTA', proteome, 'index']))
+p = subprocess.Popen(['python3', 'CreateMSGFPlusIndex.py', project_directory, 'FASTA', proteome, 'index'], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
 

@@ -7,6 +7,9 @@
   #end if
   #end for
 
+  #for $p in $proteins
+  --additional_proteome '$p.fasta'
+  #end for
   --mgf '$mgf'
 
   --frag_method '$frag_method'
@@ -26,7 +29,9 @@
     <param name="proteome" type="select" label="Select a proteome">
       <options from_data_table="Proteomes" />
     </param>
-
+    <repeat name="proteins" title="Add additional protein FASTA files">
+      <param name="fasta" type="data" label="Select a FASTA file" format="fasta" />
+    </repeat>
 
     <param name="mgf" type="data" label="Select an MGF file" format="mgf" />
 
