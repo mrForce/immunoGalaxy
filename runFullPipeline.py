@@ -50,15 +50,6 @@ for x in args.allele:
 """
 
 mgf_link = os.path.join(project_directory, 'thing.mgf')
-
-fasta_link = os.path.join(project_directory, 'proteome.fasta')
-if args.additional_proteome:
-    with open(fasta_link, 'w') as f:
-        for x in args.additional_proteome:
-            with open(x, 'r') as g:
-                shutil.copyfileobj(g, f)
-    print('going to call AddFASTA. Command: %s' % ' '.join(['python3', 'AddFASTA.py', project_directory, fasta_link, 'proteome']))
-    p = subprocess.Popen(['python3', 'AddFASTA.py', project_directory, fasta_link, 'proteome'], cwd=tools_location, stderr=sys.stdout.fileno())
     
 os.symlink(args.mgf, mgf_link)
 proteome = 'proteome'
