@@ -66,8 +66,10 @@
       </param>
       <when value="filtered">
 	 <repeat name="mhcalleles" title="Select MHC Alleles">
-	  <param name="allele" type="select" label="Select an allele">	    
-            <options from_data_table="Alleles" />
+	   <param name="allele" type="select" label="Select an allele">	 
+             <options from_data_table="Alleles" >
+	       <filter type="param_value" column="organism" ref="proteome" key="name" />
+	     </options>
 	  </param>
 	</repeat>
 	<param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
