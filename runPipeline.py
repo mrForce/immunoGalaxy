@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import shutil
 import os
+import itertools
 import uuid
 parser = argparse.ArgumentParser()
 
@@ -39,7 +40,7 @@ for x in args.allele:
     allele_list.append(x)
 peptide_lengths = args.pep_len.split(',')
 filtered = False
-if len(arg*s.allele) > 0:
+if len(args.allele) > 0:
     assert(len(peptide_lengths) > 0)
     filtered = True
 project_directory = os.path.join(os.getcwd(), 'project', 'project')
@@ -53,8 +54,9 @@ assert(p.wait() == 0)
 length_to_allele_to_netmhc_map = {}
 if filtered:
     for x in peptide_lengths:
+        length_to_allele_to_netmhc_map[x] = {}
         for allele in args.allele:
-            length_to_netmhc_map[x][allele] = ['proteome' + x + 'Mers_' + allele]
+            length_to_allele_to_netmhc_map[x][allele] = ['Proteome' + x + 'Mers_' + allele]
             
 
 proteome = 'proteome'
@@ -131,7 +133,7 @@ assert(p.wait() == 0)
 
 
 if filtered_netmhc_names:
-    command = ['python3', 'CreateTargetSet.py', project_directory, 'targetSet'] + list(itertools.chain.from_iterable([('--FilteredNetMHC', x) for x in filter_netmhc_command_part]))
+    command = ['python3', 'CreateTargetSet.py', project_directory, 'targetSet'] + list(itertools.chain.from_iterable([('--FilteredNetMHC', x) for x in filtered_netmhc_names]))
     print('going to call CreateTargetSet. Command: %s' % ' '.join(command))
     p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
@@ -149,13 +151,14 @@ else:
     
 print('created msgfplus index')
 command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum)]
-print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(command)
+print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(command))
 p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 print('ran msgfplus search')
 
-print('going to call RunPercolator. Command: %s' % ' '.join(['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator']))
-p = subprocess.Popen(['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator'], cwd=tools_location, stderr=sys.stdout.fileno())
+command = ['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator', '--num_matches_per_spectrum', str(args.num_matches_per_spectrum)]
+print('going to call RunPercolator. Command: %s' % ' '.join(command))
+p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
 print('ran percolator')
@@ -168,6 +171,6 @@ print('ran peptides with q values')
 if args.archive:
     print('project directory: %s' % project_directory)
     print('archive: %s' % args.archive)
-    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'TargetSet'), os.path.join(project_directory, 'FilteredNetMHC')])
+    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'TargetSet'), os.path.join(project_directory, 'FilteredNetMHC'), os.path.join(project_directory, 'FASTA'),  os.path.join(project_directory, 'MGF')])
     shutil.move(args.archive + '.zip', args.archive)
     print('Zip file size: %d' % os.path.getsize(args.archive))

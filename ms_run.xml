@@ -3,7 +3,7 @@
 <tool id="fa_gc_content_1" name="Run MSGF+ on a NetMHC filtered proteome" version="0.1.0">
   <command interpreter="python3">runPipeline.py
 
-  #for $r in $mhcalleles
+  #for $r in $search_type.mhcalleles
   #for $x in $__app__.tool_data_tables['Alleles'].get_fields()
   #if str($x[0]) == str($r.allele.value)
   --allele $x[0]
@@ -17,9 +17,9 @@
   --additional_proteome '$p.fasta'
   #end for
   
-  --pep_len '$length'
-
-  --rank_filter '$rank_filter'
+  --pep_len '$search_type.length'
+  --rank_filter '$search_type.rank_filter'
+  --num_matches_per_spectrum '$num_matches_per_spectrum'
 
   --mgf '$mgf'
 
@@ -83,7 +83,7 @@
     </conditional>
   </inputs>
   <outputs>
-    <data format="tabular" name="output" label="Search of ${mgf.name} with NetMHC rank cutoff of ${rank_filter}" />
+    <data format="tabular" name="output" label="Search of ${mgf.name} with NetMHC rank cutoff of ${search_type.rank_filter}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
