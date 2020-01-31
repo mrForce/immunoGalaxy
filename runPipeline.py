@@ -9,7 +9,7 @@ import uuid
 parser = argparse.ArgumentParser()
 
 
-parser.add_argument('--base_project', action='append')
+parser.add_argument('base_project')
 parser.add_argument('--allele', action='append')
 parser.add_argument('--additional_proteome', action='append')
 parser.add_argument('--pep_len', type=str)
@@ -44,8 +44,8 @@ if len(args.allele) > 0:
     assert(len(peptide_lengths) > 0)
     filtered = True
 project_directory = os.path.join(os.getcwd(), 'project', 'project')
-assert(len(set(args.base_project)) == 1)
-base_project = args.base_project[0]
+
+base_project = args.base_project
 print('going to copy project')
 p = subprocess.Popen(['python3', 'CopyProject.py', base_project, project_directory] + allele_list, cwd=tools_location, stderr=sys.stdout.fileno())
 print('copying project')
