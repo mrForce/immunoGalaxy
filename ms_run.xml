@@ -36,7 +36,10 @@
   <inputs>
 
     <param name="proteome" type="select" label="Select a proteome">
-      <options from_data_table="Proteomes" />
+      <options from_data_table="Proteomes">
+	<column name="organism" index="3"/>
+      </options>
+      
     </param>
 
     <repeat name="proteins" title="Add additional protein FASTA files">
@@ -68,7 +71,7 @@
 	 <repeat name="mhcalleles" title="Select MHC Alleles">
 	   <param name="allele" type="select" label="Select an allele">	 
              <options from_data_table="Alleles" >
-	       <filter type="param_value" column="organism" ref="proteome" key="name" keep="true"/>
+	       <filter type="param_value" column="organism" ref="proteome" ref_attribute="organism"/>
 	     </options>
 	  </param>
 	</repeat>
