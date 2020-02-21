@@ -1,8 +1,14 @@
 
 
-<tool id="fa_gc_content_1" name="Run MSGF+ on a NetMHC filtered proteome" version="0.1.0">
+<tool id="fa_gc_content_1" name="Run MSGF+ on Proteome" version="0.1.0">
   <command interpreter="python3">runPipeline.py
-  '$proteome.project'
+  '$proteome'
+
+  #for $p in $proteins
+  --additional_proteome '$p.fasta'
+  #end for
+
+  #if str($search_type) == 'filtered'
   #for $r in $search_type.mhcalleles
   #for $x in $__app__.tool_data_tables['Alleles'].get_fields()
   #if str($x[0]) == str($r.allele.value)
@@ -11,15 +17,11 @@
   #end if
   #end for
   #end for
-
-  #for $p in $proteins
-  --additional_proteome '$p.fasta'
-  #end for
-  
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
+  #end if
+  
   --num_matches_per_spectrum '$num_matches_per_spectrum'
-
   --mgf '$mgf'
 
   --frag_method '$frag_method'
@@ -35,10 +37,7 @@
   <inputs>
 
     <param name="proteome" type="select" label="Select a proteome">
-      <options from_data_table="Proteomes">
-	<column name="organism" index="3"/>
-      </options>
-      
+      <options from_data_table="Proteomes" />
     </param>
 
     <repeat name="proteins" title="Add additional protein FASTA files">
@@ -67,9 +66,9 @@
 	<option value="filtered">Filtered Search</option>
       </param>
       <when value="filtered">
-	 <repeat name="mhcalleles" title="Select MHC Alleles">
-	   <param name="allele" type="select" label="Select an allele">
-	     <options from_data_table="Alleles />
+	<repeat name="mhcalleles" title="Select MHC Alleles">
+	  <param name="allele" type="select" label="Select an allele">
+	    <options from_data_table="Alleles" />
 	  </param>
 	</repeat>
 	<param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
@@ -85,7 +84,7 @@
     </conditional>
   </inputs>
   <outputs>
-    <data format="tabular" name="output" label="Search of ${mgf.name} with NetMHC rank cutoff of ${search_type.rank_filter}" />
+    <data format="tabular" name="output" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}"/>
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>

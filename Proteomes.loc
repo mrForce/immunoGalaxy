@@ -1,3 +1,3 @@
-#value	name	project organism
-/galaxy-prod/galaxy/tools-dependencies/references/Proteomes/Human.fasta	Human	/gene-data/jordan/projects/human/	Human
-/galaxy-prod/galaxy/tools-dependencies/references/Proteomes/Mouse.fasta	Mouse	/gene-data/jordan/projects/mouse/	Mouse
+#value	name	fasta organism
+/gene-data/jordan/projects/human	Human	/galaxy-prod/galaxy/tools-dependencies/references/Proteomes/Human.fasta	Human
+/gene-data/jordan/projects/mouse/	Mouse	/galaxy-prod/galaxy/tools-dependencies/references/Proteomes/Mouse.fasta	Mouse

@@ -31,18 +31,24 @@ print(args.pep_len)
 print('output')
 print(args.output)
 
+
+
+
 #tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
 tools_location = '/home/jordan/github/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
 
 allele_list = []
-for x in args.allele:
-    allele_list.append('--allele')
-    allele_list.append(x)
-peptide_lengths = args.pep_len.split(',')
 filtered = False
-if len(args.allele) > 0:
+peptide_lengths = []
+if args.allele:
+    peptide_lengths = args.pep_len.split(',')
+    for x in args.allele:
+        allele_list.append('--allele')
+        allele_list.append(x)
     assert(len(peptide_lengths) > 0)
     filtered = True
+
+
 project_directory = os.path.join(os.getcwd(), 'project', 'project')
 
 base_project = args.base_project
