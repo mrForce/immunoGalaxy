@@ -73,6 +73,7 @@ if args.additional_proteome:
     for additional_fasta in args.additional_proteome:
         name = '%d_add' % i
         additional_fasta_names.append(name)
+        command = ['python3', 'AddFASTA.py', project_directory, additional_fasta, name]
         print('going to call AddFASTA. Command: %s' % ' '.join(command))
         p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
         assert(p.wait() == 0)
