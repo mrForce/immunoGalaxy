@@ -103,7 +103,7 @@
     The fragmentation method and instrument should be self explanatory.
 
 ===============
-Unfiltered Search
+Unfiltered Search Mode
 ===============
 
 
@@ -158,7 +158,7 @@ There are also some relevant parameters that aren't specified in the search, and
 +-------------------------+------------------------+---------------+---------------------------------+
 
 ===============
-Filtered Mode
+Filtered Search Mode
 ===============
 
 
@@ -175,7 +175,17 @@ Suppose there were 1000 peptides of length 8 in the proteome, 2000 peptides of l
 
 This is why we have a base proteome: All length 8-13 peptides in the base proteome have been pre-scored by NetMHC for each allele, so we don't have to re-do the scoring each time a search is done. When additional protein FASTA files are added, the proteins are broken into peptides (with lengths that depend on the user specified lengths), and added to the set of unfiltered peptides in the proteome. *Then* the top k NetMHC scoring peptides are taken for each allele-length combination.
 
-Only one MS-GF+ search parameter changes: we use "-e 9" instead of "-e 0"; this tells MS-GF+ not to do any in-silico digestion. 
+Only one MS-GF+ search parameter changes: we use "-e 9" instead of "-e 0"; this tells MS-GF+ not to do any in-silico digestion.
+
+===============
+Outputs
+===============
+Right now there are three outputs. The main output is a list of peptides and corresponding Q-values. This is *peptide* level Q-value, as determined by Percolator. This paper gives a good summary of what peptide-level Q value is: https://noble.gs.washington.edu/papers/granholm2013determining.pdf
+
+Filtering the peptides with a Q-value under 0.05 corresponds to controlling the False Discovery Rate at 5 percent i.e. Approximately 5 percent of the peptides are false positives.
+
+The other two outputs are a log and a project ZIP file; these are mainly for debugging purposes. 
+
   </help>
 
 </tool>
