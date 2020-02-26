@@ -1,5 +1,4 @@
-
-
+<?xml version="1.0" encoding="utf-8"?>
 <tool id="fa_gc_content_1" name="Run MSGF+ on Proteome" version="0.1.0">
   <command interpreter="python3">runPipeline.py
   '$proteome'
@@ -8,18 +7,14 @@
   --additional_proteome '$p.fasta'
   #end for
 
-  #if str($search_type) == 'filtered'
+  #if str($search_type.search_type_selector) == 'filtered'
   #for $r in $search_type.mhcalleles
-  #for $x in $__app__.tool_data_tables['Alleles'].get_fields()
-  #if str($x[0]) == str($r.allele.value)
-  --allele $x[0]
-  #break
-  #end if
-  #end for
+  --allele $r.allele.value
   #end for
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
   #end if
+  
   
   --num_matches_per_spectrum '$num_matches_per_spectrum'
   --mgf '$mgf'
