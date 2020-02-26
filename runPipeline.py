@@ -17,8 +17,8 @@ parser.add_argument('--rank_filter', type=str)
 parser.add_argument('--frag_method', type=str)
 parser.add_argument('--instrument', type=str)
 parser.add_argument('--mgf', type=str)
-parser.add_argument('--output', type=str)
-#parser.add_argument('--psm_output', type=str)
+parser.add_argument('--peptide_output', type=str)
+parser.add_argument('--psm_output', type=str)
 parser.add_argument('--archive', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
 
@@ -29,9 +29,10 @@ print('additional proteome')
 print(args.additional_proteome)
 print('pep len')
 print(args.pep_len)
-print('output')
-print(args.output)
-
+print('peptide output')
+print(args.peptide_output)
+print('PSM output')
+print(args.psm_output)
 
 
 
@@ -170,10 +171,15 @@ p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
 print('ran percolator')
-print('going to call ExportPeptidesWithQValues. Command: %s' % ' '.join(['python3', 'ExportPeptidesWithQValues.py', project_directory, 'percolator', os.path.abspath(args.output)]))
-p = subprocess.Popen(['python3', 'ExportPeptidesWithQValues.py', project_directory, 'percolator', os.path.abspath(args.output)], cwd=tools_location, stderr=sys.stdout.fileno())
+print('going to call ExportPeptidesWithQValues. Command: %s' % ' '.join(['python3', 'ExportPeptidesWithQValues.py', project_directory, 'percolator', os.path.abspath(args.peptide_output)]))
+p = subprocess.Popen(['python3', 'ExportPeptidesWithQValues.py', project_directory, 'percolator', os.path.abspath(args.peptide_output)], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 print('ran peptides with q values')
+
+print('going to call ExportPSMWithQValues. Command: %s' % ' '.join(['python3', 'ExportPSMWithQValues.py', project_directory, 'percolator', os.path.abspath(args.psm_output)]))
+p = subprocess.Popen(['python3', 'ExportPSMWithQValues.py', project_directory, 'percolator', os.path.abspath(args.psm_output)], cwd=tools_location, stderr=sys.stdout.fileno())
+assert(p.wait() == 0)
+print('got psms')
 
 
 if args.archive:

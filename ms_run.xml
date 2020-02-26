@@ -23,7 +23,8 @@
 
   --instrument '$instrument'
 
-  --output '$peptides'
+  --peptide_output '$peptides'
+  --psm_output '$PSMs'
   
   --archive '$Archive'
   
@@ -80,7 +81,7 @@
   </inputs>
   <outputs>
     <data format="tabular" name="peptides" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}, peptides"/>
-    <!-- <data format="tabular" name="PSMs" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}, PSMs"/> -->
+    <data format="tabular" name="PSMs" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}, PSMs"/>
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
