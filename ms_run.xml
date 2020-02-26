@@ -157,9 +157,9 @@ There are also some relevant parameters that aren't specified in the search, and
 |                         |                        |               | with length at most 40          |
 +-------------------------+------------------------+---------------+---------------------------------+
 
-===============
+=====================
 Filtered Search Mode
-===============
+=====================
 
 
 For each MHC allele and peptide length, score the peptides in the proteome of that length, and take k percent best scoring. For example, if the MHC alleles are HLA-A0101 and HLA-B0702, and the checked lengths are 8, 9 and 10, and k is 2, then we would generate 6 different set of peptides:
