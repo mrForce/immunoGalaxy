@@ -108,7 +108,7 @@
     In this mode, the tool takes the base proteome, and concats any additional FASTA files to it. Then, it runs an MS-GF+ search against the resulting set of proteins. The following options are explicitly set in the MS-GF+ search (see: https://msgfplus.github.io/msgfplus/MSGFPlus.html)
 
 
-    +--------------------+------------------------------+----------------+------------------------------------------------+
++--------------------+------------------------------+----------------+------------------------------------------------+
 | Search Param       | Description                  | Value          | Meaning of Value                               |
 +--------------------+------------------------------+----------------+------------------------------------------------+
 | -e                 |                              | 0              |                                                |
@@ -135,6 +135,42 @@
 |                    | whether to cleave methionine |                | https://github.com/MSGFPlus/msgfplus/issues/51 |
 |                    | from N-terminus of peptides  |                |                                                |
 +--------------------+------------------------------+----------------+------------------------------------------------+
+
+There are also some relevant parameters that aren't specified in the search, and left to default in MS-GF+:
+
++-------------------------+------------------------+---------------+---------------------------------------+
+| Search Param            | Description            | Default Value | Meaning of Value                      |
++-------------------------+------------------------+---------------+---------------------------------------+
+| -precursorMassTolerance |                        | 20ppm         |                                       |
++-------------------------+------------------------+---------------+---------------------------------------+
+| -minLength              | Minimum peptide length | 6             |                                       |
+|                         |                        |               | Will only consider                    |
+|                         |                        |               |                                       |
+|                         |                        |               | peptides with length >= 6 amino acids |
++-------------------------+------------------------+---------------+---------------------------------------+
+| -maxLength              | Maximum peptide length | 40            |                                       |
+|                         |                        |               | Will only consider peptides           |
+|                         |                        |               | with length <= 40 amino acids         |
++-------------------------+------------------------+---------------+---------------------------------------+
+
+Filtered Mode:
+
+For each MHC allele and peptide length, score the peptides in the proteome of that length, and take k percent best scoring. For example, if the MHC alleles are HLA-A0101 and HLA-B0702, and the checked lengths are 8, 9 and 10, and k is 2, then we would generate 6 different set of peptides:
+
+* 2% highest scoring length 8 peptides for HLA-A0101
+* 2% highest scoring length 9 peptides for HLA-A0101
+* 2% highest scoring length 10 peptides for HLA-A0101
+* 2% highest scoring length 8 peptides for HLA-B0702
+* 2% highest scoring length 9 peptides for HLA-B0702
+* 2% highest scoring length 10 peptides for HLA-B0702
+
+Suppose there were 1000 peptides of length 8 in the proteome, 2000 peptides of length 9 in the proteome, and 4000 peptides of length 10 in the proteome. Then sets 1 and 4 would contain 20 peptides each, sets 2 and 5 would have 40 peptides each, and sets 3 and 6 would have 80 peptides each. It's possible that sets 1 and 4 could have overlap, that sets 2 and 5 could have overlap, and that sets 3 and 6 could have overlap. We would search the concatenation of these 6 peptide sets.
+
+This is why we have a base proteome: All length 8-13 peptides in the base proteome have been pre-scored by NetMHC for each allele, so we don't have to re-do the scoring each time a search is done. When additional protein FASTA files are added, the proteins are broken into peptides (with lengths that depend on the user specified lengths), and added to the set of unfiltered peptides in the proteome. *Then* the top k NetMHC scoring peptides are taken for each allele-length combination.
+
+Only one MS-GF+ search parameter changes: we use "-e 9" instead of "-e 0"; this tells MS-GF+ not to do any in-silico digestion. 
+
+
   </help>
 
 </tool>
