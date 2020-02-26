@@ -138,20 +138,22 @@
 
 There are also some relevant parameters that aren't specified in the search, and left to default in MS-GF+:
 
-+-------------------------+------------------------+---------------+---------------------------------------+
-| Search Param            | Description            | Default Value | Meaning of Value                      |
-+-------------------------+------------------------+---------------+---------------------------------------+
-| -precursorMassTolerance |                        | 20ppm         |                                       |
-+-------------------------+------------------------+---------------+---------------------------------------+
-| -minLength              | Minimum peptide length | 6             |                                       |
-|                         |                        |               | Will only consider                    |
-|                         |                        |               |                                       |
-|                         |                        |               | peptides with length >= 6 amino acids |
-+-------------------------+------------------------+---------------+---------------------------------------+
-| -maxLength              | Maximum peptide length | 40            |                                       |
-|                         |                        |               | Will only consider peptides           |
-|                         |                        |               | with length <= 40 amino acids         |
-+-------------------------+------------------------+---------------+---------------------------------------+
+
++-------------------------+------------------------+---------------+---------------------------------+
+| Search Param            | Description            | Default Value | Meaning of Value                |
++-------------------------+------------------------+---------------+---------------------------------+
+| -precursorMassTolerance |                        | 20ppm         |                                 |
++-------------------------+------------------------+---------------+---------------------------------+
+| -minLength              | Minimum peptide length | 6             |                                 |
+|                         |                        |               | Will only consider              |
+|                         |                        |               |                                 |
+|                         |                        |               | peptides with length at least 6 |
++-------------------------+------------------------+---------------+---------------------------------+
+| -maxLength              | Maximum peptide length | 40            |                                 |
+|                         |                        |               | Will only consider peptides     |
+|                         |                        |               | with length at most 40          |
++-------------------------+------------------------+---------------+---------------------------------+
+
 
 Filtered Mode:
 
@@ -169,8 +171,6 @@ Suppose there were 1000 peptides of length 8 in the proteome, 2000 peptides of l
 This is why we have a base proteome: All length 8-13 peptides in the base proteome have been pre-scored by NetMHC for each allele, so we don't have to re-do the scoring each time a search is done. When additional protein FASTA files are added, the proteins are broken into peptides (with lengths that depend on the user specified lengths), and added to the set of unfiltered peptides in the proteome. *Then* the top k NetMHC scoring peptides are taken for each allele-length combination.
 
 Only one MS-GF+ search parameter changes: we use "-e 9" instead of "-e 0"; this tells MS-GF+ not to do any in-silico digestion. 
-
-
   </help>
 
 </tool>
