@@ -18,6 +18,7 @@ parser.add_argument('--frag_method', type=str)
 parser.add_argument('--instrument', type=str)
 parser.add_argument('--mgf', type=str)
 parser.add_argument('--output', type=str)
+#parser.add_argument('--psm_output', type=str)
 parser.add_argument('--archive', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
 

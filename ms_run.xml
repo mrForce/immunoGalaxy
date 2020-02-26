@@ -16,15 +16,15 @@
   #end if
   
   
-  --num_matches_per_spectrum '$num_matches_per_spectrum'
+  --num_matches_per_spectrum 1
   --mgf '$mgf'
 
   --frag_method '$frag_method'
 
   --instrument '$instrument'
 
-  --output '$output'
-
+  --output '$peptides'
+  
   --archive '$Archive'
   
   &gt; $Log 2&gt;&amp;1
@@ -54,7 +54,7 @@
       <option value="3">Q-Extractive</option>
     </param>
 
-    <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" />
+    <!--- <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" /> -->
     <conditional name="search_type">
       <param name="search_type_selector" type="select" label="Choose search type">
 	<option value="unfiltered" selected="true">Unfiltered Search</option>
@@ -79,7 +79,8 @@
     </conditional>
   </inputs>
   <outputs>
-    <data format="tabular" name="output" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}"/>
+    <data format="tabular" name="peptides" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}, peptides"/>
+    <!-- <data format="tabular" name="PSMs" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}, PSMs"/> -->
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
@@ -93,7 +94,37 @@
   </tests>         
   
   <help>
-    This tool computes GC content from a FASTA file.
+    The purpose of this tool is to run an MS-GF+ search using our pipeline. I'll go through each of the options and explain what they mean:
+
+    First, there's the "select proteome" dropdown. You select the proteome you want to search against. Right now there are two options: the SwissProt human, and the SwissProt mouse. These are simply labeled as "Human" and "Mouse". More can be added by me (Jordan) if requested.
+
+    Then, there's an option for adding additional protein FASTA files. How these are used depends on the tool's mode (NetMHC filtered on unfiltered).
+
+    The fragmentation method and instrument should be self explanatory.
+    
+    Unfiltered Search:
+
+    
+    In this mode, the tool takes the base proteome, and concats any additional FASTA files to it. Then, it runs an MS-GF+ search against the resulting set of proteins. The following options are explicitly set in the MS-GF+ search (see: https://msgfplus.github.io/msgfplus/MSGFPlus.html)
+
+    
+.--------------------.-------------------------------------------------------------------------------------------------------------------------------------------------------.----------------.-------------------------------------------------------------------------------------------.
+|    Search Param    |                                                                      Description                                                                      |     Value      |                                     Meaning of Value                                      |
+:--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------:
+| -e                 | Enzyme to use when digesting the proteome                                                                                                             | 0              | Unspecific cleavage. Break proteins into all possible peptides between min and max length |
+:--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------:
+| -inst              | What instrument generated the data. This changes the scoring function                                                                                 | User specified | Depends on what user specifies                                                            |
+:--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------:
+| -m                 | Fragmentation method                                                                                                                                  | User specified | Depends on what user specifies                                                            |
+:--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------:
+| -n                 | Report top n scoring peptides for each spectra                                                                                                        | 1              | Only a single peptide outputted for each spectra                                          |
+:--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------:
+| -ignoreMetCleavage | Tells MS-GF+ to not cleave methionine from the N-terminus of peptides. This is a hidden option; see: https://github.com/MSGFPlus/msgfplus/issues/51   | 1              |                                                                                           |
+:--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------:
+| -addFeatures       | Turns on features for Percolator                                                                                                                      | 1              | Percolator features are added to MS-GF+ output                                            |
+'--------------------'-------------------------------------------------------------------------------------------------------------------------------------------------------'----------------'-------------------------------------------------------------------------------------------'
+
+
   </help>
 
 </tool>
