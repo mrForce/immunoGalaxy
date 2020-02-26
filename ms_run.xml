@@ -102,9 +102,9 @@
 
     The fragmentation method and instrument should be self explanatory.
 
-===============
+=======================
 Unfiltered Search Mode
-===============
+=======================
 
 
     
@@ -156,6 +156,8 @@ There are also some relevant parameters that aren't specified in the search, and
 |                         |                        |               | Will only consider peptides     |
 |                         |                        |               | with length at most 40          |
 +-------------------------+------------------------+---------------+---------------------------------+
+
+
 
 =====================
 Filtered Search Mode
