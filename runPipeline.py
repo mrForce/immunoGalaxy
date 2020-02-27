@@ -62,10 +62,11 @@ p = subprocess.Popen(['python3', 'CopyProject.py', base_project, project_directo
 print('copying project')
 assert(p.wait() == 0)
 
-with tempfile.NamedTemporaryFile() as f:
+with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_mod:
     for mod in args.mod:
-        f.write(mod + '\n')
-    command = ['python3', 'AddModificationFile.py', base_project, project_directory, 'mod', f.name]
+        temp_mod.write(mod + '\n')
+    temp_mod.flush()
+    command = ['python3', 'AddModificationFile.py', project_directory, 'mod', temp_mod.name]
     print('Going to add modification file: ' + ' '.join(command))
     p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
@@ -170,7 +171,7 @@ else:
     assert(p.wait() == 0)
     
 print('created msgfplus index')
-command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum), '--modifications_name', 'mod']
+command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--modifications_name', 'mod', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum)]
 print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(command))
 p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
@@ -196,6 +197,6 @@ print('got psms')
 if args.archive:
     print('project directory: %s' % project_directory)
     print('archive: %s' % args.archive)
-    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'TargetSet'), os.path.join(project_directory, 'FilteredNetMHC'), os.path.join(project_directory, 'FASTA'),  os.path.join(project_directory, 'MGF'), os.path.join(project_directory, 'Modifications')])
+    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'database.db'), os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'TargetSet'), os.path.join(project_directory, 'FilteredNetMHC'), os.path.join(project_directory, 'FASTA'),  os.path.join(project_directory, 'MGF'), os.path.join(project_directory, 'Modifications')])
     shutil.move(args.archive + '.zip', args.archive)
     print('Zip file size: %d' % os.path.getsize(args.archive))

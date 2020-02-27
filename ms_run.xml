@@ -15,7 +15,9 @@
   --rank_filter '$search_type.rank_filter'
   #end if
 
-  --X '$search_type.mods'
+  #for $mod in $mods.value
+  --mod "$mod"
+  #end for
   
   --num_matches_per_spectrum 1
   --mgf '$mgf'
@@ -57,7 +59,7 @@
     </param>
 
     <param name="mods" type="select" display="checkboxes" label="Select PTMs to include" multiple="true">
-      <option from_data_table="PTM" />
+      <options from_data_table="PTM" />
     </param>
 
     <!--- <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" /> -->
