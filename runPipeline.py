@@ -2,6 +2,7 @@
 import sys
 import argparse
 import subprocess
+import tempfile
 import shutil
 import os
 import itertools
@@ -12,6 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('base_project')
 parser.add_argument('--allele', action='append')
 parser.add_argument('--additional_proteome', action='append')
+parser.add_argument('--mod', action='append')
 parser.add_argument('--pep_len', type=str)
 parser.add_argument('--rank_filter', type=str)
 parser.add_argument('--frag_method', type=str)
@@ -21,6 +23,7 @@ parser.add_argument('--peptide_output', type=str)
 parser.add_argument('--psm_output', type=str)
 parser.add_argument('--archive', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
+
 
 args = parser.parse_args()
 print('allele')
@@ -59,13 +62,21 @@ p = subprocess.Popen(['python3', 'CopyProject.py', base_project, project_directo
 print('copying project')
 assert(p.wait() == 0)
 
+with tempfile.NamedTemporaryFile() as f:
+    for mod in args.mod:
+        f.write(mod + '\n')
+    command = ['python3', 'AddModificationFile.py', base_project, project_directory, 'mod', f.name]
+    print('Going to add modification file: ' + ' '.join(command))
+    p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
+    assert(p.wait() == 0)
+
 length_to_allele_to_netmhc_map = {}
 if filtered:
     for x in peptide_lengths:
         length_to_allele_to_netmhc_map[x] = {}
         for allele in args.allele:
             length_to_allele_to_netmhc_map[x][allele] = ['Proteome' + x + 'Mers_' + allele]
-            
+        
 
 proteome = 'proteome'
 fasta_link = os.path.join(project_directory, 'proteome.fasta')
@@ -159,7 +170,7 @@ else:
     assert(p.wait() == 0)
     
 print('created msgfplus index')
-command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum)]
+command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum), '--modifications_name', 'mod']
 print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(command))
 p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
@@ -185,6 +196,6 @@ print('got psms')
 if args.archive:
     print('project directory: %s' % project_directory)
     print('archive: %s' % args.archive)
-    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'TargetSet'), os.path.join(project_directory, 'FilteredNetMHC'), os.path.join(project_directory, 'FASTA'),  os.path.join(project_directory, 'MGF')])
+    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'TargetSet'), os.path.join(project_directory, 'FilteredNetMHC'), os.path.join(project_directory, 'FASTA'),  os.path.join(project_directory, 'MGF'), os.path.join(project_directory, 'Modifications')])
     shutil.move(args.archive + '.zip', args.archive)
     print('Zip file size: %d' % os.path.getsize(args.archive))

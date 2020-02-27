@@ -14,7 +14,8 @@
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
   #end if
-  
+
+  --X '$search_type.mods'
   
   --num_matches_per_spectrum 1
   --mgf '$mgf'
@@ -53,6 +54,10 @@
       <option value="1">High Res LCQ/LTQ</option>
       <option value="2">TOF</option>
       <option value="3">Q-Extractive</option>
+    </param>
+
+    <param name="mods" type="select" display="checkboxes" label="Select PTMs to include" multiple="true">
+      <option from_data_table="PTM" />
     </param>
 
     <!--- <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" /> -->
