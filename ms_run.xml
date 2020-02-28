@@ -15,10 +15,11 @@
   --rank_filter '$search_type.rank_filter'
   #end if
 
+  #if $mods.value
   #for $mod in $mods.value
   --mod "$mod"
   #end for
-  
+  #end if
   --num_matches_per_spectrum 1
   --mgf '$mgf'
 
