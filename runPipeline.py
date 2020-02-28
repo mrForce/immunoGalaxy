@@ -56,6 +56,7 @@ if args.allele:
 
 project_directory = os.path.join(os.getcwd(), 'project', 'project')
 
+
 base_project = args.base_project
 print('going to copy project')
 p = subprocess.Popen(['python3', 'CopyProject.py', base_project, project_directory] + allele_list, cwd=tools_location, stderr=sys.stdout.fileno())
@@ -63,8 +64,9 @@ print('copying project')
 assert(p.wait() == 0)
 
 with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_mod:
-    for mod in args.mod:
-        temp_mod.write(mod + '\n')
+    if args.mod:
+        for mod in args.mod:
+            temp_mod.write(mod + '\n')
     temp_mod.flush()
     command = ['python3', 'AddModificationFile.py', project_directory, 'mod', temp_mod.name]
     print('Going to add modification file: ' + ' '.join(command))
