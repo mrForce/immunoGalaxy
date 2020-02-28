@@ -66,6 +66,16 @@ args = parser.parse_args()
 if args.type == 'percolator':
     with open(args.input, 'r') as f:
         with open(args.output, 'w') as g:
+            reader = csv.DictReader(f, delimiter='\t')
+            fieldnames = list(reader.fieldnames)
+            assert('Q-Value' in reader.fieldnames)
+            writer = csv.DictWriter(g, fieldnames, delimiter='\t')
+            writer.writeheader()
+            for row in reader:
+                q_value = float(row['Q-Value'])
+                if q_value <= args.threshold:
+                    writer.writerow(row)
+            """
             header = f.readline()
             for line in f:
                 parts = line.split()
@@ -74,6 +84,7 @@ if args.type == 'percolator':
                     q_value = float(parts[1])
                     if q_value <= args.threshold:
                         g.write(peptide + '\n')
+            """
 elif args.type == 'raw':
     pin_paths = []
     if args.raw_input_format == 'zip':
