@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <tool id="simple_ms_filter" name="Filter pipeline output by q-value" version="0.1.0">
   <command interpreter="python3">filter.py
+  --type percolator
   --threshold $threshold
   --output '$output'
   
