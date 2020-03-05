@@ -5,6 +5,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
+import csv
 parser = argparse.ArgumentParser()
 parser.add_argument('--sample_one', type=str)
 parser.add_argument('--sample_one_name', type=str)
@@ -20,15 +21,17 @@ args = parser.parse_args()
 one = set()
 two = set()
 with open(args.sample_one, 'r') as f:
-    for x in f:
-        line = x.strip()
-        if len(line) > 0:
-            one.add(line)
+    reader = csv.DictReader(f, delimiter='\t')
+    fieldnames = list(reader.fieldnames)
+    assert('Peptide' in fieldnames)
+    for x in reader:
+        one.add(x['Peptide'])
 with open(args.sample_two, 'r') as f:
-    for x in f:
-        line = x.strip()
-        if len(line) > 0:
-            two.add(line)
+    reader = csv.DictReader(f, delimiter='\t')
+    fieldnames = list(reader.fieldnames)
+    assert('Peptide' in fieldnames)
+    for x in reader:
+        two.add(x['Peptide'])
 
 venn2([one, two], [args.sample_one_name, args.sample_two_name])
 matplotlib.pyplot.savefig(args.output, format='png')
