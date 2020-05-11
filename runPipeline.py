@@ -22,6 +22,9 @@ parser.add_argument('--mgf', type=str)
 parser.add_argument('--peptide_output', type=str)
 parser.add_argument('--psm_output', type=str)
 parser.add_argument('--archive', type=str)
+parser.add_argument('--ellie_fdr', type=str)
+parser.add_argument('--ellie_positives', type=str)
+parser.add_argument('--ellie_unknowns', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
 
 
@@ -194,6 +197,12 @@ print('going to call ExportPSMWithQValues. Command: %s' % ' '.join(['python3', '
 p = subprocess.Popen(['python3', 'ExportPSMWithQValues.py', project_directory, 'percolator', os.path.abspath(args.psm_output)], cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 print('got psms')
+
+command = ['python3', 'ExportElliePIN.py', project_directory, 'search', args.ellie_fdr, args.ellie_positives, args.ellie_unkowns]
+print('going to call ExportElliePIN. Command: %s' % ' '.join(command))
+p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
+assert(p.wait() == 0)
+print('got ellie outputs')
 
 
 if args.archive:

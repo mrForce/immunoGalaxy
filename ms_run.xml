@@ -29,13 +29,16 @@
 
   --peptide_output '$peptides'
   --psm_output '$PSMs'
+  --ellie_fdr '$ellie_fdr'
+  --ellie_positives '$positives'
+  --ellie_unknowns '$unlabeled'
   
   --archive '$Archive'
   
   &gt; $Log 2&gt;&amp;1
   </command>
   <inputs>
-
+    <param name="Name" type="text" label="Search name" />
     <param name="proteome" type="select" label="Select a proteome">
       <options from_data_table="Proteomes" />
     </param>
@@ -59,6 +62,7 @@
       <option value="3">Q-Extractive</option>
     </param>
 
+    <param name="ellie_fdr" type="float" min="0" max="1" value="0.01" label="Ellie FDR" />
     <param name="mods" type="select" display="checkboxes" label="Select PTMs to include" multiple="true">
       <options from_data_table="PTM" />
     </param>
@@ -88,8 +92,10 @@
     </conditional>
   </inputs>
   <outputs>
-    <data format="tabular" name="peptides" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}, peptides"/>
-    <data format="tabular" name="PSMs" label="Search of ${mgf.name}, NetMHC ${search_type.search_type_selector}, PSMs"/>
+    <data format="tabular" name="peptides" label="Peptides for search ${Name}"/>
+    <data format="tabular" name="PSMs" label="PSMs for search ${Name}" />
+    <data format="txt" name="positives" label="Ellie Positive PSMs" />
+    <data format="txt" name="unlabeled" label="Ellie Unlabeled PSMs" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
