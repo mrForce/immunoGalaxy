@@ -198,7 +198,7 @@ p = subprocess.Popen(['python3', 'ExportPSMWithQValues.py', project_directory, '
 assert(p.wait() == 0)
 print('got psms')
 
-command = ['python3', 'ExportElliePIN.py', project_directory, 'search', args.ellie_fdr, args.ellie_positives, args.ellie_unkowns]
+command = ['python3', 'ExportElliePIN.py', project_directory, 'search', args.ellie_fdr, args.ellie_positives, args.ellie_unknowns]
 print('going to call ExportElliePIN. Command: %s' % ' '.join(command))
 p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)

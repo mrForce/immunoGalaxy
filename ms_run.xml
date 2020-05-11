@@ -94,8 +94,8 @@
   <outputs>
     <data format="tabular" name="peptides" label="Peptides for search ${Name}"/>
     <data format="tabular" name="PSMs" label="PSMs for search ${Name}" />
-    <data format="txt" name="positives" label="Ellie Positive PSMs" />
-    <data format="txt" name="unlabeled" label="Ellie Unlabeled PSMs" />
+    <data format="txt" name="positives" label="Ellie Positive PSMs for search ${Name}" />
+    <data format="txt" name="unlabeled" label="Ellie Unlabeled PSMs for search ${Name}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
