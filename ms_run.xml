@@ -62,7 +62,7 @@
       <option value="3">Q-Extractive</option>
     </param>
 
-    <param name="ellie_fdr" type="float" min="0" max="1" value="0.01" label="Ellie FDR" />
+    <param name="ellie_fdr" type="float" min="0" max="1" value="0.01" label="PLATO FDR" />
     <param name="mods" type="select" display="checkboxes" label="Select PTMs to include" multiple="true">
       <options from_data_table="PTM" />
     </param>
@@ -94,8 +94,8 @@
   <outputs>
     <data format="tabular" name="peptides" label="Peptides for search ${Name}"/>
     <data format="tabular" name="PSMs" label="PSMs for search ${Name}" />
-    <data format="txt" name="positives" label="Ellie Positive PSMs for search ${Name}" />
-    <data format="txt" name="unlabeled" label="Ellie Unlabeled PSMs for search ${Name}" />
+    <data format="txt" name="positives" label="PLATO Positive PSMs for search ${Name}" />
+    <data format="txt" name="unlabeled" label="PLATO Unlabeled PSMs for search ${Name}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
