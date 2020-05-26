@@ -1,55 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <tool id="ellie_custom_filter" name="Filter TSV(s) by FDR and Q-value cutoffs" version="0.1.0">
   <command interpreter="python3">custom_filter.py
-  --peptide_column '$peptide_column'
-  --score_column '$score_column'
+  'str($input_type.input_type_selector)'
+  #if str($input_type.input_type_selector) == "msgf":
+  '${input_type.archive}'
+  --score_column lnEValue
+  --peptide_column Peptide
+  --score_direction +
+  --label_column Label
+  --target_label 1
+  --decoy_label -1
+  #elif str($input_type.input_type_selector) == "percolator":
+  '${input_type.archive}'
+  --score_column 'percolator score'
+  --peptide_column sequence
+  --score_direction +
+  #else:
+  '${input_type.input_file}'
+  --peptide_column '${input_type.peptide_column}'
+  --label_column '${input_type.label_column}'
+  --score_column '${input_type.score_column}'
+  --target_label '${input_type.target_label}'
+  --decoy_label '${input_type.decoy_label}'
   --score_direction $score_direction_selector
+  #end if  
   --threshold $threshold
-  #if str($skip_first_row) == "yes":
-  --skip_first_row
-  #end if
   --psm_fdr_output '$psm_fdr'
   --psm_q_output '$psm_q'
   --peptide_fdr_output '$peptide_fdr'
   --peptide_q_output '$peptide_q'
-  #if str($input_type.input_type_selector) == "label":
-  --combined_input_file ${input_type.input_file}
-  --label_column '${input_type.label_column}'
-  --target_label '${input_type.target_label}'
-  --decoy_label '${input_type.decoy_label}'
-  #else:
-  --target_file '${input_type.target_file}'
-  --decoy_file '${input_type.decoy_file}'
-  #end if
   </command>
   <inputs>
     <param name="name" type="text" label="Type in a name for job" />
     <conditional name="input_type">
-      <param name="input_type_selector" type="select" label="Select how targets and decoys are distinguished">
-	<option value="label" selected="true">Column with label</option>
-	<option value="seperate">Seperate files for targets and decoys</option>
+      <param name="input_type_selector" type="select" label="Select what you are filtering">
+	<option value="msgf" selected="true">MS-GF+</option>
+	<option value="percolator">Percolator</option>
+	<option value="other">Other (including PLATO)</option>
       </param>
-      <when value="label">
+      <when value="msgf">
+	<param name="archive" type="data" label="Search Archive" format="zip" />
+      </when>
+      <when value="percolator">
+	<param name="archive" type="data" label="Search Archive" format="zip" />
+      </when>
+      <when value="other">
 	<param name="input_file" type="data" label="Input File" format="txt" />
-	<param name="label_column" type="text" label="Label Column" />
-	<param name="target_label" type="text" label="Target Label" />
-	<param name="decoy_label" type="text" label="Decoy Label" />
+	<param name="peptide_column" type="text" label="Peptide Column" />
+	<param name="score_column" type="text" label="Score Column" />
+	<param name="target_label" type="text" label="Target Label" default="1"/>
+	<param name="decoy_label" type="text" label="Decoy Label" default="-1"/>
+	<param name="score_direction_selector" type="select" label="Select the score direction">
+	  <option value="+" selected="true">Higher better</option>
+	  <option value="-">Lower better</option>
+	</param>
       </when>
-      <when value="seperate">
-	<param name="target_file" type="data" label="Target File" format="txt" />
-	<param name="decoy_file" type="data" label="Decoy File" format="txt" />
-      </when>
-    </conditional>
-    <param name="skip_first_row" type="select" label="Skip first row after header row?">
-      <option value="yes">Yes</option>
-      <option value="no">No</option>
-    </param>
-    <param name="peptide_column" type="text" label="Peptide Column" />
-    <param name="score_column" type="text" label="Score Column" />
-    <param name="score_direction_selector" type="select" label="Select the score direction">
-      <option value="+" selected="true">Higher better</option>
-      <option value="-">Lower better</option>
-    </param>    
+    </conditional> 
     <param name="threshold" type="float" min="0" max="1" value="0.01" label="FDR/Q Value Threshold" />
   </inputs>
   <outputs>

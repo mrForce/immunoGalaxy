@@ -6,7 +6,9 @@ import itertools
 from enum import Enum
 import os
 import csv
+import tempfile
 import sys
+import zipfile
 class CutoffType(Enum):
     Q_VALUE = 1
     FDR = 2
@@ -91,23 +93,20 @@ peptide_regex = re.compile('^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$')
 ptm_removal_regex = re.compile('\[[^\]]*\]')
 
 parser = argparse.ArgumentParser(description='Given TSV file(s), a peptide column, score column, score direction, target/decoy column, FDR threshold, and output directory, apply the peptide level FDR threshold with slight variations. The second variant is whether to use the first (FDR) or last threshold crossing (Q-value). Output files should be target rows from input TSV file(s) that pass the FDR/Q-value threshold')
+parser.add_argument('input_source', help='Whether this is from Percolator, MS-GF+, or something else', choices=['msgf', 'percolator', 'other'])
+parser.add_argument('input_file', help='File. Could be an archive which contains the necessary files for MS-GF+ or Percolator.')
 parser.add_argument('--peptide_column', help='Which column contains the peptide')
 parser.add_argument('--score_column', help='Which column contains the score')
 parser.add_argument('--score_direction', help='+ if a higher score is better, - if a lower score is better', choices=['+', '-'])
 parser.add_argument('--threshold', help='FDR/Q-value cutoff', type=float)
-parser.add_argument('--skip_first_row', help='sometimes after the header row, there will be another row with additional crap in it we need to skip', action='store_true')
 parser.add_argument('--psm_fdr_output')
 parser.add_argument('--psm_q_output')
 parser.add_argument('--peptide_fdr_output')
 parser.add_argument('--peptide_q_output')
-#if combined file input, the following options apply
-parser.add_argument('--combined_input_file')
+
 parser.add_argument('--label_column')
 parser.add_argument('--target_label')
 parser.add_argument('--decoy_label')
-#if seperate files input, the following options apply
-parser.add_argument('--target_file')
-parser.add_argument('--decoy_file')
 
 """
 A wrapper around the dict. This is so we can specify the label without modifying the row contents
@@ -118,6 +117,11 @@ class Row:
         self.label = label
 
 args = parser.parse_args()
+assert(args.input_source)
+assert(args.input_file)
+
+
+
 assert(args.peptide_column)
 assert(args.score_column)
 assert(args.score_direction)
@@ -126,18 +130,11 @@ assert(args.psm_fdr_output)
 assert(args.psm_q_output)
 assert(args.peptide_fdr_output)
 assert(args.peptide_q_output)
-if args.combined_input_file:
-    assert(args.label_column)
+
+if args.input_source == 'msgf' or args.input_source == 'other':
     assert(args.target_label)
     assert(args.decoy_label)
-    assert(args.target_file is None)
-    assert(args.decoy_file is None)
-else:
-    assert(args.label_column is None)
-    assert(args.target_label is None)
-    assert(args.decoy_label is None)
-    assert(args.target_file)
-    assert(args.decoy_file)
+
 
 def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_first_row = False):
     rows = []
@@ -181,13 +178,31 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_f
 
 fieldnames = None
 rows = []
-
-if args.combined_input_file:
-    rows, fieldnames = read_tsv_file(args.combined_input_file, args, FileType.COMBINED, None, skip_first_row = args.skip_first_row)
+if args.input_source == 'msgf' or args.input_source == 'percolator':
+    with zipfile.ZipFile(args.input_file, 'r') as zip_ref:
+        names = zip_ref.namelist()
+        tmp_dir = tempfile.TemporaryDirectory()
+        if args.input_source == 'msgf':
+            pin_files = [x for x in names if x.endswith('.mzid.pin')]
+            print('pin files: ' + ', '.join(pin_files))
+            assert(len(pin_files) == 1)
+            pin_file_path = zip_ref.extract(pin_files[0], tmp_dir.name)
+            rows, fieldnames = read_tsv_file(pin_file_path, args, FileType.COMBINED, None)
+        else:
+            target_psms_files = [x for x in names if x.endswith('percolator.target.psms.txt')]
+            decoy_psms_files = [x for x in names if x.endswith('percolator.decoy.psms.txt')]
+            print('target psms files: ' + ', '.join(target_psms_files))
+            print('decoy psms files: ' + ', '.join(decoy_psms_files))
+            assert(len(target_psms_files) == 1)
+            assert(len(decoy_psms_files) == 1)
+            target_path = zip_ref.extract(target_psms_files[0], tmp_dir.name)
+            decoy_path = zip_ref.extract(decoy_psms_files[0], tmp_dir.name)
+            target_rows, fieldnames = read_tsv_file(target_path, args, FileType.TARGET, None, skip_first_row=True)
+            decoy_rows, decoy_fieldnames = read_tsv_file(decoy_path, args, FileType.DECOY, fieldnames, skip_first_row = True)
+            rows = target_rows + decoy_rows
 else:
-    target_rows, fieldnames = read_tsv_file(args.target_file, args, FileType.TARGET, None, skip_first_row = args.skip_first_row)
-    decoy_rows, decoy_fieldnames = read_tsv_file(args.decoy_file, args, FileType.DECOY, fieldnames, skip_first_row = args.skip_first_row)
-    rows = target_rows + decoy_rows
+    rows, fieldnames = read_tsv_file(args.combined_input_file, args, FileType.COMBINED, None, skip_first_row = args.skip_first_row)
+
 assert(rows)
 assert(fieldnames)
 parsed_peptide_rows = []
