@@ -150,6 +150,7 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_f
         assert(arguments.peptide_column in fieldnames)
         assert(arguments.score_column in fieldnames)
         if file_type is FileType.COMBINED:
+            print('fieldnames: ' + ', '.join(fieldnames~))
             assert(arguments.label_column in fieldnames)
         if skip_first_row:
             first_row = reader.__next__()
@@ -166,6 +167,12 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_f
             label = None
             if file_type is FileType.COMBINED:
                 assert(arguments.label_column in row_copy)
+                if not (row_copy[arguments.label_column] == arguments.target_label or row_copy[arguments.label_column] == arguments.decoy_label):
+                    print('row copy ')
+                    print(row_copy)
+                    print('label column: ' + arguments.label_column)
+                    print('target label: ' + arguments.target_label)
+                    print('decoy label: ' + arguments.decoy_label)
                 assert(row_copy[arguments.label_column] == arguments.target_label or row_copy[arguments.label_column] == arguments.decoy_label)
                 label = 1 if row_copy[arguments.label_column] == arguments.target_label else -1
             elif file_type is FileType.TARGET:
@@ -187,7 +194,7 @@ if args.input_source == 'msgf' or args.input_source == 'percolator':
             print('pin files: ' + ', '.join(pin_files))
             assert(len(pin_files) == 1)
             pin_file_path = zip_ref.extract(pin_files[0], tmp_dir.name)
-            rows, fieldnames = read_tsv_file(pin_file_path, args, FileType.COMBINED, None)
+            rows, fieldnames = read_tsv_file(pin_file_path, args, FileType.COMBINED, None, skip_first_row=True)
         else:
             target_psms_files = [x for x in names if x.endswith('percolator.target.psms.txt')]
             decoy_psms_files = [x for x in names if x.endswith('percolator.decoy.psms.txt')]
@@ -197,11 +204,11 @@ if args.input_source == 'msgf' or args.input_source == 'percolator':
             assert(len(decoy_psms_files) == 1)
             target_path = zip_ref.extract(target_psms_files[0], tmp_dir.name)
             decoy_path = zip_ref.extract(decoy_psms_files[0], tmp_dir.name)
-            target_rows, fieldnames = read_tsv_file(target_path, args, FileType.TARGET, None, skip_first_row=True)
-            decoy_rows, decoy_fieldnames = read_tsv_file(decoy_path, args, FileType.DECOY, fieldnames, skip_first_row = True)
+            target_rows, fieldnames = read_tsv_file(target_path, args, FileType.TARGET, None)
+            decoy_rows, decoy_fieldnames = read_tsv_file(decoy_path, args, FileType.DECOY, fieldnames)
             rows = target_rows + decoy_rows
 else:
-    rows, fieldnames = read_tsv_file(args.combined_input_file, args, FileType.COMBINED, None, skip_first_row = args.skip_first_row)
+    rows, fieldnames = read_tsv_file(args.input_file, args, FileType.COMBINED, None)
 
 assert(rows)
 assert(fieldnames)
