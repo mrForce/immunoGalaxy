@@ -27,8 +27,6 @@
 
   --instrument '$instrument'
 
-  --peptide_output '$peptides'
-  --psm_output '$PSMs'
   --ellie_fdr '$ellie_fdr'
   --ellie_positives '$positives'
   --ellie_unknowns '$unlabeled'
