@@ -92,8 +92,8 @@
     </conditional>
   </inputs>
   <outputs>
-    <data format="tabular" name="peptides" label="Peptides for search ${Name}"/>
-    <data format="tabular" name="PSMs" label="PSMs for search ${Name}" />
+    <!--- <data format="tabular" name="peptides" label="Peptides for search ${Name}"/> -->
+    <!--- <data format="tabular" name="PSMs" label="PSMs for search ${Name}" /> -->
     <data format="txt" name="positives" label="PLATO Positive PSMs for search ${Name}" />
     <data format="txt" name="unlabeled" label="PLATO Unlabeled PSMs for search ${Name}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />

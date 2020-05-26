@@ -208,6 +208,6 @@ print('got ellie outputs')
 if args.archive:
     print('project directory: %s' % project_directory)
     print('archive: %s' % args.archive)
-    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'database.db'), os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'TargetSet'), os.path.join(project_directory, 'FilteredNetMHC'), os.path.join(project_directory, 'FASTA'),  os.path.join(project_directory, 'MGF'), os.path.join(project_directory, 'Modifications')])
+    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'database.db'), os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'MGF'), os.path.join(project_directory, 'Modifications')])
     shutil.move(args.archive + '.zip', args.archive)
     print('Zip file size: %d' % os.path.getsize(args.archive))
