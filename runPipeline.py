@@ -2,6 +2,7 @@
 import sys
 import argparse
 import subprocess
+import glob
 import tempfile
 import shutil
 import os
@@ -20,9 +21,8 @@ parser.add_argument('--frag_method', type=str)
 parser.add_argument('--instrument', type=str)
 parser.add_argument('--mgf', type=str)
 parser.add_argument('--archive', type=str)
-parser.add_argument('--ellie_fdr', type=str)
-parser.add_argument('--ellie_positives', type=str)
-parser.add_argument('--ellie_unknowns', type=str)
+parser.add_argument('--msgf_unfiltered', type=str)
+parser.add_argument('--percolator_unfiltered', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
 
 
@@ -196,19 +196,40 @@ print('ran percolator')
 #assert(p.wait() == 0)
 #print('got psms')
 
-command = ['python3', 'ExportElliePIN.py', project_directory, 'search', args.ellie_fdr, args.ellie_positives, args.ellie_unknowns]
+command = ['python3', 'ExportElliePIN.py', project_directory, 'search', '0.01', '/dev/null', args.msgf_unfiltered]
 print('going to call ExportElliePIN. Command: %s' % ' '.join(command))
 p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 print('got ellie outputs')
 
+
+
+percolator_target_file = glob.glob(project_directory + '/**/percolator.target.psms.txt', recursive=True)
+assert(len(percolator_target_file) == 1)
+percolator_decoy_file = glob.glob(project_directory + '/**/percolator.decoy.psms.txt', recursive=True)
+assert(len(percolator_decoy_file) == 1)
+
+with tempfile.NamedTemporaryFile() as f:
+    command = ['awk', 'NR==1 {print "Label", $0} NR>1 {print 1, $0}', percolator_target_file[0]]
+    p = subprocess.Popen(command, stdout=f)
+    assert(p.wait() == 0)
+    with tempfile.NamedTemporaryFile() as g:
+        command = ['awk', 'NR>1 {print -1, $0}', percolator_decoy_file[0]]
+        p = subprocess.Popen(command, stdout=g)
+        assert(p.wait() == 0)
+        command = ['cat', f.name, g.name]
+        with open(args.percolator_unfiltered, 'w') as h:
+            p = subprocess.Popen(command, stdout=h)
+            assert(p.wait() == 0)
+
+"""
 #use custom script for FDR calculations.
 command = ['python3', '/galaxy-prod/galaxy/tools/MSEpitope/custom_filter.py', 'other', args.ellie_unknowns, '--peptide_column', 'Peptide', '--label_column', 'Label', '--score_column', 'lnEValue', '--target_label', '1', '--decoy_label', '-1', '--score_direction', '+', '--threshold', str(args.ellie_fdr), '--psm_q_output', args.ellie_positives, '--psm_fdr_output', '/dev/null', '--peptide_fdr_output', '/dev/null', '--peptide_q_output', '/dev/null']
 print('going to call custom_filter. Command: %s' % ' '.join(command))
 p = subprocess.Popen(command, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 print('got ellie positive output')
-
+"""
 
 if args.archive:
     print('project directory: %s' % project_directory)

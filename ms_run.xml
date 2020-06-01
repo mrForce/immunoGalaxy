@@ -27,9 +27,8 @@
 
   --instrument '$instrument'
 
-  --ellie_fdr '$ellie_fdr'
-  --ellie_positives '$positives'
-  --ellie_unknowns '$unlabeled'
+  --msgf_unfiltered '$msgfUnfiltered'
+  --percolator_unfiltered '$percolatorUnfiltered'
   
   --archive '$Archive'
   
@@ -92,8 +91,8 @@
   <outputs>
     <!--- <data format="tabular" name="peptides" label="Peptides for search ${Name}"/> -->
     <!--- <data format="tabular" name="PSMs" label="PSMs for search ${Name}" /> -->
-    <data format="txt" name="positives" label="PLATO Positive PSMs for search ${Name}" />
-    <data format="txt" name="unlabeled" label="PLATO Unlabeled PSMs for search ${Name}" />
+    <data format="txt" name="msgfUnfiltered" label="MS-GF+ PSMs Unfiltered for search ${Name}" />
+    <data format="txt" name="percolatorUnfiltered" label="Percolator PSMs for search ${Name}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
