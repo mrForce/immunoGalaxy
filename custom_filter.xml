@@ -38,17 +38,35 @@
 	<option value="percolator">Percolator</option>
 	<option value="other">Other (including PLATO)</option>
       </param>
-      <when value="msgf">
-	<param name="archive" type="data" label="Search Archive" format="zip" />
-      </when>
       <when value="percolator">
-	<param name="archive" type="data" label="Search Archive" format="zip" />
+	<param name="input_file" type="data" label="Input File" format="txt" />
+	<param name="peptide_column" type="text" label="Peptide Column Header" default="sequence"/>
+	<param name="score_column" type="text" label="Score Column Header"  default="percolator score" />
+	<param name="label_column" type="text" label="Label Column Header" default="Label" />
+	<param name="target_label" type="text" label="Target Label" default="1"/>
+	<param name="decoy_label" type="text" label="Decoy Label" default="-1"/>
+	<param name="score_direction_selector" type="select" label="Select the score direction">
+	  <option value="+" selected="true">Higher better</option>
+	  <option value="-">Lower better</option>
+	</param>
+      </when>
+      <when value="msgf">
+	<param name="input_file" type="data" label="Input File" format="txt" />
+	<param name="peptide_column" type="text" label="Peptide Column Header" default="Peptide"/>
+	<param name="score_column" type="text" label="Score Column Header"  default="lnEValue" />
+	<param name="label_column" type="text" label="Label Column Header" default="Label" />
+	<param name="target_label" type="text" label="Target Label" default="1"/>
+	<param name="decoy_label" type="text" label="Decoy Label" default="-1"/>
+	<param name="score_direction_selector" type="select" label="Select the score direction">
+	  <option value="+" selected="true">Higher better</option>
+	  <option value="-">Lower better</option>
+	</param>
       </when>
       <when value="other">
 	<param name="input_file" type="data" label="Input File" format="txt" />
-	<param name="peptide_column" type="text" label="Peptide Column" default="Peptide"/>
-	<param name="score_column" type="text" label="Score Column"  default="Avg" />
-	<param name="label_column" type="text" label="Label Column" default="Label" />
+	<param name="peptide_column" type="text" label="Peptide Column Header" default="Peptide"/>
+	<param name="score_column" type="text" label="Score Column Header"  default="Avg" />
+	<param name="label_column" type="text" label="Label Column Header" default="Label" />
 	<param name="target_label" type="text" label="Target Label" default="1"/>
 	<param name="decoy_label" type="text" label="Decoy Label" default="-1"/>
 	<param name="score_direction_selector" type="select" label="Select the score direction">
