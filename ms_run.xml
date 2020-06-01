@@ -59,7 +59,6 @@
       <option value="3">Q-Extractive</option>
     </param>
 
-    <param name="ellie_fdr" type="float" min="0" max="1" value="0.01" label="PLATO FDR" />
     <param name="mods" type="select" display="checkboxes" label="Select PTMs to include" multiple="true">
       <options from_data_table="PTM" />
     </param>
