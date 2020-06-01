@@ -40,8 +40,8 @@ print(args.pep_len)
 
 
 
-#tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
-tools_location = '/home/jordan/github/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
+tools_location = '/galaxy-prod/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
+#tools_location = '/home/jordan/github/galaxy/tools-dependencies/bin/MSEpitope/tidePipeline'
 
 allele_list = []
 filtered = False
@@ -203,7 +203,7 @@ assert(p.wait() == 0)
 print('got ellie outputs')
 
 #use custom script for FDR calculations.
-command = ['python3', 'custom_filter.py', 'other', args.ellie_unknowns, '--peptide_column', 'Peptide', '--label_column', 'Label', '--score_column', 'lnEValue', '--target_label', '1', '--decoy_label', '-1', '--score_direction', '+', '--threshold', str(args.ellie_fdr), '--psm_q_output', args.ellie_positives, '--psm_fdr_output', '/dev/null', '--peptide_fdr_output', '/dev/null', '--peptide_q_output', '/dev/null']
+command = ['python3', '/galaxy-prod/galaxy/tools/MSEpitope/custom_filter.py', 'other', args.ellie_unknowns, '--peptide_column', 'Peptide', '--label_column', 'Label', '--score_column', 'lnEValue', '--target_label', '1', '--decoy_label', '-1', '--score_direction', '+', '--threshold', str(args.ellie_fdr), '--psm_q_output', args.ellie_positives, '--psm_fdr_output', '/dev/null', '--peptide_fdr_output', '/dev/null', '--peptide_q_output', '/dev/null']
 print('going to call custom_filter. Command: %s' % ' '.join(command))
 p = subprocess.Popen(command, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)

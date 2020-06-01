@@ -8,6 +8,12 @@ import re
 import csv
 import subprocess
 import sys
+
+print('cwd: ' + os.getcwd())
+command = ['python3', '/galaxy-prod/galaxy/tools/MSEpitope/custom_filter.py']
+p = subprocess.Popen(command, stderr=sys.stdout.fileno())
+assert(p.wait() == 0)
+print('stuff')
 parser = argparse.ArgumentParser()
 #if percolator, then use the output of the search, which is from percolator. If 'raw', then unpack ZIP file, and compute (peptide level) Q-values ourself.
 parser.add_argument('--type', choices=['percolator', 'raw'])

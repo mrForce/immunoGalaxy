@@ -108,6 +108,7 @@ parser.add_argument('--label_column')
 parser.add_argument('--target_label')
 parser.add_argument('--decoy_label')
 
+
 """
 A wrapper around the dict. This is so we can specify the label without modifying the row contents
 """
