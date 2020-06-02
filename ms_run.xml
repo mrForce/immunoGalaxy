@@ -121,15 +121,15 @@
     Percolator: Version 3.02.0 in Crux version 3.20-d57cff
     NetMHC: Version 4.0
     
-    =======================
+    ===========================
     Unfiltered Search Mode
-    =======================
+    ===========================
     
     In this mode, the tool takes the base proteome, and concats any additional FASTA files to it. Then it runs MS-GF+ and Percolator. 
 
-    =====================
+    =========================
     Filtered Search Mode
-    =====================
+    =========================
 
     In this mode, the user must specify a set of peptide lengths, a set of MHC-I alleles, and a rank *k*. For each length-allele combination, the tool "scores" the peptides of that length using NetMHC that allele. I put "scores" in quotes because we pre-computed the scores for the 8-13 mers in the base proteome with each allele supported by NetMHC, so only peptides that are uploaded by the user in the "additional protein FASTA files" are scored by NetMHC on the fly. Then, it selects the top *k* percent best scoring peptides for that length-allele combination. For example, suppose the user specified lengths 8, 9 and 10, and alleles HLA-A0101 and HLA-B0702, and *k* is 2%. Then, the tool would select the following peptides:
 
