@@ -93,7 +93,6 @@ peptide_regex = re.compile('^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$')
 ptm_removal_regex = re.compile('\[[^\]]*\]')
 
 parser = argparse.ArgumentParser(description='Given TSV file(s), a peptide column, score column, score direction, target/decoy column, FDR threshold, and output directory, apply the peptide level FDR threshold with slight variations. The second variant is whether to use the first (FDR) or last threshold crossing (Q-value). Output files should be target rows from input TSV file(s) that pass the FDR/Q-value threshold')
-parser.add_argument('input_source', help='Whether this is from Percolator, MS-GF+, or something else', choices=['msgf', 'percolator', 'other'])
 parser.add_argument('input_file', help='File. Could be an archive which contains the necessary files for MS-GF+ or Percolator.')
 parser.add_argument('--peptide_column', help='Which column contains the peptide')
 parser.add_argument('--score_column', help='Which column contains the score')
@@ -118,7 +117,7 @@ class Row:
         self.label = label
 
 args = parser.parse_args()
-assert(args.input_source)
+
 assert(args.input_file)
 
 
@@ -131,11 +130,14 @@ assert(args.psm_fdr_output)
 assert(args.psm_q_output)
 assert(args.peptide_fdr_output)
 assert(args.peptide_q_output)
+assert(args.target_label)
+assert(args.decoy_label)
 
+"""
 if args.input_source == 'msgf' or args.input_source == 'other':
     assert(args.target_label)
     assert(args.decoy_label)
-
+"""
 
 def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_first_row = False):
     rows = []
@@ -151,7 +153,7 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_f
         assert(arguments.peptide_column in fieldnames)
         assert(arguments.score_column in fieldnames)
         if file_type is FileType.COMBINED:
-            print('fieldnames: ' + ', '.join(fieldnames~))
+            print('fieldnames: ' + ', '.join(fieldnames))
             assert(arguments.label_column in fieldnames)
         if skip_first_row:
             first_row = reader.__next__()
@@ -186,6 +188,7 @@ def read_tsv_file(input_path, arguments, file_type, fieldnames = None, *, skip_f
 
 fieldnames = None
 rows = []
+"""
 if args.input_source == 'msgf' or args.input_source == 'percolator':
     with zipfile.ZipFile(args.input_file, 'r') as zip_ref:
         names = zip_ref.namelist()
@@ -210,7 +213,8 @@ if args.input_source == 'msgf' or args.input_source == 'percolator':
             rows = target_rows + decoy_rows
 else:
     rows, fieldnames = read_tsv_file(args.input_file, args, FileType.COMBINED, None)
-
+"""
+rows, fieldnames = read_tsv_file(args.input_file, args, FileType.COMBINED, None)
 assert(rows)
 assert(fieldnames)
 parsed_peptide_rows = []
