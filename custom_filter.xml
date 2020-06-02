@@ -88,11 +88,25 @@
     - JOB_NAME Peptide-level Step-Down Filter
     - JOB_NAME Peptide-level Q-Value Filter
 
-    To control FDR at the peptide-level, one must first select the best scoring PSM for each Peptide, and discard the other PSM's for that peptide. I use the following Python regex to extract the peptide from the row::
+    To control FDR at the peptide-level, one must first select the best scoring PSM for each Peptide, and discard the other PSM's for that peptide. I extract the peptide in the following way. First, I take the Peptide field and try to match it against the following Python regex:
 
-    >> ^[A-Z\-]\.(?P&lt;peptide&gt;.*)\.[A-Z\-]$
+    ^[A-Z\-]\.(?P&lt;peptide&gt;.*)\.[A-Z\-]$
 
-  
+    If the matching succeeds, it uses the peptide group from the match object. For example, GCHR would be extracted from Y.GCHR.S. If the match fails, then the whole Peptide field is used. For example, if the peptide field was just YTNNC, then this would fail the match, and simply be used as the peptide. 
+
+    Let's call the set of PSMs given to us *A*. For each peptide, we select the best scoring PSM, forming a set of PSMs *B*.
+
+    To control FDR at the PSM level, we run our procedure on *A*. To control it at the peptide level, we run the procedure on *B*.
+
+    Now, here is the procedure:
+
+    1. Group together PSMs with the same score.
+    2. Sort the groups by their score, from best to worst, into a list.
+    3. Scan from the start to the end of the list from step 2, keeping track of the number of target PSMs and the number of decoy PSMs. At each group, compute the following ratio: (num decoys + 1)/num_targets
+
+    Say there are *n* groups, indexed from 1 to *n*, and we are given an FDR cutoff *c*. When doing the Q-Value filter, find the highest indexed group where (num decoys + 1)/num_targets is less than *c*. Suppose this group has index *i*. We take the target PSMs from groups 1-to-*i*. When doing the Step-Down filter, find the lowest index *i* where group *i* has ratio (num decoys + 1)/num_targets greater than or equal to *c*. Take the target PSMs from groups 1-to-*i - 1.
+
+    The Step-Down and Q-Value filters will typically yield the same set of PSMs, but this isn't always the case.
   </help>
 
 </tool>
