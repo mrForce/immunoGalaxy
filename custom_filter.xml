@@ -104,7 +104,7 @@
     2. Sort the groups by their score, from best to worst, into a list.
     3. Scan from the start to the end of the list from step 2, keeping track of the number of target PSMs and the number of decoy PSMs. At each group, compute the following ratio: (num decoys + 1)/num_targets
 
-    Say there are *n* groups, indexed from 1 to *n*, and we are given an FDR cutoff *c*. When doing the Q-Value filter, find the highest indexed group where (num decoys + 1)/num_targets is less than *c*. Suppose this group has index *i*. We take the target PSMs from groups 1-to-*i*. When doing the Step-Down filter, find the lowest index *i* where group *i* has ratio (num decoys + 1)/num_targets greater than or equal to *c*. Take the target PSMs from groups 1-to-*i - 1*.
+    Say there are *n* groups, indexed from 1 to *n*, and we are given an FDR cutoff *c*. When doing the Q-Value filter, find the highest indexed group where (num decoys + 1)/num_targets is less than *c*. Suppose this group has index *i*. We take the target PSMs from groups 1-to-*i*. When doing the Step-Down filter, find the lowest index *i* where group *i* has ratio (num decoys + 1)/num_targets greater than or equal to *c*. Take the target PSMs from groups 1-to-(*i* - 1).
 
     The Step-Down and Q-Value filters will typically yield the same set of PSMs, but this isn't always the case.
   </help>
