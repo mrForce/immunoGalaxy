@@ -20,7 +20,8 @@
       <param name="input_type_selector" type="select" label="Select what you are filtering">
 	<option value="msgf" selected="true">MS-GF+</option>
 	<option value="percolator">Percolator</option>
-	<option value="other">Other (including PLATO)</option>
+	<option value="plato">PLATO</option>
+	<option value="other">Other</option>
       </param>
       <when value="percolator">
 	<param name="input_file" type="data" label="Input File" format="txt" />
@@ -46,13 +47,25 @@
 	  <option value="-">Lower better</option>
 	</param>
       </when>
-      <when value="other">
+      <when value="plato">
 	<param name="input_file" type="data" label="Input File" format="txt" />
 	<param name="peptide_column" type="text" label="Peptide Column Header" value="Peptide"/>
 	<param name="score_column" type="text" label="Score Column Header"  value="Avg" />
 	<param name="label_column" type="text" label="Label Column Header" value="Label" />
 	<param name="target_label" type="text" label="Target Label" value="1"/>
 	<param name="decoy_label" type="text" label="Decoy Label" value="-1"/>
+	<param name="score_direction_selector" type="select" label="Select the score direction">
+	  <option value="+" selected="true">Higher better</option>
+	  <option value="-">Lower better</option>
+	</param>
+      </when>
+      <when value="other">
+	<param name="input_file" type="data" label="Input File" format="txt" />
+	<param name="peptide_column" type="text" label="Peptide Column Header"/>
+	<param name="score_column" type="text" label="Score Column Header"/>
+	<param name="label_column" type="text" label="Label Column Header"/>
+	<param name="target_label" type="text" label="Target Label"/>
+	<param name="decoy_label" type="text" label="Decoy Label"/>
 	<param name="score_direction_selector" type="select" label="Select the score direction">
 	  <option value="+" selected="true">Higher better</option>
 	  <option value="-">Lower better</option>
@@ -106,7 +119,7 @@
 
     Say there are *n* groups, indexed from 1 to *n*, and we are given an FDR cutoff *c*. When doing the Q-Value filter, find the highest indexed group where (num decoys + 1)/num_targets is less than *c*. Suppose this group has index *i*. We take the target PSMs from groups 1-to-*i*. When doing the Step-Down filter, find the lowest index *i* where group *i* has ratio (num decoys + 1)/num_targets greater than or equal to *c*. Take the target PSMs from groups 1-to-(*i* - 1).
 
-    The Step-Down and Q-Value filters will typically yield the same set of PSMs, but this isn't always the case.
+    The Step-Down and Q-Value filters will typically yield the same set of PSMs, but this isn't always the case. 
   </help>
 
 </tool>
