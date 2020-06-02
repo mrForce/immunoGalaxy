@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<tool id="msgfplus_runner" name="Run MSGF+ on Proteome" version="0.1.0">
+<tool id="msgfplus_runner" name="Run MSGF+ on Proteome" version="20.06">
   <command interpreter="python3">runPipeline.py
   '$proteome'
 
@@ -105,77 +105,35 @@
   </tests>         
   
   <help>
-    The purpose of this tool is to run an MS-GF+ search using our pipeline. I'll go through each of the options and explain what they mean:
+    The purpose of this tool is to run MS-GF+ and Percolator. 
 
-    First, there's the "select proteome" dropdown. You select the proteome you want to search against. Right now there are two options: the SwissProt human, and the SwissProt mouse. These are simply labeled as "Human" and "Mouse". More can be added by me (Jordan) if requested.
+    First, there's the "select proteome" dropdown. You select the proteome you want to search against. Right now there is only a single option: human. It was extracted from here: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640_9606.fasta.gz in April 2019. 
 
-    Then, there's an option for adding additional protein FASTA files. How these are used depends on the tool's mode (NetMHC filtered on unfiltered).
+    Then, there's an option for adding additional protein FASTA files. How these are used depends on the tool's mode, which I will get to in a moment. 
 
-    The fragmentation method and instrument should be self explanatory.
+    The fragmentation method, instrument and PTMs should be self explanatory.
+    ======================
+    Tool versions
+    ======================
 
+    MS-GF+: v2020.03.14
+    msgf2pin: I use a custom version of msgf2pin. I forked the percolator repo: https://github.com/mrForce/msgf2pin-PTM-Mass-Delta
+    Percolator: Version 3.02.0 in Crux version 3.20-d57cff
+    NetMHC: Version 4.0
+    
 =======================
 Unfiltered Search Mode
 =======================
 
 
     
-    In this mode, the tool takes the base proteome, and concats any additional FASTA files to it. Then, it runs an MS-GF+ search against the resulting set of proteins. The following options are explicitly set in the MS-GF+ search (see: https://msgfplus.github.io/msgfplus/MSGFPlus.html)
-
-
-+--------------------+------------------------------+----------------+------------------------------------------------+
-| Search Param       | Description                  | Value          | Meaning of Value                               |
-+--------------------+------------------------------+----------------+------------------------------------------------+
-| -e                 |                              | 0              |                                                |
-|                    | Enzyme to use when           |                | Unspecific cleavage. Breaks proteins into      |
-|                    |                              |                |                                                |
-|                    | generating proteome          |                | all possible peptides between                  |
-|                    |                              |                |                                                |
-|                    |                              |                | min and max length                             |
-+--------------------+------------------------------+----------------+------------------------------------------------+
-| -inst              |                              | User specified | Changes scoring function                       |
-|                    | What instrument generated    |                |                                                |
-|                    |                              |                |                                                |
-|                    | the data                     |                |                                                |
-+--------------------+------------------------------+----------------+------------------------------------------------+
-| -m                 | Fragmentation method         | User specified | Changes scoring function                       |
-+--------------------+------------------------------+----------------+------------------------------------------------+
-| -n                 |                              | 1              |                                                |
-|                    | Report top n peptides        |                | Only best scoring peptide reported             |
-|                    | for each spectra             |                |                                                |
-|                    |                              |                | for each spectra                               |
-+--------------------+------------------------------+----------------+------------------------------------------------+
-| -ignoreMetCleavage |                              | 1              |                                                |
-|                    | Hidden option that controls  |                | Turns off meth cleavage. See:                  |
-|                    | whether to cleave methionine |                | https://github.com/MSGFPlus/msgfplus/issues/51 |
-|                    | from N-terminus of peptides  |                |                                                |
-+--------------------+------------------------------+----------------+------------------------------------------------+
-
-There are also some relevant parameters that aren't specified in the search, and left to default in MS-GF+:
-
-
-+-------------------------+------------------------+---------------+---------------------------------+
-| Search Param            | Description            | Default Value | Meaning of Value                |
-+-------------------------+------------------------+---------------+---------------------------------+
-| -precursorMassTolerance |                        | 20ppm         |                                 |
-+-------------------------+------------------------+---------------+---------------------------------+
-| -minLength              | Minimum peptide length | 6             |                                 |
-|                         |                        |               | Will only consider              |
-|                         |                        |               |                                 |
-|                         |                        |               | peptides with length at least 6 |
-+-------------------------+------------------------+---------------+---------------------------------+
-| -maxLength              | Maximum peptide length | 40            |                                 |
-|                         |                        |               | Will only consider peptides     |
-|                         |                        |               | with length at most 40          |
-+-------------------------+------------------------+---------------+---------------------------------+
-
-
+    In this mode, the tool takes the base proteome, and concats any additional FASTA files to it. Then it runs MS-GF+ and Percolator. 
 
 =====================
 Filtered Search Mode
 =====================
 
-
-For each MHC allele and peptide length, score the peptides in the proteome of that length, and take k percent best scoring. For example, if the MHC alleles are HLA-A0101 and HLA-B0702, and the checked lengths are 8, 9 and 10, and k is 2, then we would generate 6 different set of peptides:
+In this mode, the user must specify a set of peptide lengths, a set of MHC-I alleles, and a rank *k*. For each length-allele combination, the tool "scores" the peptides of that length using NetMHC that allele. I put "scores" in quotes because we pre-computed the scores for the 8-13 mers in the base proteome with each allele supported by NetMHC, so only peptides that are uploaded by the user in the "additional protein FASTA files" are scored by NetMHC on the fly. Then, it selects the top *k* percent best scoring peptides for that length-allele combination. For example, suppose the user specified lengths 8, 9 and 10, and alleles HLA-A0101 and HLA-B0702, and *k* is 2%. Then, the tool would select the following peptides:
 
 * 2% highest scoring length 8 peptides for HLA-A0101
 * 2% highest scoring length 9 peptides for HLA-A0101
@@ -184,20 +142,39 @@ For each MHC allele and peptide length, score the peptides in the proteome of th
 * 2% highest scoring length 9 peptides for HLA-B0702
 * 2% highest scoring length 10 peptides for HLA-B0702
 
-Suppose there were 1000 peptides of length 8 in the proteome, 2000 peptides of length 9 in the proteome, and 4000 peptides of length 10 in the proteome. Then sets 1 and 4 would contain 20 peptides each, sets 2 and 5 would have 40 peptides each, and sets 3 and 6 would have 80 peptides each. It's possible that sets 1 and 4 could have overlap, that sets 2 and 5 could have overlap, and that sets 3 and 6 could have overlap. We would search the concatenation of these 6 peptide sets.
+This yields 6 sets of peptides. We concatenate the sets, create a FASTA file from it, and use MS-GF+Percolator to search the MGF file against this FASTA file.
 
-This is why we have a base proteome: All length 8-13 peptides in the base proteome have been pre-scored by NetMHC for each allele, so we don't have to re-do the scoring each time a search is done. When additional protein FASTA files are added, the proteins are broken into peptides (with lengths that depend on the user specified lengths), and added to the set of unfiltered peptides in the proteome. *Then* the top k NetMHC scoring peptides are taken for each allele-length combination.
+Just a few points to clarify here:
 
-Only one MS-GF+ search parameter changes: we use "-e 9" instead of "-e 0"; this tells MS-GF+ not to do any in-silico digestion.
+* The entries in the uploaded FASTA files are considered proteins, so they will be cut into the lengths specified by the user.
+* The rank cutting is done after combining the peptides from the uploaded FASTA(s) and base proteome.
+* NetMHC provides a rank output for each peptide. We do **not** use this; the rank is relative to the scored set of peptides.
 
 ===============
 Outputs
 ===============
-Right now there are three outputs. The main output is a list of peptides and corresponding Q-values. This is *peptide* level Q-value, as determined by Percolator. This paper gives a good summary of what peptide-level Q value is: https://noble.gs.washington.edu/papers/granholm2013determining.pdf
+There are four outputs:
 
-Filtering the peptides with a Q-value under 0.05 corresponds to controlling the False Discovery Rate at 5 percent i.e. Approximately 5 percent of the peptides are false positives.
+1. MS-GF+ PSMs
+2. Percolator PSMs
+3. Log
+4. Archive
 
-The other two outputs are a log and a project ZIP file; these are mainly for debugging purposes. 
+The first output is essentially the PIN generated by msgf2pin, except with the second row removed. This second row contains information that Percolator needs, but is otherwise not useful to us.
+
+The second output is a little more complicated. Even though we do the search against a concatenated set of target and decoy peptides, Percolator seperates the target and decoy PSMs into two seperate outputs: percolator.target.psms.txt and percolator.decoy.psms.txt. These are both TSV files, where the first row is a header row, and the remaining rows are PSMs. To generate the output for our tool, we take the two files, insert a column with the header Label. This column contains 1 for each row in percolator.target.psms.txt, and -1 for each row in percolator.decoy.psms.txt. Then, the two files are concatenated, with the header row from percolator.decoy.psms.txt removed.
+
+The third output is a log file; it contains the stdout and stderr of MS-GF+, msgf2pin, and Percolator, and the commands that were ran themselves, if you're interested in that.
+
+The fourth output is a ZIP file. It contains the following files (buried under many layers of folders):
+
+* The MGF file that was searched. It doesn't retain the original name.
+* The Modifications file that was passed to MS-GF+.
+* a database.db file that I may use for debugging purposes
+* The MS-GF+ index files
+* The MS-GF+ search output. search.mzid is created by MS-GF+, and search.mzid.pin is created by msgf2pin
+* The percolator output files. These are: percolator.decoy.peptides.txt, percolator.decoy.psms.txt, percolator.log.txt, percolator.params.txt, percolator.target.peptides.txt and percolator.target.psms.txt
+
 
   </help>
 
