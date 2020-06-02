@@ -62,9 +62,9 @@
     <param name="threshold" type="float" min="0" max="1" value="0.01" label="FDR/Q Value Threshold" />
   </inputs>
   <outputs>
-    <data format="txt" name="psm_fdr" label="${name} PSM-level FDR Filter" />
+    <data format="txt" name="psm_fdr" label="${name} PSM-level Step-Down Filter" />
     <data format="txt" name="psm_q" label="${name} PSM-level Q-Value Filter" />
-    <data format="txt" name="peptide_fdr" label="${name} Peptide-level FDR Filter" />
+    <data format="txt" name="peptide_fdr" label="${name} Peptide-level Step-Down Filter" />
     <data format="txt" name="peptide_q" label="${name} Peptide-level Q-value Filter" />
   </outputs>
 
@@ -77,7 +77,22 @@
   </tests>         
   
   <help>
-    This tool computes GC content from a FASTA file.
+    This tool is for computing FDR/Q-values and filtering based on them. It assumes that the search was done using concatenated TDC. That is, each spectrum is searched against a database consisting of both targets and decoys, and is matched to **one** peptide, either a target or decoy peptide. This match is called a peptide-spectrum match (PSM). Note that this tool is *not* compatible with searches performed using seperated TDC. That is, where each spectra is matched to both a target peptide, and a decoy peptide.
+
+    The tool requires a TSV (tab-seperated value) file as input. The first row is a header row. The remaining rows are the PSMs. Each row (PSM) must contain the: Peptide, score, and label; additionally, the user must specify how the target and decoy PSMs are labeled, and the score direction (is a higher score better, or is a lower score better?). The user must also specify a FDR/Q-Value cutoff. 1% is the default.
+
+    The tool has 4 outputs:
+
+    - JOB_NAME PSM-level Step-Down Filter
+    - JOB_NAME PSM-level Q-Value Filter
+    - JOB_NAME Peptide-level Step-Down Filter
+    - JOB_NAME Peptide-level Q-Value Filter
+
+    To control FDR at the peptide-level, one must first select the best scoring PSM for each Peptide, and discard the other PSM's for that peptide. I use the following Python regex to extract the peptide from the row:
+
+    > ^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$
+
+    
   </help>
 
 </tool>
