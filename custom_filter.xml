@@ -88,8 +88,9 @@
     - JOB_NAME Peptide-level Step-Down Filter
     - JOB_NAME Peptide-level Q-Value Filter
 
-    To control FDR at the peptide-level, one must first select the best scoring PSM for each Peptide, and discard the other PSM's for that peptide. I use the following Python regex to extract the peptide from the row:
+    To control FDR at the peptide-level, one must first select the best scoring PSM for each Peptide, and discard the other PSM's for that peptide. I use the following Python regex to extract the peptide from the row::
 
+    >> ^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$
   
   </help>
 
