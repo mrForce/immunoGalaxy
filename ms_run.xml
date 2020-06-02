@@ -112,6 +112,7 @@
     Then, there's an option for adding additional protein FASTA files. How these are used depends on the tool's mode, which I will get to in a moment. 
 
     The fragmentation method, instrument and PTMs should be self explanatory.
+    
     ======================
     Tool versions
     ======================
