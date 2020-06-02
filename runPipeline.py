@@ -210,11 +210,11 @@ percolator_decoy_file = glob.glob(project_directory + '/**/percolator.decoy.psms
 assert(len(percolator_decoy_file) == 1)
 
 with tempfile.NamedTemporaryFile() as f:
-    command = ['awk', 'NR==1 {print "Label", $0} NR>1 {print 1, $0}', percolator_target_file[0]]
+    command = ['awk', 'BEGIN {OFS="\t"} NR==1 {print "Label", $0} NR>1 {print 1, $0}', percolator_target_file[0]]
     p = subprocess.Popen(command, stdout=f)
     assert(p.wait() == 0)
     with tempfile.NamedTemporaryFile() as g:
-        command = ['awk', 'NR>1 {print -1, $0}', percolator_decoy_file[0]]
+        command = ['awk', 'BEGIN {OFS="\t"} NR>1 {print -1, $0}', percolator_decoy_file[0]]
         p = subprocess.Popen(command, stdout=g)
         assert(p.wait() == 0)
         command = ['cat', f.name, g.name]
