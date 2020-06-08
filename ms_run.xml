@@ -22,8 +22,8 @@
   #end if
   --num_matches_per_spectrum 1
   --mgf '$mgf'
-  --minLength $minLength
-  --maxLength $maxLength
+  --minLength $search_type.minLength
+  --maxLength $search_type.maxLength
   --frag_method '$frag_method'
 
   --instrument '$instrument'
