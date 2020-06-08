@@ -24,6 +24,8 @@ parser.add_argument('--archive', type=str)
 parser.add_argument('--msgf_unfiltered', type=str)
 parser.add_argument('--percolator_unfiltered', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
+parser.add_argument('--minLength', type=int, default=0)
+parser.add_argument('--maxLength', type=int, default=0)
 
 
 args = parser.parse_args()
@@ -175,6 +177,12 @@ else:
     
 print('created msgfplus index')
 command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--modifications_name', 'mod', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum)]
+if args.minLength > 0:
+    command.append('--minLength')
+    command.append(str(args.minLength))
+if args.maxLength > 0:
+    command.append('--maxLength')
+    command.append(str(args.maxLength))
 print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(command))
 p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)

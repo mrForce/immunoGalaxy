@@ -22,7 +22,8 @@
   #end if
   --num_matches_per_spectrum 1
   --mgf '$mgf'
-
+  --minLength $minLength
+  --maxLength $maxLength
   --frag_method '$frag_method'
 
   --instrument '$instrument'
@@ -85,6 +86,10 @@
 	</param>
 	<param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
       </when>
+      <when value="unfiltered">
+	<param name="minLength" type="integer" value="6" label="Minimum Peptide Length" />
+	<param name="maxLength" type="integer" value="40" label="Max Peptide Length" />
+      </when>      
     </conditional>
   </inputs>
   <outputs>
