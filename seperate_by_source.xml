@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tool id="source_seperate" name="Seperate PSMs by source based on _source= in output" version="20.06">
+  <command interpreter="python3">source_seperate.py
+  $input_file
+  $base_rows
+  $added_fasta_rows
+  '$protein_column'
+  </command>
+  <inputs>
+    <param name="name" type="text" label="Type in a name for job" />
+    <param name="input_file" type="data" label="Input File" format="txt" />
+    <param name="protein_column" type="text" label="Protein Column" value="protein id" />
+	
+  </inputs>
+  <outputs>
+    <data format="txt" name="base_rows" label="${name} Rows from Base" />
+    <data format="txt" name="added_fasta_rows" label="${name} Rows from Added FASTA file" />
+  </outputs>
+
+
+  
+  <help>
+    This is for when a user uses an additional FASTA file in the search, and then runs the FDR filter. Then, the user wants to seperate the PSMs/Peptides from their source -- either the base proteome, or what they uploaded.
+
+    When my search tool runs, it appends _source={0|1} to the accession part of the FASTA file. Well, only if the user uploads an additional FASTA file. That way, it can track where the peptides came from (0 means the base proteome, 1 means the additional FASTA file). 
+  </help>
+
+</tool>
+
+
