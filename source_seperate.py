@@ -20,19 +20,22 @@ with open(args.input_file, 'r') as f:
     source_regex = re.compile('.*_source=(?P<source>0|1)')
     assert(args.protein_column in reader.fieldnames)
     for row in reader:
-        protein = row[args.protein_column]
-        match = source_regex.match(protein)
-        if match:
-            group = match.group('source')
-            assert(group in ['0', '1'])
-            if group == '0':
-                base_rows.append(row)
-            elif group == '1':
-                additional_fasta_rows.append(row)
+        proteins = row[args.protein_column].split(',')
+        base = False
+        for protein in proteins:
+            match = source_regex.match(protein)
+            if match:
+                group = match.group('source')
+                assert(group in ['0', '1'])
+                if group == '0':
+                    base = True
+            else:
+                print('No source')
+                assert(match)
+        if base:
+            base_rows.append(row)
         else:
-            print('No source')
-            assert(match)
-
+            additional_fasta_rows.append(row)
 
     base_writer = csv.DictWriter(base_output, reader.fieldnames, delimiter='\t')
     base_writer.writeheader()
