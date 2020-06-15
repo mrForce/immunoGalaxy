@@ -3,9 +3,9 @@
   <command interpreter="python3">runPipeline.py
   '$proteome'
 
-  #for $p in $proteins
+  #if $fasta
   --additional_proteome '$p.fasta'
-  #end for
+  #end if
 
   #if str($search_type.search_type_selector) == 'filtered'
   #for $r in $search_type.mhcalleles
@@ -41,9 +41,9 @@
       <options from_data_table="Proteomes" />
     </param>
 
-    <repeat name="proteins" title="Add additional protein FASTA files">
-      <param name="fasta" type="data" label="Select a FASTA file" format="fasta" />
-    </repeat>
+
+    <param optional="true" name="fasta" type="data" label="Select a FASTA file" format="fasta" />
+
 
     <param name="mgf" type="data" label="Select an MGF file" format="mgf" />
 
