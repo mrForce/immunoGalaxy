@@ -4,7 +4,7 @@
   '$proteome'
 
   #if $fasta
-  --additional_proteome '$p.fasta'
+  --additional_proteome '$fasta'
   #end if
 
   #if str($search_type.search_type_selector) == 'filtered'
