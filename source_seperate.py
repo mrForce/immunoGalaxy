@@ -39,7 +39,7 @@ with open(args.input_file, 'r') as f:
     for x in base_rows:
         base_writer.writerow(x)
     additional_writer = csv.DictWriter(additional_fasta_output, reader.fieldnames, delimiter='\t')
-    additional_fasta_output.writeheader()
+    additional_writer.writeheader()
     for x in additional_fasta_rows:
         additional_writer.writerow(x)
     
