@@ -100,7 +100,7 @@ if args.additional_proteome:
         """
         If we're doing NetMHC filtering, then there's no point in combining FASTA files.
         """
-        command = ['python3', 'ConcatFASTA.py', project_directory, 'cproteome', 'proteome'] + additional_fasta_names + ['source=True']
+        command = ['python3', 'ConcatFASTA.py', project_directory, 'cproteome', 'proteome'] + additional_fasta_names + ['--source']
         print('going to call ConcatFASTA. Command: %s' % ' '.join(command))
         p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
         assert(p.wait() == 0)
