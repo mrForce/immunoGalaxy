@@ -13,6 +13,9 @@
   #end for
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
+  #else
+  --minLength $search_type.minLength
+  --maxLength $search_type.maxLength
   #end if
 
   #if $mods.value
@@ -22,8 +25,6 @@
   #end if
   --num_matches_per_spectrum $numMatches
   --mgf '$mgf'
-  --minLength $search_type.minLength
-  --maxLength $search_type.maxLength
   --frag_method '$frag_method'
 
   --instrument '$instrument'
