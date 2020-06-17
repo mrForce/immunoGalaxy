@@ -29,6 +29,8 @@
 
   --instrument '$instrument'
 
+  --precursor_tolerance '$precursorTolerance'
+
   --msgf_unfiltered '$msgfUnfiltered'
   --percolator_unfiltered '$percolatorUnfiltered'
   
@@ -64,6 +66,8 @@
     <param name="mods" type="select" display="checkboxes" label="Select PTMs to include" multiple="true">
       <options from_data_table="PTM" />
     </param>
+
+    <param name="precursorTolerance" type="text" label="Precursor tolerance" value="20ppm" />
 
     <param name="numMatches" type="integer" value="1" label="Num matches per spectrum" />
     <!--- <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" /> -->

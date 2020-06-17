@@ -19,6 +19,7 @@ parser.add_argument('--pep_len', type=str)
 parser.add_argument('--rank_filter', type=str)
 parser.add_argument('--frag_method', type=str)
 parser.add_argument('--instrument', type=str)
+parser.add_argument('--precursor_tolerance', type=str)
 parser.add_argument('--mgf', type=str)
 parser.add_argument('--archive', type=str)
 parser.add_argument('--msgf_unfiltered', type=str)
@@ -176,7 +177,7 @@ else:
     assert(p.wait() == 0)
     
 print('created msgfplus index')
-command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--modifications_name', 'mod', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum)]
+command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--modifications_name', 'mod', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum), '--t', args.precursor_tolerance]
 if args.minLength > 0:
     command.append('--minLength')
     command.append(str(args.minLength))
