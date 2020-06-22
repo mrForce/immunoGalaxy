@@ -25,7 +25,7 @@
   --mode netMHCPercolator
   --minLength $search_type.minLength
   --maxLength $search_type.maxLength
-  #endif
+  #end if
 
   #if $mods.value
   #for $mod in $mods.value
