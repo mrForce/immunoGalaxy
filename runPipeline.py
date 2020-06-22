@@ -236,7 +236,7 @@ print('ran msgfplus search')
 
 command = ['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator', '--num_matches_per_spectrum', str(args.num_matches_per_spectrum)]
 if args.mode == 'netMHCPercolator':
-    for x in args.alleles:
+    for x in args.allele:
         command.append('--allele')
         command.append(x)
 print('going to call RunPercolator. Command: %s' % ' '.join(command))
