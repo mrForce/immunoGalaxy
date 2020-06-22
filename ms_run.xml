@@ -8,15 +8,24 @@
   #end if
 
   #if str($search_type.search_type_selector) == 'filtered'
+  --mode filtered
   #for $r in $search_type.mhcalleles
   --allele $r.allele.value
   #end for
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
-  #else
+  #elif str($search_type.search_type_selector) == 'unfiltered'
+  --mode unfiltered
   --minLength $search_type.minLength
   --maxLength $search_type.maxLength
-  #end if
+  #else
+  #for $r in $search_type.mhcalleles
+  --allele $r.allele.value
+  #end for
+  --mode netMHCPercolator
+  --minLength $search_type.minLength
+  --maxLength $search_type.maxLength
+  #endif
 
   #if $mods.value
   #for $mod in $mods.value
@@ -74,6 +83,7 @@
     <conditional name="search_type">
       <param name="search_type_selector" type="select" label="Choose search type">
 	<option value="unfiltered" selected="true">Unfiltered Search</option>
+	<option value="netmhcPercolator">Use NetMHC in Percolator</option>
 	<option value="filtered">Filtered Search</option>
       </param>
       <when value="filtered">
@@ -95,7 +105,16 @@
       <when value="unfiltered">
 	<param name="minLength" type="integer" value="6" label="Minimum Peptide Length" />
 	<param name="maxLength" type="integer" value="40" label="Max Peptide Length" />
-      </when>      
+      </when>
+      <when value="netmhcPercolator">
+	<repeat name="mhcalleles" title="Select MHC Alleles">
+	  <param name="allele" type="select" label="Select an allele">
+	    <options from_data_table="Alleles" />
+	  </param>
+	</repeat>
+	<param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	<param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+      </when>
     </conditional>
   </inputs>
   <outputs>
