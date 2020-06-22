@@ -54,7 +54,7 @@ filtered = False
 if args.mode == 'filtered':
     filtered = True
 peptide_lengths = []
-if args.allele:
+if filtered:
     peptide_lengths = args.pep_len.split(',')
     for x in args.allele:
         allele_list.append('--allele')
