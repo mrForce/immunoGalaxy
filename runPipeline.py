@@ -10,7 +10,7 @@ import itertools
 import uuid
 parser = argparse.ArgumentParser()
 
-TEST=True
+TEST=False
 
 parser.add_argument('base_project')
 parser.add_argument('--allele', action='append')
