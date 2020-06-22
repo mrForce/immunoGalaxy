@@ -182,12 +182,11 @@ for x in args.allele:
 
 mgf_link = os.path.join(project_directory, 'thing.mgf')
 
-os.symlink(args.mgf, mgf_link)
-
 print('going to call AddMGF. Command: %s' % ' '.join(['python3', 'AddMGF.py', project_directory, mgf_link, 'mgf', '8', args.frag_method, args.instrument]))
 if TEST:
     print('skipping AddMGF because of TEST')
 else:
+    os.symlink(args.mgf, mgf_link)
     p = subprocess.Popen(['python3', 'AddMGF.py', project_directory, mgf_link, 'mgf', '8', args.frag_method, args.instrument], cwd=tools_location, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
 
