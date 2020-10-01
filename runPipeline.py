@@ -8,6 +8,21 @@ import shutil
 import os
 import itertools
 import uuid
+
+
+def getMemory():
+    p = subprocess.run(['free'], stdout=subprocess.PIPE)
+    s = p.stdout.encode()
+    lines = s.split('\n')
+    first_line_split = lines[0].split()
+    assert('available' in first_line_split)
+    available_index = first_line_split.index('available')
+    for line in lines[1::]:
+        split_line = line.split()
+        if split_line[0] == 'Mem:':
+            return int(split_line[available_index])
+    return -1
+    
 parser = argparse.ArgumentParser()
 
 TEST=False
@@ -219,7 +234,10 @@ else:
         assert(p.wait() == 0)
     
 print('created msgfplus index')
-command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--modifications_name', 'mod', '--memory', '10000', '--thread', '4', '--n', str(args.num_matches_per_spectrum), '--t', args.precursor_tolerance]
+memory = getMemory()
+assert(memory > 0)
+#use half the available memory. Divide by 1024 to get megabytes. Divide by 2 to cut in half. 
+command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--modifications_name', 'mod', '--memory', str(int(memory/2048)), '--thread', '4', '--n', str(args.num_matches_per_spectrum), '--t', args.precursor_tolerance]
 if args.minLength > 0:
     command.append('--minLength')
     command.append(str(args.minLength))
@@ -264,7 +282,7 @@ if TEST:
 else:
     p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
     if p.wait() != 0:
-        printf('COULD NOT CREATE ELLIE PIN')
+        print('COULD NOT CREATE ELLIE PIN')
 
 
 
