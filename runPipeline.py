@@ -263,8 +263,8 @@ if TEST:
     print('skipping ExportElliePIN because of TEST')
 else:
     p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
-    assert(p.wait() == 0)
-print('got ellie outputs')
+    if p.wait() != 0:
+        printf('COULD NOT CREATE ELLIE PIN')
 
 
 
