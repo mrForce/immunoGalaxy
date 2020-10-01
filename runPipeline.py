@@ -12,7 +12,7 @@ import uuid
 
 def getMemory():
     p = subprocess.run(['free'], stdout=subprocess.PIPE)
-    s = p.stdout.encode()
+    s = p.stdout.decode()
     lines = s.split('\n')
     first_line_split = lines[0].split()
     assert('available' in first_line_split)
