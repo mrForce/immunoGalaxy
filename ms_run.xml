@@ -82,7 +82,7 @@
     <!--- <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" /> -->
     <conditional name="search_type">
       <param name="search_type_selector" type="select" label="Choose search type">
-	<option value="unfiltered" selected="true">Unspecific Cleavage</option>
+	<option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
 	<option value="filtered">NetMHC Filtered Peptide Search</option>
 	<option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
       </param>
