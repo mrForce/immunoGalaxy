@@ -14,13 +14,10 @@ def getMemory():
     p = subprocess.run(['free'], stdout=subprocess.PIPE)
     s = p.stdout.decode()
     lines = s.split('\n')
-    first_line_split = lines[0].split()
-    assert('available' in first_line_split)
-    available_index = first_line_split.index('available')
     for line in lines[1::]:
         split_line = line.split()
         if split_line[0] == 'Mem:':
-            return int(split_line[available_index])
+            return int(split_line[-1])
     return -1
     
 parser = argparse.ArgumentParser()
@@ -56,8 +53,9 @@ print(args.pep_len)
 
 
 
-
-
+memory = getMemory()
+print('Memory: ' + str(memory))
+assert(memory > 0)
 
 
 
@@ -232,10 +230,8 @@ else:
     else:
         p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
         assert(p.wait() == 0)
-    
-print('created msgfplus index')
-memory = getMemory()
-assert(memory > 0)
+print('created msgfplus index')    
+
 #use half the available memory. Divide by 1024 to get megabytes. Divide by 2 to cut in half. 
 command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--modifications_name', 'mod', '--memory', str(int(memory/2048)), '--thread', '4', '--n', str(args.num_matches_per_spectrum), '--t', args.precursor_tolerance]
 if args.minLength > 0:
@@ -254,8 +250,8 @@ print('ran msgfplus search')
 
 command = ['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator', '--num_matches_per_spectrum', str(args.num_matches_per_spectrum)]
 if args.mode == 'netMHCPercolator':
+    command.append('--allele')
     for x in args.allele:
-        command.append('--allele')
         command.append(x)
 print('going to call RunPercolator. Command: %s' % ' '.join(command))
 if TEST:
