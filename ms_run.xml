@@ -157,6 +157,7 @@
     * The entries in the uploaded FASTA files are considered proteins, so they will be cut into the lengths specified by the user.
     * The rank cutting is done after combining the peptides from the uploaded FASTA(s) and base proteome.
     * NetMHC provides a rank output for each peptide. We do **not** use this; the rank is relative to the scored set of peptides.
+    * We search the generated FASTA file using the "no cleavage" for the EnzymeID in MS-GF+. 
 
     The problem with this mode is that the *k* is basically arbitrary. There's no specific reason to use 2% as the cutoff. So, I've introduced a third mode: "Unspecific Cleavage, NetMHC as Percolator Feature". This is similar to the first mode, but we use the NetMHC score as a feature in Percolator. Before we run Percolator, for each PSM from MS-GF+, we score the peptide against the user-specified alleles using NetMHC, and add as Percolator feature the best score. For example, consider a PSM with peptide HQAAMQMLK, and alleles HLA-A0301 and HLA-B0802. The predicted IC50 for those alleles is: 31.42 and 28347.44 nM. We would use 31.42 as the value for the "NetMHC score" feature in Percolator. The idea here is that Percolator can learn how useful the NetMHC score is in seperating correct from incorrect PSMs, and we don't need to set an arbitrary rank cutoff. You'll notice that the default min and max peptide lengths are 8 and 11, respectively. This is because, as of this writing, the NetMHC webpage advises that "Predictions for peptides longer than 11 amino acids should be taken with caution."
 
@@ -201,6 +202,9 @@
     * The percolator output files. These are: percolator.decoy.peptides.txt, percolator.decoy.psms.txt, percolator.log.txt, percolator.params.txt, percolator.target.peptides.txt and percolator.target.psms.txt
 
 
+    FDR Control
+
+    This is mentioned in the MS-GF+ documentation, but I'll give a brief summary here. One way of doing FDR control is called Target-Decoy Analysis (or Competition). Basically, you take the database, and generate a set of "decoy" peptides based off of it. The assumption here is that a spectrum matched against a decoy peptide is incorrect, and from this you estimate the fraction of target matches that are incorrect. MS-GF+ generates the decoys by reversing the peptides in the target database, and then generating peptides based on those reversed proteins. However, in search mode 2 (where we filter by the NetMHC score), because we pass the peptides to MS-GF+ directly, they are reversed to form the decoys; whereas in search modes 1 and 3, the proteins are reversed and then unspecifically digested. 
   </help>
 
 </tool>
