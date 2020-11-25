@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<tool id="msgfplus_runner" name="Run MSGF+ on Proteome" version="20.06">
+<tool id="msgfplus_runner" name="MS-GF+Percolator Database Search" version="20.06">
   <command interpreter="python3">runPipeline.py
   '$proteome'
 
@@ -82,9 +82,9 @@
     <!--- <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" /> -->
     <conditional name="search_type">
       <param name="search_type_selector" type="select" label="Choose search type">
-	<option value="unfiltered" selected="true">Unfiltered Search</option>
-	<option value="netmhcPercolator">Use NetMHC in Percolator</option>
-	<option value="filtered">Filtered Search</option>
+	<option value="unfiltered" selected="true">Unspecific Cleavage</option>
+	<option value="filtered">NetMHC Filtered Peptide Search</option>
+	<option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
       </param>
       <when value="filtered">
 	<repeat name="mhcalleles" title="Select MHC Alleles">
@@ -120,7 +120,7 @@
   <outputs>
     <!--- <data format="tabular" name="peptides" label="Peptides for search ${Name}"/> -->
     <!--- <data format="tabular" name="PSMs" label="PSMs for search ${Name}" /> -->
-    <data format="txt" name="msgfUnfiltered" label="MS-GF+ PSMs Unfiltered for search ${Name}" />
+    <data format="txt" name="msgfUnfiltered" label="MS-GF+ PSMs for search ${Name}" />
     <data format="txt" name="percolatorUnfiltered" label="Percolator PSMs for search ${Name}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
@@ -135,34 +135,13 @@
   </tests>         
   
   <help>
-    The purpose of this tool is to run MS-GF+ and Percolator. 
+    Consider the following experiment: You take some cells, extract the MHC-I presented peptides, and analyze the peptides using MS/MS. From this, you get a set of spectra, and you now want to search these spectra against a peptide database. This tool provides an easy way to do that. It uses MS-GF+ for the database search, and Percolator for post-processing. MS-GF+ matches each spectra to a peptide, with a score. Percolator uses some fancy machine learning (SVM) to combine features like MS-GF+ score, charge, delta between theoretical and measured mass, etc. into a better scoring function. The Peptide-Spectrum Matches (PSMs), and their scores, are outputted as TSV files with the names: "Percolator PSMs for search {Search Name}" and "MS-GF+ PSMs for search {Search Name}", and you can use another tool called "Filter TSV(s) by FDR and Q-Value Cutoffs" to do FDR control (see that tool description for more details). 
 
-    First, there's the "select proteome" dropdown. You select the proteome you want to search against. Right now there is only a single option: human. It was extracted from here: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640_9606.fasta.gz in April 2019. 
+    In most proteomic experiments, you would use a cleaving enzyme (such as Trypsin) to break the proteins into smaller peptides, and then sequence those peptides. The database search tool would do in-silico digestion of the protein database to get the set of peptides to search the spectra against. This is **not** what my tool does, because there are no clear-cut rules about what peptides will be presented by MHC-I. So, I have created three tool modes.
 
-    Then, there's an option for adding additional protein FASTA files. How these are used depends on the tool's mode, which I will get to in a moment. 
+    The first mode is to construct the peptide database by breaking the protein database into all peptides between a user-specified minimum and maximum length. This option is called "Unspecific Cleavage". Then, search the spectra against those peptides. Note that this is done by specifying 0 (Unspecific Cleavage) as the EnzymeID in MS-GF+ (so the MS-GF+ command includes: "-e 0" in it). As you can imagine, this yields a huge search space, which is bad for both runtime and statistical reasons. The bigger the database, the more stringent you have to be when doing FDR (False Discovery Rate) control because of multiple testing. I will add more information about how FDR is estimated near the end of this tool description.
 
-    The fragmentation method, instrument and PTMs should be self explanatory.
-    
-
-    Tool Versions
-
-
-    MS-GF+: v2020.03.14
-    msgf2pin: I use a custom version of msgf2pin. I forked the percolator repo: https://github.com/mrForce/msgf2pin-PTM-Mass-Delta
-    Percolator: Version 3.02.0 in Crux version 3.20-d57cff
-    NetMHC: Version 4.0
-    
-
-      Unfiltered Search Mode
-
-    
-    In this mode, the tool takes the base proteome, and concats any additional FASTA files to it. Then it runs MS-GF+ and Percolator. 
-
-
-       Filtered Search Mode
-
-
-    In this mode, the user must specify a set of peptide lengths, a set of MHC-I alleles, and a rank *k*. For each length-allele combination, the tool "scores" the peptides of that length using NetMHC that allele. I put "scores" in quotes because we pre-computed the scores for the 8-13 mers in the base proteome with each allele supported by NetMHC, so only peptides that are uploaded by the user in the "additional protein FASTA files" are scored by NetMHC on the fly. Then, it selects the top *k* percent best scoring peptides for that length-allele combination. For example, suppose the user specified lengths 8, 9 and 10, and alleles HLA-A0101 and HLA-B0702, and *k* is 2%. Then, the tool would select the following peptides:
+    To address this problem, I added a second mode: "NetMHC Filtered Peptide Search". It breaks the proteins into peptides, and then scores those peptides using NetMHC. In this mode, the user must specify a set of peptide lengths, a set of MHC-I alleles, and a rank *k*. For each length-allele combination, the tool "scores" the peptides of that length using NetMHC that allele. I put "scores" in quotes because we pre-computed the scores for the 8-13 mers in the base proteome with each allele supported by NetMHC, so only peptides that are uploaded by the user in the "additional protein FASTA files" are scored by NetMHC on the fly. Then, it selects the top *k* percent best scoring peptides for that length-allele combination. For example, suppose the user specified lengths 8, 9 and 10, and alleles HLA-A0101 and HLA-B0702, and *k* is 2%. Then, the tool would select the following peptides:
 
     * 2% highest scoring length 8 peptides for HLA-A0101
     * 2% highest scoring length 9 peptides for HLA-A0101
@@ -178,6 +157,23 @@
     * The entries in the uploaded FASTA files are considered proteins, so they will be cut into the lengths specified by the user.
     * The rank cutting is done after combining the peptides from the uploaded FASTA(s) and base proteome.
     * NetMHC provides a rank output for each peptide. We do **not** use this; the rank is relative to the scored set of peptides.
+
+    The problem with this mode is that the *k* is basically arbitrary. There's no specific reason to use 2% as the cutoff. So, I've introduced a third mode: "Unspecific Cleavage, NetMHC as Percolator Feature". This is similar to the first mode, but we use the NetMHC score as a feature in Percolator. Before we run Percolator, for each PSM from MS-GF+, we score the peptide against the user-specified alleles using NetMHC, and add as Percolator feature the best score. For example, consider a PSM with peptide HQAAMQMLK, and alleles HLA-A0301 and HLA-B0802. The predicted IC50 for those alleles is: 31.42 and 28347.44 nM. We would use 31.42 as the value for the "NetMHC score" feature in Percolator. The idea here is that Percolator can learn how useful the NetMHC score is in seperating correct from incorrect PSMs, and we don't need to set an arbitrary rank cutoff. You'll notice that the default min and max peptide lengths are 8 and 11, respectively. This is because, as of this writing, the NetMHC webpage advises that "Predictions for peptides longer than 11 amino acids should be taken with caution."
+
+    Other Parameters
+
+    
+    The fragmentation method, instrument, and precursor tolerance correspond directly to the -m, -inst, and -t options in MS-GF+. The "Num matches per spectrum" parameter are the (maximum) number of peptides matched to each spectra. This corresponds to the -n option in MS-GF+. 
+    
+
+    Versions
+
+    Human proteome is from here: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640_9606.fasta.gz, extracted on April 2019 
+    MS-GF+: v2020.03.14
+    msgf2pin: I use a custom version of msgf2pin. I forked the percolator repo: https://github.com/mrForce/msgf2pin-PTM-Mass-Delta
+    Percolator: Version 3.02.0 in Crux version 3.20-d57cff
+    NetMHC: Version 4.0
+    
 
 
     Outputs
