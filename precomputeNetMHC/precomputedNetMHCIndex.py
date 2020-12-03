@@ -1,7 +1,7 @@
 import io
 import array
 from Bio import SeqIO
-from collections import Counter, namedtuple
+from collections import Counter, namedtuple, defaultdict
 
 class DuplicatePeptideMarker:
     def __init__(self, sequenceStart, nextProteinIndex, nextChainPosition, lastProteinIndex, lastChainPosition):
@@ -24,7 +24,52 @@ class FASTAPeptideCollection:
     def writeToFile(self, delim, fastaPath):
         pass
 
+def getPeptideOccurences(recordIterator, peptideLength):
+    peptides = defaultdict(list)
+    proteinIndex = 0
+    for record in recordIterator:
+        for startIndex in range(0, len(record.seq) - peptideLength + 1):
+            peptide = str(record.seq[startIndex:(startIndex + peptideLength)])
+            peptides[peptide].append((proteinIndex, startIndex))
+        proteinIndex += 1
+    return (peptides, proteinIndex)
 
+def createDuplicateChains(peptideOccurences, numProteins):
+    chains = [[] for x in range(0, numProteins)]
+    for peptide, occurences in dict(peptideOccurences).items():
+        print('chains')
+        print(chains)
+        print('peptide: ' + peptide)
+        if len(occurences) > 1:
+            print('occurences')
+            print(occurences)
+            lastProteinIndex = None
+            lastChainPosition = None
+            for i in range(0, len(occurences)):
+                element = occurences[i]
+                print('element')
+                print(element)
+                chains[element[0]].append(DuplicatePeptideMarker(element[1], None, None, lastProteinIndex, lastChainPosition))
+                print(chains[element[0]])
+                if i > 0:
+                    assert(lastProteinIndex != None)
+                    assert(lastChainPosition != None)
+                    last = chains[lastProteinIndex][lastChainPosition]
+                    last.nextProteinIndex = element[0]
+                    last.nextChainPosition = len(chains[element[0]]) - 1
+                lastProteinIndex = element[0]
+                lastChainPosition = len(chains[element[0]]) - 1
+    return chains
+def sortDuplicateChains(chains):
+    for i in range(0, len(chains)):
+        chains[i].sort(key=lambda x: x.sequenceStart)
+        for j in range(0, len(chains[i])):
+            element = chains[i][j]
+            if element.nextProteinIndex != None:
+                chains[element.nextProteinIndex][element.nextChainPosition].lastChainPosition = j
+            if element.lastProteinIndex != None:
+                chains[element.lastProteinIndex][element.lastChainPosition].nextChainPosition = j
+    
 def duplicatePeptideChains(recordIterator, peptideLength):
     peptides = {}
     proteinIndex = 0
@@ -52,15 +97,7 @@ def duplicatePeptideChains(recordIterator, peptideLength):
             else:
                 peptides[peptide] = TempPeptideTracker(True, None, proteinIndex, startIndex)
         proteinIndex += 1
-    for i in range(0, len(chains)):
-        chains[i].sort(key=lambda x: x.sequenceStart)
-        for j in range(0, len(chains[i])):
-            element = chains[i][j]
-            if element.nextProteinIndex != None:
-                chains[element.nextProteinIndex][element.nextChainPosition].lastChainPosition = j
-            if element.lastProteinIndex != None:
-                chains[element.lastProteinIndex][element.lastChainPosition].nextChainPosition = j
-    return chains
+
                     
 class ProteinPeptideTable:
     def __init__(self, fastaFile, peptideLength):
