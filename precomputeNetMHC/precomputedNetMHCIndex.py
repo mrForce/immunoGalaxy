@@ -11,6 +11,13 @@ class DuplicatePeptideMarker:
         self.lastProteinIndex = lastProteinIndex
         self.lastChainPosition = lastChainPosition
 
+
+class ProteinChain:
+    def __init__(self, length):
+        self.length = length
+        self.chain = []
+        
+    
 class TempPeptideTracker:
     def __init__(self, first, chainPosition, proteinIndex, sequenceStart):
         self.first = first
@@ -24,22 +31,24 @@ class FASTAPeptideCollection:
     def writeToFile(self, delim, fastaPath):
         pass
 
-def getPeptideOccurences(recordIterator, peptideLength):
+
+    
+def getPeptideOccurencesAndProteinLengths(recordIterator, peptideLength):
     peptides = defaultdict(list)
     proteinIndex = 0
+    proteinLengths = []
     for record in recordIterator:
         for startIndex in range(0, len(record.seq) - peptideLength + 1):
             peptide = str(record.seq[startIndex:(startIndex + peptideLength)])
             peptides[peptide].append((proteinIndex, startIndex))
+        proteinLengths.append(len(record.seq))
         proteinIndex += 1
-    return (peptides, proteinIndex)
+        
+    return (peptides, proteinLengths)
 
-def createDuplicateChains(peptideOccurences, numProteins):
-    chains = [[] for x in range(0, numProteins)]
+def createDuplicateChains(peptideOccurences, proteinLengths):
+    chains = [ProteinChain(x) for x in proteinLengths]
     for peptide, occurences in dict(peptideOccurences).items():
-        print('chains')
-        print(chains)
-        print('peptide: ' + peptide)
         if len(occurences) > 1:
             print('occurences')
             print(occurences)
@@ -49,27 +58,29 @@ def createDuplicateChains(peptideOccurences, numProteins):
                 element = occurences[i]
                 print('element')
                 print(element)
-                chains[element[0]].append(DuplicatePeptideMarker(element[1], None, None, lastProteinIndex, lastChainPosition))
-                print(chains[element[0]])
+                chains[element[0]].chain.append(DuplicatePeptideMarker(element[1], None, None, lastProteinIndex, lastChainPosition))
+                print(chains[element[0]].chain)
                 if i > 0:
                     assert(lastProteinIndex != None)
                     assert(lastChainPosition != None)
-                    last = chains[lastProteinIndex][lastChainPosition]
+                    last = chains[lastProteinIndex].chain[lastChainPosition]
                     last.nextProteinIndex = element[0]
-                    last.nextChainPosition = len(chains[element[0]]) - 1
+                    last.nextChainPosition = len(chains[element[0]].chain) - 1
                 lastProteinIndex = element[0]
-                lastChainPosition = len(chains[element[0]]) - 1
+                lastChainPosition = len(chains[element[0]].chain) - 1
     return chains
 def sortDuplicateChains(chains):
     for i in range(0, len(chains)):
-        chains[i].sort(key=lambda x: x.sequenceStart)
-        for j in range(0, len(chains[i])):
-            element = chains[i][j]
+        chains[i].chain.sort(key=lambda x: x.sequenceStart)
+        for j in range(0, len(chains[i].chain)):
+            element = chains[i].chain[j]
             if element.nextProteinIndex != None:
-                chains[element.nextProteinIndex][element.nextChainPosition].lastChainPosition = j
+                chains[element.nextProteinIndex].chain[element.nextChainPosition].lastChainPosition = j
             if element.lastProteinIndex != None:
-                chains[element.lastProteinIndex][element.lastChainPosition].nextChainPosition = j
-    
+                chains[element.lastProteinIndex].chain[element.lastChainPosition].nextChainPosition = j
+
+
+
 def duplicatePeptideChains(recordIterator, peptideLength):
     peptides = {}
     proteinIndex = 0
