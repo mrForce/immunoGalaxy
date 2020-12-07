@@ -31,8 +31,7 @@ class FASTAPeptideCollection:
     def writeToFile(self, delim, fastaPath):
         pass
 
-
-    
+        
 def getPeptideOccurencesAndProteinLengths(recordIterator, peptideLength):
     peptides = defaultdict(list)
     proteinIndex = 0
@@ -45,6 +44,7 @@ def getPeptideOccurencesAndProteinLengths(recordIterator, peptideLength):
         proteinIndex += 1
         
     return (peptides, proteinLengths)
+
 
 def createDuplicateChains(peptideOccurences, proteinLengths):
     chains = [ProteinChain(x) for x in proteinLengths]
@@ -79,7 +79,33 @@ def sortDuplicateChains(chains):
             if element.lastProteinIndex != None:
                 chains[element.lastProteinIndex].chain[element.lastChainPosition].nextChainPosition = j
 
+class NoDuplicatePeptideIterator:
+    def __init__(self, chains, recordIterator, length):
+        self.chains = chains
+        self.recordIterator = recordIterator
+        self.chainIndex = 0
+        self.positionInProtein = 0
+        self.positionInChain = 0
+    def advance(self):
+        self.positionInProtein += 1
+        if self.positionInProtein == self.chains[self.chainIndex].length:
+            self.chainIndex += 1
+            self.positionInChain = 0
+            self.positionInProtein = 0
+        if self.chainIndex >= len(self.chains):
+            return None
+        if self.positionInChain < len(self.chains[self.chainIndex]) and self.chains[self.chainIndex][self.positionInChain].sequenceStart == self.positionInProtein and self.chains[self.chainIndex][self.positionInChain].lastProteinIndex != None:
+            self.positionInChain += 1
+            self.advance()
+            
+    def skipPeptide(self):
+        self.advance()
+    def getPeptide(self, headers=False):
+        if 
+        pass
+        
 
+                
 
 def duplicatePeptideChains(recordIterator, peptideLength):
     peptides = {}
@@ -109,6 +135,74 @@ def duplicatePeptideChains(recordIterator, peptideLength):
                 peptides[peptide] = TempPeptideTracker(True, None, proteinIndex, startIndex)
         proteinIndex += 1
 
+
+class ScoreTable:
+    def __init__(self, filename):
+        self.filename = filename
+        self.alleles = []
+        #the number of bytes the list of alleles takes up. Basically, read this # of bytes, and you're add the start of the score table.
+        self.headerSize = -1
+        if os.path.isfile(filename):            
+            reader = open(filename, 'rb')
+            alleleListSize = int.from_bytes(reader.read(4), 'little')
+            alleleListBytes = array.array('u', '')
+            alleleListBytes.frombytes(reader.read(alleleListSize))
+            alleleListString = alleleListBytes.tounicode()
+            self.alleles = alleleListString.split(' ')
+            reader.close()
+            self.headerSize = 4 + alleleListSize
+            z = array.array('I', [])
+            self.rowSize = len(self.alleles)*z.itemsize
+    def getTableReader(self):
+        if self.headerSize < 0:
+            return None
+        else:
+            reader = open(self.filename, 'rb')
+            reader.read(self.headerSize)
+            return reader
+    def addAllele(self, netmhcCaller, alleleName, peptideIterator):
+        assert(alleleName not in self.alleles)
+        reader = self.getTableReader()
+        self.alleles.append(alleleName)
+        #create a temporary file to hold the output. 
+        fd, path = temp.mkstemp()
+        tempWriter = open(path, 'wb')
+        alleleListString = ' '.join(self.alleles)
+        alleleArray = array.array('u', alleleListString)
+        alleleListBytes = alleleArray.tobytes()
+        tempWriter.write(len(alleleListBytes).to_bytes(4, 'little'))
+        tempWriter.write(alleleListBytes)
+        scoreIter = netmhcCaller.scorePeptides(alleleName, peptideIter)
+        z = array.array('I', [])        
+        inputRowSize = z.itemsize*(len(self.alleles) - 1)
+        outputRowSize = z.itemsize*len(self.alleles)
+        for score in scoreIter:
+            x = array.array('I', [])
+            if inputRowSize > 0:
+                inputRowBytes = self.reader.read(inputRowSize)
+                x.extend(inputRowBytes)
+            x.append(int(score))
+            outputRowBytes = x.tobytes()
+            assert(outputRowSize == len(outputRowBytes))
+            tempWriter.write(outputRowBytes)
+        tempWriter.flush()
+      
+        shutil.copyfile(path, self.filename)
+        os.remove(path)
+        self.__init__(self.filename)
+    def getAlleleList(self):
+        return self.alleles
+    
+    def __iter__(self):
+        self.reader = self.getTableReader()
+        assert(self.reader != None)
+        return self
+    def __next__(self):
+        rowBytes = self.reader.read(self.rowSize)
+        rowArray = array.array('I', rowBytes)
+        return rowArray
+        
+
                     
 class ProteinPeptideTable:
     def __init__(self, fastaFile, peptideLength):
@@ -128,15 +222,8 @@ class ScoreTable:
     def __init__(self, ppt):
         self.ppt = ppt
         self.alleleScores = {}
-    def addAllele(self, netmhcCaller, alleleName):
-        assert(alleleName not in self.alleleScores)
-        peptideIter = self.ppt.peptideIterator()
-        scoreIter = netmhcCaller.scorePeptides(alleleName, peptideIter)
-        scoreArray = array.array('I', scoreIter)
-        assert(len(scoreArray) == self.ppt.getNumPeptides())
-        self.alleleScores[alleleName] = scoreArray
     
-    def getTopFraction(self, alleleName, fraction):
+    def getScoreThreshold(self, alleleName, fraction):
         #fraction should be 0.02 for 2%
         assert(alleleName in self.alleleScores)
         scores = self.alleleScores[alleleName]
@@ -151,9 +238,9 @@ class ScoreTable:
             if numPeptidesIncluded >= numPeptidesToInclude:
                 break
         assert(threshold > -1)
-        scoreIndex = 0
-        peptidePositionsToKeep = []
-        for peptidePosition in self.ppt.peptidePositionIterator():
-            if scores[scoreIndex] <= threshold:
-                peptidePositionsToKeep.append(peptidePosition)
-        return peptidePositionsToKeep    
+        return threshold
+    def __getstate__(self):
+        
+        pass
+    def __setstate__(self):
+        pass
