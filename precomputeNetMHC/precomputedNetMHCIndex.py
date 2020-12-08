@@ -13,8 +13,8 @@ class DuplicatePeptideMarker:
 
 
 class ProteinChain:
-    def __init__(self, length):
-        self.length = length
+    def __init__(self, proteinLength):
+        self.proteinLength = proteinLength
         self.chain = []
         
     
@@ -80,25 +80,59 @@ def sortDuplicateChains(chains):
                 chains[element.lastProteinIndex].chain[element.lastChainPosition].nextChainPosition = j
 
 class NoDuplicatePeptideIterator:
-    def __init__(self, chains, recordIterator, length):
+    def __init__(self, chains, recordIterator, pepLen):
         self.chains = chains
+        self.pepLen = pepLen
         self.recordIterator = recordIterator
+        self.currentRecord = next(self.recordIterator)
         self.chainIndex = 0
         self.positionInProtein = 0
         self.positionInChain = 0
-    def advance(self):
+    def moveForward(self):
+        link = None
+        if self.positionInChain < len(self.chains[self.chainIndex].chain):
+            currentChainLink = self.chains[self.chainIndex].chain[self.positionInChain]
+            if currentChainLink.sequenceStart == self.positionInProtein:
+                link = currentChainLink
+                self.positionInChain += 1
         self.positionInProtein += 1
-        if self.positionInProtein == self.chains[self.chainIndex].length:
-            self.chainIndex += 1
-            self.positionInChain = 0
-            self.positionInProtein = 0
+        return link
+    def moveToNextProtein(self):
+        self.chainIndex += 1
+        self.positionInProtein = 0
+        self.positionInChain = 0
+        self.currentRecord = next(self.recordIterator)
+
+    
+    def moveToValid(self):
+        """
+        Returns False if we go past the chain collection. Returns True otherwise. 
+        """
         if self.chainIndex >= len(self.chains):
-            return None
-        if self.positionInChain < len(self.chains[self.chainIndex]) and self.chains[self.chainIndex][self.positionInChain].sequenceStart == self.positionInProtein and self.chains[self.chainIndex][self.positionInChain].lastProteinIndex != None:
-            self.positionInChain += 1
-            self.advance()
+            return False
+        if self.positionInProtein > self.chains[self.chainIndex].proteinLength - self.pepLen:
+            try:
+                self.moveToNextProtein()
+            except StopIteration:
+                return False
+            return self.moveToValid()
+        else:
+            #finish here
+            link = self.moveForward()
+            if link and link.lastProteinIndex != None:
+                
+                
+            if self.positionInChain < len(self.chains[self.chainIndex]):
+                if self.chains[self.chainIndex][self.positionInChain].sequenceStart == self.positionInProtein and self.chains[self.chainIndex][self.positionInChain].lastProteinIndex != None:
+                    self.positionInProtein += 1
+                    self.positionInChain += 1
+                    return self.moveToValid()
+            return True
             
     def skipPeptide(self):
+        if self.positionInChain < len(self.chains[self.chainIndex]):
+            if self.chains[self.chainIndex][self.positionInChain
+        self.positionInProtein += 1
         self.advance()
     def getPeptide(self, headers=False):
         if 
