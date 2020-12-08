@@ -2,7 +2,7 @@ import io
 import array
 from Bio import SeqIO
 from collections import Counter, namedtuple, defaultdict, UserList
-
+import hashlib
 class ChainLink:
     def __init__(self, sequenceStart, nextChainIndex, nextChainPosition, lastChainIndex, lastChainPosition):
         self.sequenceStart = sequenceStart
@@ -18,20 +18,41 @@ class Chain(UserList):
         self.header = header
         self.data = []
 
+
+def fileMD5(path):
+    with open(path, 'rb') as f:
+        fHash = hashlib.md5()
+        chunk = f.read(8192)
+        while chunk:
+            fHash.update(chunk)
+            chunk = f.read(8192)
+        return fHash.hexdigest()
+        
 class ChainCollection(UserList):
     def __init__(self, fastaPath, pepLen):
+        self.md5 = fileMD5(fastaPath)
         f = open(fastaPath, 'r')
-        recordIterator = SeqIO.FastaIO.SimpleFastaParser(f)        
+        recordIterator = SeqIO.FastaIO.SimpleFastaParser(f)
+        self.pepLen = pepLen
         self.data = []                    
         self.initChains(proteins)
         self.pruneChains()
+        f.close()
+    def __getstate__(self):
+        state = {'md5': self.md5, 'data': self.data.copy(), 'pepLen': self.pepLen}
+        return state
+    def __setstate__(self, state):
+        self.md5 = state['md5']
+        self.data = state['data'].copy()
+        self.pepLen = state['pepLen']
+        
     def initChains(self, recordIterator):
         peptides = {}
         protIndex = 0
         for header, sequence in recordIterator:
             chain = Chain(len(sequence), header)
-            for i in range(0, len(sequence) - pepLen + 1):
-                pep = sequence[i:(i + pepLen)]
+            for i in range(0, len(sequence) - self.pepLen + 1):
+                pep = sequence[i:(i + self.pepLen)]
                 link = ChainLink(i, None, None, None, None)
                 if pep in peptides:
                     chainIndex, chainPosition = peptides[pep]
@@ -52,19 +73,22 @@ class ChainCollection(UserList):
                         self.data[x.nextChainIndex][x.nextChainPosition].lastChainPosition = len(tempChain)
                     tempChain.append(x)
             self.data[i] = tempChain
+
 class NoDuplicatePeptideIterator:
-    def __init__(self, chains, recordIterator, pepLen):
+    def __init__(self, chains, fastaPath, pepLen):
+        f = open(fastaPath, 'r')
+        self.recordIterator = SeqIO.FastaIO.SimpleFastaParser(f)
         self.chains = chains
         self.pepLen = pepLen
-        self.recordIterator = recordIterator
-        self.currentRecord = next(self.recordIterator)
+        _, self.currentRecord = next(self.recordIterator)
         self.chainIndex = 0
         self.positionInProtein = 0
         self.positionInChain = 0
         self.moveToValid()
+    
     def moveForward(self):
-        if self.positionInChain < len(self.chains[self.chainIndex].chain):
-            currentChainLink = self.chains[self.chainIndex].chain[self.positionInChain]
+        if self.positionInChain < len(self.chains[self.chainIndex]):
+            currentChainLink = self.chains[self.chainIndex][self.positionInChain]
             if currentChainLink.sequenceStart == self.positionInProtein:
                 self.positionInChain += 1
         self.positionInProtein += 1
@@ -72,7 +96,7 @@ class NoDuplicatePeptideIterator:
         self.chainIndex += 1
         self.positionInProtein = 0
         self.positionInChain = 0
-        self.currentRecord = next(self.recordIterator)    
+        _, self.currentRecord = next(self.recordIterator)    
     def moveToValid(self):
         """
         Returns False if we go past the chain collection. Returns True otherwise. 
@@ -86,7 +110,7 @@ class NoDuplicatePeptideIterator:
                 return False
             return self.moveToValid()
         else:
-            if self.positionInChain < len(self.chains[self.chainIndex].chain) and self.chains[self.chainIndex].chain[self.positionInChain].lastProteinIndex != None:
+            if self.positionInChain < len(self.chains[self.chainIndex]) and self.chains[self.chainIndex][self.positionInChain].lastProteinIndex != None:
                 self.moveForward()
                 return self.moveToValid()
             return True
@@ -94,22 +118,25 @@ class NoDuplicatePeptideIterator:
     def skipPeptide(self):
         self.moveForward()
         return self.moveToValid()
+
+    
     def gatherHeaders(self):
         headers = []
         chainIndex = self.chainIndex
         chainPos = self.positionInChain
-        if chainIndex >= len(self.chains) or chainPos >= len(self.chains[self.chainIndex].chain):
+        if chainIndex >= len(self.chains) or chainPos >= len(self.chains[self.chainIndex]):
             return False
         while chainIndex != None and chainPos != None:
             headers.append(self.chains[chainIndex].header)
-            tempChainPos = self.chains[chainIndex].chain[chainPos].nextChainPosition
-            chainIndex = self.chains[chainIndex].chain[chainPos].nextProteinIndex
+            tempChainPos = self.chains[chainIndex][chainPos].nextChainPosition
+            chainIndex = self.chains[chainIndex][chainPos].nextProteinIndex
             chainPos = tempChainPos
         return headers
     def getPeptideAndAdvance(self):            
         if self.chainIndex >= len(self.chains) or self.positionInProtein > self.chains[self.chainIndex].proteinLength - self.pepLen:
             return False
-        return self.currentRecord.seq[self.positionInProtein:(self.positionInProtein + self.pepLen)]
+        return self.currentRecord[self.positionInProtein:(self.positionInProtein + self.pepLen)]
+    
     def getPeptideWithHeadersAndAdvance(self):        
         headers = self.gatherHeaders()
         if headers:
@@ -118,8 +145,6 @@ class NoDuplicatePeptideIterator:
                 return {'peptide': peptide, 'headers': headers}
         return False
         
-
-                
 
 
 class ScoreTable:
@@ -187,46 +212,12 @@ class ScoreTable:
         rowBytes = self.reader.read(self.rowSize)
         rowArray = array.array('I', rowBytes)
         return rowArray
-        
 
-                    
-class ProteinPeptideTable:
-    def __init__(self, fastaFile, peptideLength):
-        self.duplicatePeptideMapper = []
-            
 
-    def peptideIterator(self):
+class NetMHCCaller:
+    def __init__(self, netmhcPath):
+        self.netmhcPath = netmhcPath
+    def getAlleles(self):
         pass
-    def peptidePositionIterator(self):
-        pass
-    def FASTAPeptideIterator(self, positions):
-        pass
-    def getNumPeptides(self):
-        pass
-class ScoreTable:
-    #ppt is an instance of the ProteinPeptideTable class
-    def __init__(self, ppt):
-        self.ppt = ppt
-        self.alleleScores = {}
-    
-    def getScoreThreshold(self, alleleName, fraction):
-        #fraction should be 0.02 for 2%
-        assert(alleleName in self.alleleScores)
-        scores = self.alleleScores[alleleName]
-        c = Counter(scores)
-        numPeptides = len(scores)
-        numPeptidesToInclude = int(numPeptides*fraction)
-        threshold = -1
-        numPeptidesIncluded = 0
-        for score,count in c.items():
-            threshold = score
-            numPeptidesIncluded += count
-            if numPeptidesIncluded >= numPeptidesToInclude:
-                break
-        assert(threshold > -1)
-        return threshold
-    def __getstate__(self):
-        
-        pass
-    def __setstate__(self):
+    def scorePeptides(self, peptideIter):
         pass
