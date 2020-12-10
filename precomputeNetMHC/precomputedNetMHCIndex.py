@@ -1,8 +1,14 @@
 import io
 import array
+import os
+import shutil
 from Bio import SeqIO
+import tempfile
 from collections import Counter, namedtuple, defaultdict, UserList
 import hashlib
+from abc import ABC, abstractmethod
+
+
 class ChainLink:
     def __init__(self, sequenceStart, nextChainIndex, nextChainPosition, lastChainIndex, lastChainPosition):
         self.sequenceStart = sequenceStart
@@ -10,6 +16,8 @@ class ChainLink:
         self.nextChainPosition = nextChainPosition
         self.lastChainIndex = lastChainIndex
         self.lastChainPosition = lastChainPosition
+    def __str__(self):
+        return '({}, {}, {}, {}, {})'.format(self.sequenceStart, self.nextChainIndex, self.nextChainPosition, self.lastChainIndex, self.lastChainPosition)
 
 
 class Chain(UserList):
@@ -17,6 +25,9 @@ class Chain(UserList):
         self.proteinLength = proteinLength
         self.header = header
         self.data = []
+
+    def __str__(self):
+        return 'length: {}, header: {}, links: {}'.format(self.proteinLength, self.header, '->'.join([str(x) for x in self.data]))
 
 
 def fileMD5(path):
@@ -35,7 +46,7 @@ class ChainCollection(UserList):
         recordIterator = SeqIO.FastaIO.SimpleFastaParser(f)
         self.pepLen = pepLen
         self.data = []                    
-        self.initChains(proteins)
+        self.initChains(recordIterator)
         self.pruneChains()
         f.close()
     def __getstate__(self):
@@ -51,14 +62,20 @@ class ChainCollection(UserList):
         protIndex = 0
         for header, sequence in recordIterator:
             chain = Chain(len(sequence), header)
+            self.data.append(chain)
             for i in range(0, len(sequence) - self.pepLen + 1):
                 pep = sequence[i:(i + self.pepLen)]
                 link = ChainLink(i, None, None, None, None)
+                chain.append(link)
                 if pep in peptides:
                     chainIndex, chainPosition = peptides[pep]
-                    self.data[chainIndex][chainPosition].nextProteinIndex = protIndex
+                    print('chain index: ' + str(chainIndex))
+                    print('chain position: ' + str(chainPosition))
+                    print(peptides)
+                    
+                    self.data[chainIndex][chainPosition].nextChainIndex = protIndex
                     self.data[chainIndex][chainPosition].nextChainPosition = i
-                    link.lastProteinIndex = chainIndex
+                    link.lastChainIndex = chainIndex
                     link.lastChainPosition = chainPosition
                 peptides[pep] = (protIndex, i)                
             protIndex += 1
@@ -110,7 +127,7 @@ class NoDuplicatePeptideIterator:
                 return False
             return self.moveToValid()
         else:
-            if self.positionInChain < len(self.chains[self.chainIndex]) and self.chains[self.chainIndex][self.positionInChain].lastProteinIndex != None:
+            if self.positionInChain < len(self.chains[self.chainIndex]) and self.chains[self.chainIndex][self.positionInChain].lastChainIndex != None:
                 self.moveForward()
                 return self.moveToValid()
             return True
@@ -129,7 +146,7 @@ class NoDuplicatePeptideIterator:
         while chainIndex != None and chainPos != None:
             headers.append(self.chains[chainIndex].header)
             tempChainPos = self.chains[chainIndex][chainPos].nextChainPosition
-            chainIndex = self.chains[chainIndex][chainPos].nextProteinIndex
+            chainIndex = self.chains[chainIndex][chainPos].nextChainIndex
             chainPos = tempChainPos
         return headers
     def getPeptideAndAdvance(self):            
@@ -176,14 +193,14 @@ class ScoreTable:
         reader = self.getTableReader()
         self.alleles.append(alleleName)
         #create a temporary file to hold the output. 
-        fd, path = temp.mkstemp()
+        fd, path = tempfile.mkstemp()
         tempWriter = open(path, 'wb')
         alleleListString = ' '.join(self.alleles)
         alleleArray = array.array('u', alleleListString)
         alleleListBytes = alleleArray.tobytes()
         tempWriter.write(len(alleleListBytes).to_bytes(4, 'little'))
         tempWriter.write(alleleListBytes)
-        scoreIter = netmhcCaller.scorePeptides(alleleName, peptideIter)
+        scoreIter = netmhcCaller.scorePeptides(alleleName, peptideIterator)
         z = array.array('I', [])        
         inputRowSize = z.itemsize*(len(self.alleles) - 1)
         outputRowSize = z.itemsize*len(self.alleles)
@@ -214,10 +231,12 @@ class ScoreTable:
         return rowArray
 
 
-class NetMHCCaller:
-    def __init__(self, netmhcPath):
-        self.netmhcPath = netmhcPath
-    def getAlleles(self):
+class AbstractScorer(ABC):
+    @abstractmethod
+    def scorePeptides(self, alleleName, pepIter):
         pass
-    def scorePeptides(self, peptideIter):
-        pass
+
+class DummyScorer(AbstractScorer):
+    def scorePeptides(self, alleleName, pepIter):
+        for x in pepIter:
+            yield sum([ord(y) - ord('A') for y in x])

@@ -14,3 +14,4 @@ assert(args.minLength >= 8)
 assert(args.maxLength >= 8)
 assert(os.path.exists(args.netMHC))
 assert(os.path.exists(args.fastaInput))
+
