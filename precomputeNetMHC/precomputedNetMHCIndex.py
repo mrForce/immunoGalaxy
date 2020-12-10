@@ -1,10 +1,13 @@
 import io
 import array
 import os
+import csv
 import shutil
+import threading
 from Bio import SeqIO
 import tempfile
 from collections import Counter, namedtuple, defaultdict, UserList
+import queue
 import hashlib
 from abc import ABC, abstractmethod
 
@@ -135,89 +138,7 @@ def peptideGenerator(chains, fastaPath, pepLen):
                 chainPosition += 1
             proteinPosition += 1
     openFASTA.close()
-"""
-class NoDuplicatePeptideIterator:
-    def __init__(self, chains, fastaPath, pepLen):
-        self.chains = chains
-        self.fastaPath = fastaPath
-        self.pepLen = pepLen
-    def setup(self):
-        self.openFASTA = open(self.fastaPath, 'r')
-        self.recordIterator = SeqIO.FastaIO.SimpleFastaParser(self.openFASTA)
-        _, self.currentRecord = next(self.recordIterator)
-        
-    def __iter__(self):
-        x = NoDuplicatePeptideIterator(self)
-        x.setup()
-        
-        self.openFASTA = open(fastaPath, 'r')
-        self.recordIterator = SeqIO.FastaIO.SimpleFastaParser(self.openFASTA)
-        self.chains = chains
-        self.pepLen = pepLen
-        _, self.currentRecord = next(self.recordIterator)
-        self.chainIndex = 0
-        self.positionInProtein = 0
-        self.positionInChain = 0
-        self.moveToValid()
-    
-    def terminate(self):
-        self.openFASTA.close()
-    
-    def moveForward(self):
-        if self.positionInChain < len(self.chains[self.chainIndex]):
-            currentChainLink = self.chains[self.chainIndex][self.positionInChain]
-            if currentChainLink.sequenceStart == self.positionInProtein:
-                self.positionInChain += 1
-        self.positionInProtein += 1
-    def moveToNextProtein(self):
-        self.chainIndex += 1
-        self.positionInProtein = 0
-        self.positionInChain = 0
-        _, self.currentRecord = next(self.recordIterator)
-    def iterator(self):
-        while chainIndex < len(chains):
-            
-    def moveToValid(self):
-         if self.chainIndex >= len(self.chains):
-            self.terminate()
-            return False
-        if self.positionInProtein > self.chains[self.chainIndex].proteinLength - self.pepLen:
-            try:
-                self.moveToNextProtein()
-            except StopIteration:
-                self.terminate()
-                return False
-            return self.moveToValid()
-        else:
-            if self.positionInChain < len(self.chains[self.chainIndex]) and self.chains[self.chainIndex][self.positionInChain].sequenceStart == self.positionInProtein and self.chains[self.chainIndex][self.positionInChain].lastChainIndex != None:
-                self.moveForward()
-                return self.moveToValid()
-            return True
-            
-    def skipPeptide(self):
-        self.moveForward()
-        return self.moveToValid()
 
-    
-    
-    def getPeptideAndAdvance(self):            
-        if self.chainIndex >= len(self.chains) or self.positionInProtein > self.chains[self.chainIndex].proteinLength - self.pepLen:
-            return False
-        pep = self.currentRecord[self.positionInProtein:(self.positionInProtein + self.pepLen)]
-        self.moveForward()
-        self.moveToValid()
-        return pep
-        
-    def getPeptideWithHeadersAndAdvance(self):        
-        headers = self.gatherHeaders()
-        if headers:
-            peptide = self.getPeptideAndAdvance()
-            if peptide:            
-                return {'peptide': peptide, 'headers': headers}
-        self.terminate()
-        return False
-        
-"""
 
 class ScoreTable:
     def __init__(self, filename):
@@ -322,3 +243,96 @@ class DummyScorer(AbstractScorer):
     def scorePeptides(self, alleleName, pepIter):
         for x in pepIter:
             yield sum([ord(y) - ord('A') for y in x]) + self.offset
+
+
+
+def writePeptidesToFile(peptides, filePath):
+    with open(filePath, 'w') as f:
+        for x in peptides:
+            f.write(x + '\n')
+def runNetMHC(peptides, allele, netmhcPath):
+    with tempfile.NamedTemporaryFile(mode='w') as inputFile:
+        for x in batch:
+            f.write(x + '\n')
+            f.flush()
+        fd, outputFilePath = mkstemp(suffix='.xls')                    
+        subprocess.call([self.netmhcPath, '-p', inputFile.name, '-xls', '-xlsfile', outputFilePath], shell=True)
+        #return a list of tuple (peptide, score)
+        with open(outputFilePath, 'r') as outputFile:
+            outputFile.readline()
+            results = []
+            reader = csv.DictReader(outputFile, delimiter='\t')
+            for line in reader:
+                results.append((line['Peptide'], line['nM']))                
+            return results
+
+class NetMHCRunnerThread(threading.Thread):
+    def __init__(self, netmhcPath, allele, inputQ, outputQ, completeFlag):
+        thread.Thread.__init__(self)
+        self.netmhcPath = netmhcPath
+        self.allele = allele
+        self.inputQ = inputQ
+        self.outputQ = outputQ
+        self.completedFlag = completedFlag
+
+    def run(self):
+        while True:
+            batch = None
+            try:
+                batch = self.inputQ.get(timeout=1)
+            except queue.Empty:
+                if self.completeFlag.is_set():
+                    return
+            else:                
+                assert(batch)
+                results = runNetMHC(batch, self.allele, self.netmhcPath)
+                self.outputQ.put(results)
+                inputQ.task_done()
+
+class QueueInserterThread(threading.Thread):
+    def __init__(self, q, iterator, batchSize, completeFlag):
+        self.q = q
+        self.iterator = iterator
+        self.batchSize = batchSize
+        self.completeFlag = completeFlag
+    def run(self):
+        while True:
+            batch = list(itertools.islice(self.iterator, 0, self.batchSize))
+            if batch:
+                self.q.put(batch)
+            else:
+                self.completeFlag.set()
+                return
+class NetMHCScorer(AbstractScorer):
+    def __init__(self, path, batchSize):
+        self.path = path
+        self.batchSize
+    def scorePeptides(self, alleleName, pepIter):
+        num_threads = 2
+        inputQ = queue.Queue(num_threads)
+        outputQ = queue.Queue(num_threads)
+        completeFlag = threading.Event()
+        threads = []
+        qThread = QueueInserterThread(inputQ, pepIter, self.batchSize, completeFlag)
+        qThread.start()
+        for t in range(0, num_threads):
+            thread = NetMHCRunnerThread(self.path, alleleName, inputQ, outputQ, completeFlag)
+            threads.append(thread)
+        for t in threads:
+            t.start()
+        while True:
+            resultBatch = None
+            try:
+                resultBatch = outputQ.get(timeout=30)
+            except queue.Empty:
+                if not any([t.is_alive() for t in threads]):
+                    break
+            else:
+                assert(resultBatch)
+                for x in resultBatch:
+                    yield x
+        for t in threads:
+            #they should all be gone by now, but do this for safety
+            t.join()
+            
+            
