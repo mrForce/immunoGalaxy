@@ -1,6 +1,8 @@
 """from precomputedNetMHCIndex import ChainCollection, NoDuplicatePeptideIterator, ScoreTable, DummyScorer"""
-from precomputedNetMHCIndex import ChainCollection, NoDuplicatePeptideIterator
+from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, DummyScorer
 import pickle
+import itertools
+import os
 chains = ChainCollection('test.fasta', 3)
 for chain in chains:
     print(chain)
@@ -21,7 +23,27 @@ while True:
     else:
         break
 """
-pepIter = NoDuplicatePeptideIterator(chainCollection, 'test.fasta', 3)
+pepIter = peptideGenerator(chainCollection, 'test.fasta', 3)
+
+for pep in pepIter:
+    print('>' + ' @ '.join(pep.getHeaders()))
+    print(pep.getPeptideSequence())
+pepIter = map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, 'test.fasta', 3))
+os.remove('scores.bin')
+scoreTable = ScoreTable('scores.bin')
+first_scorer = DummyScorer(0)
+second_scorer = DummyScorer(1)
+third_scorer = DummyScorer(2)
+scoreTable.addAllele(first_scorer, 'A',  map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, 'test.fasta', 3)))
+scoreTable.addAllele(second_scorer, 'B', map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, 'test.fasta', 3)))
+scoreTable.addAllele(third_scorer, 'C', map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, 'test.fasta', 3)))
+
+for peptide, row in itertools.zip_longest(map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, 'test.fasta', 3)), scoreTable):
+    print('peptide: ' + peptide)
+    print('row')
+    print(row)
+    
+"""
 while True:
     pepAndHeader = pepIter.getPeptideWithHeadersAndAdvance()
     if pepAndHeader:
@@ -31,4 +53,4 @@ while True:
         print(peptide)
     else:
         break
-
+"""

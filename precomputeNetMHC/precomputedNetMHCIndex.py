@@ -88,9 +88,68 @@ class ChainCollection(UserList):
                     tempChain.append(x)
             self.data[i] = tempChain
 
+class PeptideHolder:
+    def __init__(self, chains, proteinSequence, startPosition, chainIndex, chainPosition, pepLen):
+        self.chains = chains
+        self.proteinSequence = proteinSequence
+        self.startPosition = startPosition
+        self.chainIndex = chainIndex
+        self.chainPosition = chainPosition
+        self.pepLen = pepLen
+    def getPeptideSequence(self):
+        return self.proteinSequence[self.startPosition:(self.startPosition + self.pepLen)]
+    def getHeaders(self):
+        assert(self.chainIndex < len(self.chains))
+        chainIndex = self.chainIndex
+        chainPos = self.chainPosition
+        headers = set([self.chains[chainIndex].header])
+        while chainPos != None:
+            headers.add(self.chains[chainIndex].header)
+            tempChainPos = self.chains[chainIndex][chainPos].nextChainPosition
+            chainIndex = self.chains[chainIndex][chainPos].nextChainIndex
+            chainPos = tempChainPos
+        return headers
+
+def peptideGenerator(chains, fastaPath, pepLen):
+    openFASTA = open(fastaPath, 'r')
+    recordIter = SeqIO.FastaIO.SimpleFastaParser(openFASTA)
+    chainIndex = 0
+    chainPosition = 0
+    proteinPosition = 0
+    _, protein = next(recordIter)
+    while chainIndex < len(chains):        
+        if proteinPosition > chains[chainIndex].proteinLength - pepLen:
+            chainIndex += 1
+            proteinPosition = 0
+            chainPosition = 0
+            try:
+                _, protein = next(recordIter)
+            except StopIteration:
+                break
+        else:
+            if chainPosition >= len(chains[chainIndex]) or chains[chainIndex][chainPosition].sequenceStart != proteinPosition:
+                yield PeptideHolder(chains, protein, proteinPosition, chainIndex, None, pepLen)
+            else:
+                if chains[chainIndex][chainPosition].lastChainIndex == None:
+                    yield PeptideHolder(chains, protein, proteinPosition, chainIndex, chainPosition, pepLen)                
+                chainPosition += 1
+            proteinPosition += 1
+    openFASTA.close()
+"""
 class NoDuplicatePeptideIterator:
     def __init__(self, chains, fastaPath, pepLen):
+        self.chains = chains
         self.fastaPath = fastaPath
+        self.pepLen = pepLen
+    def setup(self):
+        self.openFASTA = open(self.fastaPath, 'r')
+        self.recordIterator = SeqIO.FastaIO.SimpleFastaParser(self.openFASTA)
+        _, self.currentRecord = next(self.recordIterator)
+        
+    def __iter__(self):
+        x = NoDuplicatePeptideIterator(self)
+        x.setup()
+        
         self.openFASTA = open(fastaPath, 'r')
         self.recordIterator = SeqIO.FastaIO.SimpleFastaParser(self.openFASTA)
         self.chains = chains
@@ -100,6 +159,7 @@ class NoDuplicatePeptideIterator:
         self.positionInProtein = 0
         self.positionInChain = 0
         self.moveToValid()
+    
     def terminate(self):
         self.openFASTA.close()
     
@@ -113,12 +173,12 @@ class NoDuplicatePeptideIterator:
         self.chainIndex += 1
         self.positionInProtein = 0
         self.positionInChain = 0
-        _, self.currentRecord = next(self.recordIterator)    
+        _, self.currentRecord = next(self.recordIterator)
+    def iterator(self):
+        while chainIndex < len(chains):
+            
     def moveToValid(self):
-        """
-        Returns False if we go past the chain collection. Returns True otherwise. 
-        """
-        if self.chainIndex >= len(self.chains):
+         if self.chainIndex >= len(self.chains):
             self.terminate()
             return False
         if self.positionInProtein > self.chains[self.chainIndex].proteinLength - self.pepLen:
@@ -139,21 +199,7 @@ class NoDuplicatePeptideIterator:
         return self.moveToValid()
 
     
-    def gatherHeaders(self):
-        headers = set()
-        chainIndex = self.chainIndex
-        chainPos = self.positionInChain
-        
-        if chainIndex >= len(self.chains):
-            return False
-        if chainPos >= len(self.chains[self.chainIndex]):
-            return set([self.chains[chainIndex].header])
-        while chainIndex != None and chainPos != None:            
-            headers.add(self.chains[chainIndex].header)
-            tempChainPos = self.chains[chainIndex][chainPos].nextChainPosition
-            chainIndex = self.chains[chainIndex][chainPos].nextChainIndex
-            chainPos = tempChainPos
-        return headers
+    
     def getPeptideAndAdvance(self):            
         if self.chainIndex >= len(self.chains) or self.positionInProtein > self.chains[self.chainIndex].proteinLength - self.pepLen:
             return False
@@ -161,7 +207,7 @@ class NoDuplicatePeptideIterator:
         self.moveForward()
         self.moveToValid()
         return pep
-    
+        
     def getPeptideWithHeadersAndAdvance(self):        
         headers = self.gatherHeaders()
         if headers:
@@ -171,10 +217,17 @@ class NoDuplicatePeptideIterator:
         self.terminate()
         return False
         
-
+"""
 
 class ScoreTable:
     def __init__(self, filename):
+        self.typecode = 'H'
+        try:
+            t = array.array(self.typecode, [50000])
+        except OverflowError:
+            self.typecode = 'I'
+        t = array.array(self.typecode, [50000])
+        print('typecode: ' + self.typecode)
         self.filename = filename
         self.alleles = []
         #the number of bytes the list of alleles takes up. Basically, read this # of bytes, and you're add the start of the score table.
@@ -182,13 +235,14 @@ class ScoreTable:
         if os.path.isfile(filename):            
             reader = open(filename, 'rb')
             alleleListSize = int.from_bytes(reader.read(4), 'little')
+            print('allele list size: ' + str(alleleListSize))
             alleleListBytes = array.array('u', '')
             alleleListBytes.frombytes(reader.read(alleleListSize))
             alleleListString = alleleListBytes.tounicode()
             self.alleles = alleleListString.split(' ')
             reader.close()
             self.headerSize = 4 + alleleListSize
-            z = array.array('I', [])
+            z = array.array(self.typecode, [])
             self.rowSize = len(self.alleles)*z.itemsize
     def getTableReader(self):
         if self.headerSize < 0:
@@ -198,6 +252,7 @@ class ScoreTable:
             reader.read(self.headerSize)
             return reader
     def addAllele(self, netmhcCaller, alleleName, peptideIterator):
+        print('starting to add allele')
         assert(alleleName not in self.alleles)
         reader = self.getTableReader()
         self.alleles.append(alleleName)
@@ -205,21 +260,34 @@ class ScoreTable:
         fd, path = tempfile.mkstemp()
         tempWriter = open(path, 'wb')
         alleleListString = ' '.join(self.alleles)
+        print('allele list string: ' + alleleListString)
         alleleArray = array.array('u', alleleListString)
         alleleListBytes = alleleArray.tobytes()
+        print('allele list bytes')
+        print(alleleListBytes)
         tempWriter.write(len(alleleListBytes).to_bytes(4, 'little'))
         tempWriter.write(alleleListBytes)
         scoreIter = netmhcCaller.scorePeptides(alleleName, peptideIterator)
-        z = array.array('I', [])        
+        z = array.array(self.typecode, [])
+        print(self.alleles)
         inputRowSize = z.itemsize*(len(self.alleles) - 1)
-        outputRowSize = z.itemsize*len(self.alleles)
+        print('input row size: ' + str(inputRowSize))
+        outputRowSize = z.itemsize + inputRowSize
+        print('output row size: ' + str(outputRowSize))
         for score in scoreIter:
-            x = array.array('I', [])
+            x = array.array(self.typecode, [])
             if inputRowSize > 0:
-                inputRowBytes = self.reader.read(inputRowSize)
+                inputRowBytes = array.array(self.typecode, reader.read(inputRowSize))
+                print('input row bytes')
+                print(inputRowBytes)
+                print(x)
                 x.extend(inputRowBytes)
+            print(x)
             x.append(int(score))
+            print(x)
             outputRowBytes = x.tobytes()
+            print('output row size: ' + str(outputRowSize))
+            print('output row bytes: ' + str(outputRowBytes))
             assert(outputRowSize == len(outputRowBytes))
             tempWriter.write(outputRowBytes)
         tempWriter.flush()
@@ -234,10 +302,13 @@ class ScoreTable:
         self.reader = self.getTableReader()
         assert(self.reader != None)
         return self
-    def __next__(self):
+    def __next__(self):        
         rowBytes = self.reader.read(self.rowSize)
-        rowArray = array.array('I', rowBytes)
-        return rowArray
+        if len(rowBytes) < self.rowSize:
+            raise StopIteration
+        else:
+            rowArray = array.array(self.typecode, rowBytes)
+            return rowArray
 
 
 class AbstractScorer(ABC):
@@ -246,6 +317,8 @@ class AbstractScorer(ABC):
         pass
 
 class DummyScorer(AbstractScorer):
+    def __init__(self, offset):
+        self.offset = offset
     def scorePeptides(self, alleleName, pepIter):
         for x in pepIter:
-            yield sum([ord(y) - ord('A') for y in x])
+            yield sum([ord(y) - ord('A') for y in x]) + self.offset
