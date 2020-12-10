@@ -69,9 +69,6 @@ class ChainCollection(UserList):
                 chain.append(link)
                 if pep in peptides:
                     chainIndex, chainPosition = peptides[pep]
-                    print('chain index: ' + str(chainIndex))
-                    print('chain position: ' + str(chainPosition))
-                    print(peptides)
                     
                     self.data[chainIndex][chainPosition].nextChainIndex = protIndex
                     self.data[chainIndex][chainPosition].nextChainPosition = i
@@ -93,8 +90,9 @@ class ChainCollection(UserList):
 
 class NoDuplicatePeptideIterator:
     def __init__(self, chains, fastaPath, pepLen):
-        f = open(fastaPath, 'r')
-        self.recordIterator = SeqIO.FastaIO.SimpleFastaParser(f)
+        self.fastaPath = fastaPath
+        self.openFASTA = open(fastaPath, 'r')
+        self.recordIterator = SeqIO.FastaIO.SimpleFastaParser(self.openFASTA)
         self.chains = chains
         self.pepLen = pepLen
         _, self.currentRecord = next(self.recordIterator)
@@ -102,6 +100,8 @@ class NoDuplicatePeptideIterator:
         self.positionInProtein = 0
         self.positionInChain = 0
         self.moveToValid()
+    def terminate(self):
+        self.openFASTA.close()
     
     def moveForward(self):
         if self.positionInChain < len(self.chains[self.chainIndex]):
@@ -119,15 +119,17 @@ class NoDuplicatePeptideIterator:
         Returns False if we go past the chain collection. Returns True otherwise. 
         """
         if self.chainIndex >= len(self.chains):
+            self.terminate()
             return False
         if self.positionInProtein > self.chains[self.chainIndex].proteinLength - self.pepLen:
             try:
                 self.moveToNextProtein()
             except StopIteration:
+                self.terminate()
                 return False
             return self.moveToValid()
         else:
-            if self.positionInChain < len(self.chains[self.chainIndex]) and self.chains[self.chainIndex][self.positionInChain].lastChainIndex != None:
+            if self.positionInChain < len(self.chains[self.chainIndex]) and self.chains[self.chainIndex][self.positionInChain].sequenceStart == self.positionInProtein and self.chains[self.chainIndex][self.positionInChain].lastChainIndex != None:
                 self.moveForward()
                 return self.moveToValid()
             return True
@@ -138,13 +140,16 @@ class NoDuplicatePeptideIterator:
 
     
     def gatherHeaders(self):
-        headers = []
+        headers = set()
         chainIndex = self.chainIndex
         chainPos = self.positionInChain
-        if chainIndex >= len(self.chains) or chainPos >= len(self.chains[self.chainIndex]):
+        
+        if chainIndex >= len(self.chains):
             return False
-        while chainIndex != None and chainPos != None:
-            headers.append(self.chains[chainIndex].header)
+        if chainPos >= len(self.chains[self.chainIndex]):
+            return set([self.chains[chainIndex].header])
+        while chainIndex != None and chainPos != None:            
+            headers.add(self.chains[chainIndex].header)
             tempChainPos = self.chains[chainIndex][chainPos].nextChainPosition
             chainIndex = self.chains[chainIndex][chainPos].nextChainIndex
             chainPos = tempChainPos
@@ -152,7 +157,10 @@ class NoDuplicatePeptideIterator:
     def getPeptideAndAdvance(self):            
         if self.chainIndex >= len(self.chains) or self.positionInProtein > self.chains[self.chainIndex].proteinLength - self.pepLen:
             return False
-        return self.currentRecord[self.positionInProtein:(self.positionInProtein + self.pepLen)]
+        pep = self.currentRecord[self.positionInProtein:(self.positionInProtein + self.pepLen)]
+        self.moveForward()
+        self.moveToValid()
+        return pep
     
     def getPeptideWithHeadersAndAdvance(self):        
         headers = self.gatherHeaders()
@@ -160,6 +168,7 @@ class NoDuplicatePeptideIterator:
             peptide = self.getPeptideAndAdvance()
             if peptide:            
                 return {'peptide': peptide, 'headers': headers}
+        self.terminate()
         return False
         
 
