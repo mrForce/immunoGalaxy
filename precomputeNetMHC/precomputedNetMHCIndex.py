@@ -246,6 +246,10 @@ class DummyScorer(AbstractScorer):
 
 
 
+def getMemoryUsage(self, pids):
+    #call smem to determine the USS for each pid
+    pass
+            
 def writePeptidesToFile(peptides, filePath):
     with open(filePath, 'w') as f:
         for x in peptides:
