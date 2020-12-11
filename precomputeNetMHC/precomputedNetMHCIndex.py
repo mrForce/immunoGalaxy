@@ -1,7 +1,10 @@
 import io
 import array
 import os
+import itertools
+import pdb
 import csv
+import subprocess
 import shutil
 import threading
 from Bio import SeqIO
@@ -256,11 +259,13 @@ def writePeptidesToFile(peptides, filePath):
             f.write(x + '\n')
 def runNetMHC(peptides, allele, netmhcPath):
     with tempfile.NamedTemporaryFile(mode='w') as inputFile:
-        for x in batch:
-            f.write(x + '\n')
-            f.flush()
-        fd, outputFilePath = mkstemp(suffix='.xls')                    
-        subprocess.call([self.netmhcPath, '-p', inputFile.name, '-xls', '-xlsfile', outputFilePath], shell=True)
+        for x in peptides:
+            inputFile.write(x + '\n')
+            inputFile.flush()
+        fd, outputFilePath = tempfile.mkstemp(suffix='.xls')
+        command = [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFile.name]
+        print('command: ' + ' '.join(command))
+        subprocess.call(command)
         #return a list of tuple (peptide, score)
         with open(outputFilePath, 'r') as outputFile:
             outputFile.readline()
@@ -271,8 +276,8 @@ def runNetMHC(peptides, allele, netmhcPath):
             return results
 
 class NetMHCRunnerThread(threading.Thread):
-    def __init__(self, netmhcPath, allele, inputQ, outputQ, completeFlag):
-        thread.Thread.__init__(self)
+    def __init__(self, netmhcPath, allele, inputQ, outputQ, completedFlag):
+        threading.Thread.__init__(self)
         self.netmhcPath = netmhcPath
         self.allele = allele
         self.inputQ = inputQ
@@ -282,37 +287,39 @@ class NetMHCRunnerThread(threading.Thread):
     def run(self):
         while True:
             batch = None
+            pdb.set_trace()
             try:
                 batch = self.inputQ.get(timeout=1)
             except queue.Empty:
-                if self.completeFlag.is_set():
+                if self.completedFlag.is_set():
                     return
             else:                
                 assert(batch)
                 results = runNetMHC(batch, self.allele, self.netmhcPath)
                 self.outputQ.put(results)
-                inputQ.task_done()
+                self.inputQ.task_done()
 
 class QueueInserterThread(threading.Thread):
-    def __init__(self, q, iterator, batchSize, completeFlag):
+    def __init__(self, q, iterator, batchSize, completedFlag):
+        threading.Thread.__init__(self)
         self.q = q
         self.iterator = iterator
         self.batchSize = batchSize
-        self.completeFlag = completeFlag
+        self.completedFlag = completedFlag
     def run(self):
         while True:
             batch = list(itertools.islice(self.iterator, 0, self.batchSize))
             if batch:
                 self.q.put(batch)
             else:
-                self.completeFlag.set()
+                self.completedFlag.set()
                 return
 class NetMHCScorer(AbstractScorer):
     def __init__(self, path, batchSize):
         self.path = path
-        self.batchSize
+        self.batchSize = batchSize
     def scorePeptides(self, alleleName, pepIter):
-        num_threads = 2
+        num_threads = 1
         inputQ = queue.Queue(num_threads)
         outputQ = queue.Queue(num_threads)
         completeFlag = threading.Event()
