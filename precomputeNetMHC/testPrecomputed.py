@@ -1,5 +1,6 @@
 """from precomputedNetMHCIndex import ChainCollection, NoDuplicatePeptideIterator, ScoreTable, DummyScorer"""
-from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, DummyScorer, NetMHCScorer
+from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable
+from netMHCCalling import NetMHCScorer
 import pickle
 import itertools
 import os
@@ -25,13 +26,14 @@ while True:
     else:
         break
 """
-pepIter = peptideGenerator(chainCollection, fastaPath, pepLen)
+
+"""pepIter = peptideGenerator(chainCollection, fastaPath, pepLen)
 
 for pep in pepIter:
     print('>' + ' @ '.join(pep.getHeaders()))
     print(pep.getPeptideSequence())
-pepIter = map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
-#os.remove('scores.bin')
+"""
+os.remove('scores.bin')
 scoreTable = ScoreTable('scores.bin')
 """first_scorer = DummyScorer(0)
 second_scorer = DummyScorer(1)
@@ -43,9 +45,15 @@ scoreTable.addAllele(third_scorer, 'C', map(lambda x: x.getPeptideSequence(), pe
 for peptide, row in itertools.zip_longest(map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, 'test.fasta', 3)), scoreTable):
     print('peptide: ' + peptide)
     print('row')
-    print(row)
-    
+    print(row) 
 """
 scorer = NetMHCScorer('/home/jforce/Downloads/netMHC-4.0a.Linux/netMHC-4.0/netMHC', 10)
-scoreTable.addAllele(scorer, 'HLA-A0101', map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen)))
-scoreTable.addAllele(scorer, 'HLA-A0201', map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen)))
+def getPeptideGen(chainCollection, fastaPath, pepLen):
+    return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
+scoreTable.addAllele(scorer, 'HLA-A0101', getPeptideGen(chainCollection, fastaPath, pepLen))
+scoreTable.addAllele(scorer, 'HLA-A0201', getPeptideGen(chainCollection, fastaPath, pepLen))
+for peptide, row in itertools.zip_longest(getPeptideGen(chainCollection, fastaPath, pepLen), scoreTable):
+    print('peptide: ' + peptide)
+    print('row')
+    print(row)
+
