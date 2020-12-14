@@ -33,7 +33,7 @@ for pep in pepIter:
     print('>' + ' @ '.join(pep.getHeaders()))
     print(pep.getPeptideSequence())
 """
-os.remove('scores.bin')
+#os.remove('scores.bin')
 scoreTable = ScoreTable('scores.bin')
 """first_scorer = DummyScorer(0)
 second_scorer = DummyScorer(1)

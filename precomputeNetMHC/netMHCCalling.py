@@ -3,32 +3,44 @@ import tempfile
 import subprocess
 import csv
 import queue
+import os
 import pdb
 import itertools
 from precomputedNetMHCIndex import AbstractScorer
+
+class NetMHCError(Exception):
+    pass
+class NetMHCRunFailedError(NetMHCError):
+    def __init__(self, command):
+        self.message = 'NetMHC Run failed. This is a terminal error; none of the NetMHC results will be saved for this allele-length. Command: ' + command
+    
 
 def writePeptidesToFile(peptides, filePath):
     with open(filePath, 'w') as f:
         for x in peptides:
             f.write(x + '\n')
 def runNetMHC(peptides, allele, netmhcPath):
-    with tempfile.NamedTemporaryFile(mode='w') as inputFile:
+    fdIn, inputFilePath  = tempfile.mkstemp()
+    numPeptides = 0
+    with open(inputFilePath, 'w') as f:
         for x in peptides:
-            inputFile.write(x + '\n')
-            inputFile.flush()
-        fd, outputFilePath = tempfile.mkstemp(suffix='.xls')
-        command = [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFile.name]
-        print('command: ' + ' '.join(command))
-        subprocess.call(command)
-        #return a list of tuple (peptide, score)
-        with open(outputFilePath, 'r') as outputFile:
-            outputFile.readline()
-            results = []
-            reader = csv.DictReader(outputFile, delimiter='\t')
-            for line in reader:
-                results.append((line['Peptide'], float(line['nM'])))
-            return results
-
+            f.write(x + '\n')
+            numPeptides += 1
+    fd, outputFilePath = tempfile.mkstemp(suffix='.xls')
+    command = [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath]
+    rc = subprocess.call(command)
+    assert(rc == 0)
+    results = []    
+    #return a list of tuple (peptide, score)
+    with open(outputFilePath, 'r') as outputFile:
+        outputFile.readline()
+        reader = csv.DictReader(outputFile, delimiter='\t')
+        for line in reader:
+            results.append((line['Peptide'], float(line['nM'])))
+    assert(len(results) == numPeptides)
+    os.remove(inputFilePath)
+    os.remove(outputFilePath)
+    return (' '.join(command), results)
 
 class CoordinatedOutput:
     def __init__(self, startCount):
@@ -51,7 +63,12 @@ class CoordinatedOutput:
             data = self.data
             self.cv.notify_all()
             return data
-        
+
+class NetMHCRunResults:
+    def __init__(self, success, command, data):
+        self.success = success
+        self.command = command
+        self.data = data
 class NetMHCRunnerThread(threading.Thread):
     def __init__(self, netmhcPath, allele, inputQ, coordOutput):
         threading.Thread.__init__(self)
@@ -74,9 +91,15 @@ class NetMHCRunnerThread(threading.Thread):
                     self.coordOutput.waitToSet(i, None)
                     return
                 else:
-                    results = dict(runNetMHC(batch, self.allele, self.netmhcPath))
-                    self.inputQ.task_done()
-                    self.coordOutput.waitToSet(i, [results[x] for x in batch])
+                    try:
+                        command, results = runNetMHC(batch, self.allele, self.netmhcPath)
+                    except:
+                        self.coordOutput.waitToSet(i, NetMHCRunResults(False, ' '.join(command), None))
+                        return
+                    else:
+                        self.inputQ.task_done()
+                        resultsDict = dict(results)
+                        self.coordOutput.waitToSet(i, NetMHCRunResults(True, ' '.join(command), [resultsDict[x] for x in batch]))
 
 class QueueInserterThread(threading.Thread):
     def __init__(self, q, iterator, batchSize, numThreads):
@@ -102,7 +125,7 @@ class NetMHCScorer(AbstractScorer):
         self.path = path
         self.batchSize = batchSize
     def scorePeptides(self, alleleName, pepIter):
-        num_threads = 1
+        num_threads = 2
         inputQ = queue.PriorityQueue(num_threads)
         coordOutput = CoordinatedOutput(0)
         threads = []
@@ -119,9 +142,14 @@ class NetMHCScorer(AbstractScorer):
             if resultBatch is None:
                 deadThreads += 1
             else:
-                assert(resultBatch)
-                for x in resultBatch:
-                    yield x
+                success = resultBatch.success
+                if success:
+                    assert(resultBatch)
+                    for x in resultBatch.data:
+                        yield x
+                else:
+                    raise NetMHCRunFailedError(resultBatch.command)
+                        
         for t in threads:
             #they should all be gone by now, but do this for safety
             t.join()

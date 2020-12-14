@@ -215,7 +215,9 @@ class ScoreTable:
             assert(outputRowSize == len(outputRowBytes))
             tempWriter.write(outputRowBytes)
         tempWriter.flush()
-      
+        if reader:
+            #none left
+            assert(len(reader.read(1)) == 0)
         shutil.copyfile(path, self.filename)
         os.remove(path)
         self.__init__(self.filename)
@@ -248,10 +250,6 @@ class DummyScorer(AbstractScorer):
             yield sum([ord(y) - ord('A') for y in x]) + self.offset
 
 
-
-def getMemoryUsage(self, pids):
-    #call smem to determine the USS for each pid
-    pass
             
 
             
