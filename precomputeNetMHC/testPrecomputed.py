@@ -52,8 +52,12 @@ def getPeptideGen(chainCollection, fastaPath, pepLen):
     return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
 scoreTable.addAllele(scorer, 'HLA-A0101', getPeptideGen(chainCollection, fastaPath, pepLen))
 scoreTable.addAllele(scorer, 'HLA-A0201', getPeptideGen(chainCollection, fastaPath, pepLen))
+num_peptides = 0
 for peptide, row in itertools.zip_longest(getPeptideGen(chainCollection, fastaPath, pepLen), scoreTable):
     print('peptide: ' + peptide)
     print('row')
     print(row)
+    num_peptides += 1
+print('num peptides')
+print(num_peptides)
 

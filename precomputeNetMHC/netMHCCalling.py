@@ -7,40 +7,105 @@ import os
 import pdb
 import itertools
 from precomputedNetMHCIndex import AbstractScorer
-
+#retry 2 times if necessary, for a total of 3 runs for a single batch of peptides.
+NUM_RETRY=2
 class NetMHCError(Exception):
     pass
 class NetMHCRunFailedError(NetMHCError):
-    def __init__(self, command):
-        self.message = 'NetMHC Run failed. This is a terminal error; none of the NetMHC results will be saved for this allele-length. Command: ' + command
-    
+    def __init__(self, runs):
+        messageLines = []
+        messageLines.append('NetMHC Run failed for all retries')
+        messageLines.append('Input File (containing peptides): ' + runs.peptideFilePath)
+        messageLines.append('This was ran ' + str(len(runs.runs)) + ' times')
+        for x in runs.runs:
+            messageLines.append('command: ' + x.command)
+            messageLines.append('return code: ' + str(x.returnCode))
+            messageLines.append('stdout file: ' + x.stdoutPath)
+            messageLines.append('stderr file: ' + x.stderrPath)
+            messageLines.append('scores file: ' + x.scoresPath)
+        self.message = '\n'.join(messageLines)
 
+
+class NetMHCRun:
+    def __init__(self, stdoutPath, stderrPath, scoresPath, returnCode, command):
+        self.stdoutPath = stdoutPath
+        self.stderrPath = stderrPath
+        self.scoresPath = scoresPath
+        self.returnCode = returnCode
+        self.command = command
+        self.success = True
+        self.results = None
+    def setResults(self, results):
+        self.results = results
+    def getResults(self):
+        return self.results
+    def setFailed(self):
+        self.success = False
+    def __del__(self):
+        if self.success:
+            os.remove(self.stdoutPath)
+            os.remove(self.stderrPath)
+            os.remove(self.scoresPath)
+        
+class NetMHCRuns:
+    def __init__(self, peptidesFilePath):
+        self.runs = []
+        self.peptidesFilePath = peptidesFilePath
+        self.success = True
+    def __del__(self):
+        if self.success:
+            os.remove(self.peptidesFilePath)
+    def setFailed(self):
+        self.success = False
+    def addRun(self, netmhcRun):
+        self.runs.append(netmhcRun)
+    def getRuns(self):
+        return self.runs
+    def getLastRun(self):
+        return self.runs[-1]
+    def getPeptidesFilePath(self):
+        return self.peptidesFilePath
+
+def extractScores(outputFilePath):
+    results = []
+    with open(outputFilePath, 'r') as outputFile:
+        outputFile.readline()
+        reader = csv.DictReader(outputFile, delimiter='\t')
+        for line in reader:
+            results.append((line['Peptide'], float(line['nM'])))
+    return results
 def writePeptidesToFile(peptides, filePath):
     with open(filePath, 'w') as f:
         for x in peptides:
             f.write(x + '\n')
 def runNetMHC(peptides, allele, netmhcPath):
     fdIn, inputFilePath  = tempfile.mkstemp()
-    numPeptides = 0
     with open(inputFilePath, 'w') as f:
         for x in peptides:
             f.write(x + '\n')
-            numPeptides += 1
-    fd, outputFilePath = tempfile.mkstemp(suffix='.xls')
-    command = [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath]
-    rc = subprocess.call(command)
-    assert(rc == 0)
-    results = []    
-    #return a list of tuple (peptide, score)
-    with open(outputFilePath, 'r') as outputFile:
-        outputFile.readline()
-        reader = csv.DictReader(outputFile, delimiter='\t')
-        for line in reader:
-            results.append((line['Peptide'], float(line['nM'])))
-    assert(len(results) == numPeptides)
-    os.remove(inputFilePath)
-    os.remove(outputFilePath)
-    return (' '.join(command), results)
+    runs = NetMHCRuns(inputFilePath)
+    tries = 0
+    while tries <= NUM_RETRY:
+        fd, outputFilePath = tempfile.mkstemp(suffix='.xls')
+        command = [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath]
+        stdoutFD, stdoutPath = tempfile.mkstemp()
+        stderrFD, stderrPath = tempfile.mkstemp()
+        rc = subprocess.call(command, stdout=stdoutFD, stderr=stderrFD)            
+        run = NetMHCRun(stdoutPath, stderrPath, outputFilePath, rc, ' '.join(command))
+        runs.addRun(run)
+        tries += 1
+        if rc == 0:
+            scores = extractScores(outputFilePath)
+            scoredPeptides = set([x[0] for x in scores])
+            peptideSet = set(peptides)
+            if scoredPeptides <= peptideSet and peptideSet <= scoredPeptides:
+                scoreDict = dict(scores)
+                run.setResults([scoreDict[x] for x in peptides])
+                return runs
+            else:
+                run.setFailed()
+    runs.setFailed()
+    return runs
 
 class CoordinatedOutput:
     def __init__(self, startCount):
@@ -64,11 +129,6 @@ class CoordinatedOutput:
             self.cv.notify_all()
             return data
 
-class NetMHCRunResults:
-    def __init__(self, success, command, data):
-        self.success = success
-        self.command = command
-        self.data = data
 class NetMHCRunnerThread(threading.Thread):
     def __init__(self, netmhcPath, allele, inputQ, coordOutput):
         threading.Thread.__init__(self)
@@ -91,15 +151,11 @@ class NetMHCRunnerThread(threading.Thread):
                     self.coordOutput.waitToSet(i, None)
                     return
                 else:
-                    try:
-                        command, results = runNetMHC(batch, self.allele, self.netmhcPath)
-                    except:
-                        self.coordOutput.waitToSet(i, NetMHCRunResults(False, ' '.join(command), None))
+                    runs = runNetMHC(batch, self.allele, self.netmhcPath)
+                    success = runs.success
+                    self.coordOutput.waitToSet(i, runs)
+                    if not success:
                         return
-                    else:
-                        self.inputQ.task_done()
-                        resultsDict = dict(results)
-                        self.coordOutput.waitToSet(i, NetMHCRunResults(True, ' '.join(command), [resultsDict[x] for x in batch]))
 
 class QueueInserterThread(threading.Thread):
     def __init__(self, q, iterator, batchSize, numThreads):
@@ -138,17 +194,16 @@ class NetMHCScorer(AbstractScorer):
             t.start()
         deadThreads = 0
         while deadThreads < num_threads:
-            resultBatch = coordOutput.getDataAndIncrement()
-            if resultBatch is None:
+            runs = coordOutput.getDataAndIncrement()
+            if runs is None:
                 deadThreads += 1
             else:
-                success = resultBatch.success
+                success = runs.success
                 if success:
-                    assert(resultBatch)
-                    for x in resultBatch.data:
+                    for x in runs.getLastRun().getResults():
                         yield x
                 else:
-                    raise NetMHCRunFailedError(resultBatch.command)
+                    raise NetMHCRunFailedError(runs)
                         
         for t in threads:
             #they should all be gone by now, but do this for safety
