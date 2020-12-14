@@ -13,7 +13,7 @@ from collections import Counter, namedtuple, defaultdict, UserList
 import queue
 import hashlib
 from abc import ABC, abstractmethod
-
+MAX_SCORE = 50000
 
 class ChainLink:
     def __init__(self, sequenceStart, nextChainIndex, nextChainPosition, lastChainIndex, lastChainPosition):
@@ -223,7 +223,7 @@ class ScoreTable:
         self.__init__(self.filename)
     def getAlleleList(self):
         return self.alleles
-    
+        
     def __iter__(self):
         self.reader = self.getTableReader()
         assert(self.reader != None)
