@@ -13,9 +13,10 @@ class NetMHCError(Exception):
     pass
 class NetMHCRunFailedError(NetMHCError):
     def __init__(self, runs):
+        self.runs = runs
         messageLines = []
         messageLines.append('NetMHC Run failed for all retries')
-        messageLines.append('Input File (containing peptides): ' + runs.peptideFilePath)
+        messageLines.append('Input File (containing peptides): ' + runs.peptidesFilePath)
         messageLines.append('This was ran ' + str(len(runs.runs)) + ' times')
         for x in runs.runs:
             messageLines.append('command: ' + x.command)
@@ -102,8 +103,7 @@ def runNetMHC(peptides, allele, netmhcPath):
                 scoreDict = dict(scores)
                 run.setResults([scoreDict[x] for x in peptides])
                 return runs
-            else:
-                run.setFailed()
+        run.setFailed()
     runs.setFailed()
     return runs
 
