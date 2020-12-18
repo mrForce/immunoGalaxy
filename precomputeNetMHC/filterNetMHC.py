@@ -27,12 +27,12 @@ def computeScoreThreshold(distribution, k):
             return score
     return maxVal
 
-def filterOnThreshold(table, allele, peptideGen, threshold):
+def filterOnThreshold(table, allele, peptideHolderGen, threshold):
     allelePosition = table.getAlleleList().index(allele)
     peptides = set()
-    for peptide, row in itertools.zip_longest(peptideGen, scoreTable):
+    for peptideHolder, row in itertools.zip_longest(peptideHolderGen, scoreTable):
         if row[allelePosition] <= threshold:
-            peptides.add(peptide)
+            peptides.add(peptideHolder)
     return peptides
     
 

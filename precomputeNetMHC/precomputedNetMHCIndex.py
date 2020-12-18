@@ -2,6 +2,7 @@ import io
 import array
 import os
 import itertools
+import mmap
 import pdb
 import csv
 import subprocess
@@ -142,7 +143,104 @@ def peptideGenerator(chains, fastaPath, pepLen):
             proteinPosition += 1
     openFASTA.close()
 
+    
+class ScoreTableHeader:
+    def __init__(self, multiplier, alleleSeperator, alleleList, numPeptides):
+        self.multiplier = multiplier
+        self.alleleSeperator = alleleSeperator
+        self.alleleList = alleleList
+        self.numPeptides = numPeptides
+    def getMultiplier(self):
+        return self.multiplier
+    def getAlleles(self):
+        return self.alleleList
+    def addAllele(self, allele):
+        self.alleleList.append(allele)
+    def getNumPeptides(self):
+        return self.numPeptides
+    def __init__(self, byteArray):
+        self.multiplier, self.numPeptides, alleleArraySize = struct.unpack('!HQL', byteArray)
+        structSize = struct.calcsize('!HQL')
+        alleleArrayBytes = byteArray[structSize:(structSize + alleleArraySize)]
+        alleleArray = array.frombytes(alleleArrayBytes)
+        self.alleleSeperator = alleleArray[0]
+        self.alleleList = alleleArray[1::].split(self.alleleSeperator)
+    def toBytes(self):
+        alleleArray = array.array('u', self.alleleSeperator + self.alleleSeperator.join(self.alleleList))
+        alleleArrayBytes = alleleArray.tobytes()
+        multiplierNumPeptidesAndAlleleListSize = struct.pack('!HQL', self.multiplier, self.numPeptides, len(alleleArrayBytes))
+        return multiplierNumPeptidesAndAlleleListSize + alleleArrayBytes
+def readScoreTableHeader(mmapObject):
+    headerOffsetFromEnd, = struct.unpack('!L', mmapObject)
+    currPos = mmapObject.tell()
+    mmapObject.seek(headerOffsetFromEnd, os.SEEK_END)
+    headerBytes = mmapObject.read()
+    mmapObject.seek(currPos)
+    return ScoreTableHeader(headerBytes)
 
+def setScoreTableHeader(mmapObject, header):
+    headerBytes = header.toBytes()
+    offset = len(headerBytes)
+    currPos = mmapObject.tell()
+    mmapObject.seek(0)
+    
+    mmapObject.write(struct.pack('!L', offset))
+    mmapObject.seek(0, os.SEEK_END)
+    mmapObject.write(headerBytes)
+    mmapObject.seek(currPos)
+        
+
+
+class ScoreTableReader:
+    def __init__(self, filename):
+        assert(os.path.isfile(filename))
+        fileObject = open(filename, 'rb')
+        self.memMap = mmap.mmap(fileObject.fileno(), 0)
+        header = readScoreTableHeader(self.memMap)
+        self.alleleList = header.getAlleleList()
+        self.multiplier = header.getMultiplier()
+        self.numPeptides = header.getNumPeptides()
+    def scoreGenerator(self, allele):
+        alleleLoc = self.alleleList.index(allele)
+        alleleStartByteLocation = struct.calcsize('!L') + struct.calcsize('!H')*alleleLoc*self.numPeptides
+        byteIter = itertools.islice(self.memMap, alleleStartByteLocation, alleleStartByteLocation + struct.calcsize('!H')*self.numPeptides)
+        for score, in struct.iter_unpack('!H', byteIter):
+            yield score
+        
+    def getAlleleList(self):
+        return self.alleleList
+    def getMultiplier(self):
+        return self.multiplier
+    def getNumPeptides(self):
+        return self.numPeptides
+
+def createEmptyScoreTable(filename, numPeptides, multiplier):
+    assert(not os.path.isfile(filename))
+    fileObject = open(filename, 'wb')
+    memMap = mmap.mmap(fileObject.fileno(), 0)
+    header = ScoreTableHeader(multiplier, '\t', [], numPeptides)
+    setScoreTableHeader(memMap, header)
+    memMap.flush()
+    memMap.close()
+    fileObject.close()
+
+def appendToFile(memMap, byteIterable):
+    memMap.seek(0, os.SEEK_END)
+    memMap.write(byteIterable)
+def addAlleleToScoreTable(filename, allele, netmhcCaller, peptideIterator):
+    assert(os.path.isfile(filename))
+    fileObject = open(filename, 'wb')
+    memMap = mmap.mmap(fileObject.fileno(), 0)
+    header = readScoreTableHeader(memMap)
+    assert(allele not in header.getAlleleList())
+    with tempfile.TemporaryFile() as f:
+        memMap = mmap.mmap(f.fileno()
+    tempFileObject = mmap.mmap(
+    scoreIter = netmhcCaller.scorePeptides(allele, peptideIterator)
+    
+
+    
+    
 class ScoreTable:
     def __init__(self, filename):
         self.typecode = 'H'
