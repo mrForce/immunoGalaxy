@@ -6,6 +6,7 @@ import mmap
 import pdb
 import csv
 import subprocess
+import struct
 import shutil
 import threading
 from Bio import SeqIO
@@ -144,12 +145,13 @@ def peptideGenerator(chains, fastaPath, pepLen):
     openFASTA.close()
 
     
-class ScoreTableHeader:
-    def __init__(self, multiplier, alleleSeperator, alleleList, numPeptides):
+class ScoreTableMeta:
+    def __init__(self, multiplier, alleleSeperator, alleleList, numPeptides, scoreTypecode):
         self.multiplier = multiplier
         self.alleleSeperator = alleleSeperator
         self.alleleList = alleleList
         self.numPeptides = numPeptides
+        self.scoreTypecode = scoreTypecode
     def getMultiplier(self):
         return self.multiplier
     def getAlleles(self):
@@ -158,11 +160,23 @@ class ScoreTableHeader:
         self.alleleList.append(allele)
     def getNumPeptides(self):
         return self.numPeptides
+    def setNumPeptides(self, numPeptides):
+        self.numPeptides = numPeptides
+    def computeAlleleOffset(self, allele):
+        index = self.alleleList.index(allele)
+        a = array.array(self.scoreTypecode)
+        return self.numPeptides*index*a.itemsize
+    def getScoreTypecode(self):
+        return self.scoreTypecode
+    def computeScoreSectionSizeInBytes(self):
+        a = array.array(self.scoreTypecode)
+        return self.numPeptides*len(self.alleleList)*a.itemsize
     def __init__(self, byteArray):
         self.multiplier, self.numPeptides, alleleArraySize = struct.unpack('!HQL', byteArray)
         structSize = struct.calcsize('!HQL')
         alleleArrayBytes = byteArray[structSize:(structSize + alleleArraySize)]
-        alleleArray = array.frombytes(alleleArrayBytes)
+        alleleArray = array.array('u')
+        alleleArray.frombytes(alleleArrayBytes)
         self.alleleSeperator = alleleArray[0]
         self.alleleList = alleleArray[1::].split(self.alleleSeperator)
     def toBytes(self):
@@ -170,26 +184,89 @@ class ScoreTableHeader:
         alleleArrayBytes = alleleArray.tobytes()
         multiplierNumPeptidesAndAlleleListSize = struct.pack('!HQL', self.multiplier, self.numPeptides, len(alleleArrayBytes))
         return multiplierNumPeptidesAndAlleleListSize + alleleArrayBytes
-def readScoreTableHeader(mmapObject):
-    headerOffsetFromEnd, = struct.unpack('!L', mmapObject)
-    currPos = mmapObject.tell()
-    mmapObject.seek(headerOffsetFromEnd, os.SEEK_END)
-    headerBytes = mmapObject.read()
-    mmapObject.seek(currPos)
+
+
+class ScoreTable:
+    def __init__(self, fileObj, tableMeta):
+        self.fileObj = fileObj
+        self.tableMeta = tableMeta
+    @classmethod
+    def empty(cls, fileObj, scoreTypecode, multiplier, alleleSeperator):
+        meta = ScoreTableMeta(multiplier, alleleSeperator, [], 0, scoreTypecode)
+        return cls(fileObj, meta)
+    @classmethod
+    def readExisting(cls, fileObj):
+        size = struct.calcsize('!L')
+        metaOffsetFromEnd, = struct.unpack('!L', fileObj.read(size))
+        fileObj.seek(metaOffsetFromEnd, os.SEEK_END)
+        metaBytes = fileObj.read(size)
+        meta = ScoreTableMeta(metaBytes)
+        return cls(fileObj, meta)
+
+    def addAllele(self, allele, netmhcCaller, peptideIterator):
+        if allele in self.alleleList:
+            return False
+        else:
+            scoreIter = netmhcCaller.scorePeptides(allele, peptideIterator)
+            location = struct.calcsize('!L') + self.tableMeta.computeScoreSectionSizeInBytes()
+            numScoresWritten = self.appendScores(scoreIter, location)
+            if len(self.alleleList) == 0:
+                self.tableMeta.setNumPeptides(numScoresWritten)
+            if numScoresWritten == self.tableMeta.getNumPeptides():                    
+                self.tableMeta.addAllele(allele)                
+            self.writeMeta()
+            return True
+    def appendScores(self, scoreIter, location):
+        chunkSize = 2**10
+        self.fileObj.seek(location)
+        numScores = 0
+        while True:
+            chunk = list(itertools.islice(chunkSize))
+            numScores += len(chunk)
+            if len(chunk) == 0:
+                break
+            chunkArray = array.array(self.tableMeta.getScoreTypecode(), chunk)
+            chunkBytes = chunkArray.tobytes()
+            self.fileObj.write(chunkBytes)
+        return numScores
+    def writeMeta(self):
+        beginningOffset = struct.calcsize('!L') + self.tableMeta.computeScoreSectionSizeInBytes()
+        self.fileObj.seek(beginningOffset)
+        metaBytes = self.tableMeta.tobytes()
+        self.fileObj.write(metaBytes)        
+        self.fileObj.seek(0, os.SEEK_END)
+        endLoc = self.fileObj.tell()
+        self.fileObj.seek(0)
+        self.fileObj.write(struct.pack('!L', endLoc - beginningOffset))
+        
+    def scoreIter(self, allele):
+        if allele in self.tableMeta.getAlleles():
+            loc = struct.calcsize('!L') + self.tableMeta.computeAlleleOffset(allele)
+            self.fileObj.seek(loc)
+            typecode = self.tableMeta.getScoreTypecode()            
+            size = struct.calcsize(typecode)
+            for i in range(0, self.tableMeta.getNumPeptides()):
+                score,  = struct.unpack(typecode, self.fileObj.read(size))
+                yield score
+        
+def readScoreTableHeader(fileObj):
+    size = struct.calcsize('!L')
+    headerOffsetFromEnd, = struct.unpack('!L', fileObj.read(size))
+    fileObj.seek(headerOffsetFromEnd, os.SEEK_END)
+    headerBytes = fileObj.read()
     return ScoreTableHeader(headerBytes)
 
-def setScoreTableHeader(mmapObject, header):
+""""
+def setScoreTableHeader(fileObj, header, startLocation):
     headerBytes = header.toBytes()
-    offset = len(headerBytes)
-    currPos = mmapObject.tell()
-    mmapObject.seek(0)
+    fileObj.seek(startLocation)
     
-    mmapObject.write(struct.pack('!L', offset))
-    mmapObject.seek(0, os.SEEK_END)
+fileObj.write(struct.pack('!L', offset))
+    fileObj.seek(0, os.SEEK_END)
     mmapObject.write(headerBytes)
     mmapObject.seek(currPos)
         
-
+"""
 
 class ScoreTableReader:
     def __init__(self, filename):
@@ -224,19 +301,13 @@ def createEmptyScoreTable(filename, numPeptides, multiplier):
     memMap.close()
     fileObject.close()
 
-def appendToFile(memMap, byteIterable):
-    memMap.seek(0, os.SEEK_END)
-    memMap.write(byteIterable)
-def addAlleleToScoreTable(filename, allele, netmhcCaller, peptideIterator):
-    assert(os.path.isfile(filename))
-    fileObject = open(filename, 'wb')
-    memMap = mmap.mmap(fileObject.fileno(), 0)
-    header = readScoreTableHeader(memMap)
+
+def addAlleleToScoreTable(fileObj, allele, netmhcCaller, peptideIterator):
+    header = readScoreTableHeader(fileObj)
     assert(allele not in header.getAlleleList())
+    
     with tempfile.TemporaryFile() as f:
-        memMap = mmap.mmap(f.fileno()
-    tempFileObject = mmap.mmap(
-    scoreIter = netmhcCaller.scorePeptides(allele, peptideIterator)
+        memMap = mmap.mmap(f.fileno())
     
 
     
@@ -345,10 +416,4 @@ class DummyScorer(AbstractScorer):
         self.offset = offset
     def scorePeptides(self, alleleName, pepIter):
         for x in pepIter:
-            yield sum([ord(y) - ord('A') for y in x]) + self.offset
-
-
-            
-
-            
-            
+            yield sum([ord(y) - ord('A') for y in x]) + self.offset                             
