@@ -143,8 +143,7 @@ def peptideGenerator(chains, fastaPath, pepLen):
                 chainPosition += 1
             proteinPosition += 1
     openFASTA.close()
-
-    
+        
 class ScoreTableMeta:
     """   
     In terms of bytes, this is structured as follows:
@@ -224,11 +223,10 @@ class ScoreTable:
         meta = ScoreTableMeta.fromBytes(metaBytes)
         return cls(fileObj, meta)
 
-    def addAllele(self, netmhcCaller, allele, peptideIterator):
+    def addAllele(self, allele, scoreIter):
         if allele in self.tableMeta.alleleList:
             return False
         else:
-            scoreIter = netmhcCaller.scorePeptides(allele, peptideIterator)
             location = struct.calcsize('!L') + self.tableMeta.computeScoreSectionSizeInBytes()
             numScoresWritten = self.appendScores(scoreIter, location)
             if len(self.tableMeta.alleleList) == 0:

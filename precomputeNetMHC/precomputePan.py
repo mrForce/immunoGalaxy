@@ -8,11 +8,12 @@ from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable
 from netMHCCalling import NetMHCScorer, NetMHCRunFailedError
 
 
-parser = argparse.ArgumentParser(description='Precompute NetMHC scores for peptides')
+parser = argparse.ArgumentParser(description='Precompute NetMHCPan scores for peptides')
 parser.add_argument('path', help='Path to NetMHC executable')
 parser.add_argument('fasta')
 parser.add_argument('chains')
-parser.add_argument('scoreTable')
+parser.add_argument('BAScoreTable')
+parser.add_argument('ELScoreTable')
 
 parser.add_argument('allele')
 parser.add_argument('length', type=int)
@@ -39,11 +40,12 @@ else:
     scoreTable = ScoreTable.empty(scoreTableFile, 'H', 1, ' ')
 
 def generateNetMHCCommand(netmhcPath, allele, inputFilePath, outputFilePath):
-    return [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath]
+    return [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath, '-BA']
 
 commandGen = functools.partial(generateNetMHCCommand, args.path, args.allele)
 scorer = NetMHCScorer(5000, commandGen, args.threads)
-scoreIter = map(lambda x: x[0], scorer.scorePeptides(getPeptideGen(chainCollection, args.fasta, args.length), ['nM']))
+scoreIter = scorer.scorePeptides(getPeptideGen(chainCollection, args.fasta, args.length), ['nM'])
+
 def getPeptideGen(chainCollection, fastaPath, pepLen):
     return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
 try:

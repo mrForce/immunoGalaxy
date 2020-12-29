@@ -27,6 +27,8 @@ class NetMHCRunFailedError(NetMHCError):
         self.message = '\n'.join(messageLines)
 
 
+
+
 class NetMHCRun:
     def __init__(self, stdoutPath, stderrPath, scoresPath, returnCode, command):
         self.stdoutPath = stdoutPath
@@ -67,19 +69,20 @@ class NetMHCRuns:
     def getPeptidesFilePath(self):
         return self.peptidesFilePath
 
-def extractScores(outputFilePath):
+def extractScores(outputFilePath, fieldsToExtract):
     results = []
     with open(outputFilePath, 'r') as outputFile:
         outputFile.readline()
         reader = csv.DictReader(outputFile, delimiter='\t')
         for line in reader:
-            results.append((line['Peptide'], float(line['nM'])))
+            results.append((line['Peptide'], [float(line[x]) for x in fieldsToExtract]))
     return results
 def writePeptidesToFile(peptides, filePath):
     with open(filePath, 'w') as f:
         for x in peptides:
             f.write(x + '\n')
-def runNetMHC(peptides, allele, netmhcPath):
+def runNetMHC(peptides, runCommand, fieldsToExtract):
+    #runCommand is a function that takes in the input file path and output file path, and returns the command to run
     fdIn, inputFilePath  = tempfile.mkstemp()
     with open(inputFilePath, 'w') as f:
         for x in peptides:
@@ -88,7 +91,8 @@ def runNetMHC(peptides, allele, netmhcPath):
     tries = 0
     while tries <= NUM_RETRY:
         fd, outputFilePath = tempfile.mkstemp(suffix='.xls')
-        command = [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath]
+        #command = [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath]
+        command = runCommand(inputFilePath, outputFilePath)
         stdoutFD, stdoutPath = tempfile.mkstemp()
         stderrFD, stderrPath = tempfile.mkstemp()
         rc = subprocess.call(command, stdout=stdoutFD, stderr=stderrFD)            
@@ -96,7 +100,7 @@ def runNetMHC(peptides, allele, netmhcPath):
         runs.addRun(run)
         tries += 1
         if rc == 0:
-            scores = extractScores(outputFilePath)
+            scores = extractScores(outputFilePath, fieldsToExtract)
             scoredPeptides = set([x[0] for x in scores])
             peptideSet = set(peptides)
             if scoredPeptides <= peptideSet and peptideSet <= scoredPeptides:
@@ -130,10 +134,10 @@ class CoordinatedOutput:
             return data
 
 class NetMHCRunnerThread(threading.Thread):
-    def __init__(self, netmhcPath, allele, inputQ, coordOutput):
+    def __init__(self, runCommand,  fieldsToExtract, inputQ, coordOutput):
         threading.Thread.__init__(self)
-        self.netmhcPath = netmhcPath
-        self.allele = allele
+        self.runCommand = runCommand
+        self.fieldsToExtract = fieldsToExtract
         self.inputQ = inputQ
         self.coordOutput = coordOutput
 
@@ -151,7 +155,7 @@ class NetMHCRunnerThread(threading.Thread):
                     self.coordOutput.waitToSet(i, None)
                     return
                 else:
-                    runs = runNetMHC(batch, self.allele, self.netmhcPath)
+                    runs = runNetMHC(batch, self.runCommand, self.fieldsToExtract)
                     success = runs.success
                     self.coordOutput.waitToSet(i, runs)
                     if not success:
@@ -177,23 +181,23 @@ class QueueInserterThread(threading.Thread):
                     self.q.put((x + i, None))
                 return
 class NetMHCScorer(AbstractScorer):
-    def __init__(self, path, batchSize):
-        self.path = path
+    def __init__(self, batchSize, runCommand, numThreads):
+        self.runCommand = runCommand
         self.batchSize = batchSize
-    def scorePeptides(self, alleleName, pepIter):
-        num_threads = 2
-        inputQ = queue.PriorityQueue(num_threads)
+        self.numThreads = numThreads
+    def scorePeptides(self, pepIter, fieldsToExtract):
+        inputQ = queue.PriorityQueue(self.numThreads)
         coordOutput = CoordinatedOutput(0)
         threads = []
-        qThread = QueueInserterThread(inputQ, pepIter, self.batchSize, num_threads)
+        qThread = QueueInserterThread(inputQ, pepIter, self.batchSize, self.numThreads)
         qThread.start()
-        for t in range(0, num_threads):
-            thread = NetMHCRunnerThread(self.path, alleleName, inputQ, coordOutput)
+        for t in range(0, self.numThreads):
+            thread = NetMHCRunnerThread(self.runCommand, fieldsToExtract, inputQ, coordOutput)
             threads.append(thread)
         for t in threads:
             t.start()
         deadThreads = 0
-        while deadThreads < num_threads:
+        while deadThreads < self.numThreads:
             runs = coordOutput.getDataAndIncrement()
             if runs is None:
                 deadThreads += 1
