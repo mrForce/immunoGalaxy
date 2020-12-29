@@ -1,4 +1,5 @@
 import io
+import itertools
 import argparse
 import os
 import collections
@@ -11,7 +12,7 @@ def scoreDistribution(table, allele, peptideGen, peptidesToExclude):
     #peptidesToExclude must be a set
     allelePosition = table.getAlleleList().index(allele)
     count = collections.Counter()
-    for peptide, row in itertools.zip_longest(peptideGen, scoreTable):
+    for peptide, row in itertools.zip_longest(peptideGen, table):
         if peptide not in peptidesToExclude:
             count[row[allelePosition]] += 1
     return count

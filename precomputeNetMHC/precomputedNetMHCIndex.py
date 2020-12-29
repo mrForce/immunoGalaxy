@@ -146,44 +146,63 @@ def peptideGenerator(chains, fastaPath, pepLen):
 
     
 class ScoreTableMeta:
+    """   
+    In terms of bytes, this is structured as follows:
+
++------------+----------+--------------+--------------+--------------------------------------+---------+
+| Multiplier | Typecode | Num Peptides | Allele Delim | Size of following alleles (in bytes) | Alleles |
++------------+----------+--------------+--------------+--------------------------------------+---------+
+
+The multiplier, typecode, num Peptides, allele delim, and size of alleles are stored as a packed struct using Python's struct module, with the following format string: !HbQbL
+
+Typecode is the typecode used in the array module for storing the NetMHC scores.
+
+The list of allele names are stored as an ASCII string, with 'allele delim' seperating the different names. 
+
+Note that both allele delim and typecode are stored as ascii characters (so a signed byte). But, pass them to the constructor as normal python strings. 
+    """
     def __init__(self, multiplier, alleleSeperator, alleleList, numPeptides, scoreTypecode):
-        self.multiplier = multiplier
-        self.alleleSeperator = alleleSeperator
-        self.alleleList = alleleList
+        self.multiplier = multiplier        
+        self.alleleSeperator = alleleSeperator.encode('ascii')
+        assert(len(self.alleleSeperator) == 1)
+        self.alleleList = [x.encode('ascii') for x in alleleList]
         self.numPeptides = numPeptides
-        self.scoreTypecode = scoreTypecode
+        self.scoreTypecode = scoreTypecode.encode('ascii')
+        assert(len(self.scoreTypecode) == 1)
     def getMultiplier(self):
         return self.multiplier
     def getAlleles(self):
-        return self.alleleList
+        return [x.decode('ascii') for x in self.alleleList]
     def addAllele(self, allele):
-        self.alleleList.append(allele)
+        self.alleleList.append(allele.encode('ascii'))
     def getNumPeptides(self):
         return self.numPeptides
     def setNumPeptides(self, numPeptides):
         self.numPeptides = numPeptides
     def computeAlleleOffset(self, allele):
-        index = self.alleleList.index(allele)
-        a = array.array(self.scoreTypecode)
+        print('list')
+        print(self.alleleList)
+        index = self.alleleList.index(allele.encode('ascii'))
+        a = array.array(self.getScoreTypecode())
         return self.numPeptides*index*a.itemsize
     def getScoreTypecode(self):
-        return self.scoreTypecode
+        return self.scoreTypecode.decode('ascii')
     def computeScoreSectionSizeInBytes(self):
-        a = array.array(self.scoreTypecode)
+        a = array.array(self.getScoreTypecode())
         return self.numPeptides*len(self.alleleList)*a.itemsize
-    def __init__(self, byteArray):
-        self.multiplier, self.numPeptides, alleleArraySize = struct.unpack('!HQL', byteArray)
-        structSize = struct.calcsize('!HQL')
+    @classmethod
+    def fromBytes(cls, byteArray):
+        print('byte array')
+        print(byteArray)
+        structSize = struct.calcsize('!HcQcL')
+        multiplier, scoreTypecode, numPeptides, alleleSeperator, alleleArraySize = struct.unpack('!HcQcL', byteArray[0:structSize])        
         alleleArrayBytes = byteArray[structSize:(structSize + alleleArraySize)]
-        alleleArray = array.array('u')
-        alleleArray.frombytes(alleleArrayBytes)
-        self.alleleSeperator = alleleArray[0]
-        self.alleleList = alleleArray[1::].split(self.alleleSeperator)
+        alleleList = [x.decode('ascii') for x in alleleArrayBytes.split(alleleSeperator)]
+        return cls(multiplier, alleleSeperator.decode('ascii'), alleleList, numPeptides, scoreTypecode.decode('ascii'))
     def toBytes(self):
-        alleleArray = array.array('u', self.alleleSeperator + self.alleleSeperator.join(self.alleleList))
-        alleleArrayBytes = alleleArray.tobytes()
-        multiplierNumPeptidesAndAlleleListSize = struct.pack('!HQL', self.multiplier, self.numPeptides, len(alleleArrayBytes))
-        return multiplierNumPeptidesAndAlleleListSize + alleleArrayBytes
+        alleleArrayBytes = self.alleleSeperator.join(self.alleleList)
+        metaHeader = struct.pack('!HcQcL', self.multiplier, self.scoreTypecode, self.numPeptides, self.alleleSeperator, len(alleleArrayBytes))
+        return metaHeader + alleleArrayBytes
 
 
 class ScoreTable:
@@ -196,32 +215,35 @@ class ScoreTable:
         return cls(fileObj, meta)
     @classmethod
     def readExisting(cls, fileObj):
-        size = struct.calcsize('!L')
+        size = struct.calcsize('!L')        
         metaOffsetFromEnd, = struct.unpack('!L', fileObj.read(size))
-        fileObj.seek(metaOffsetFromEnd, os.SEEK_END)
-        metaBytes = fileObj.read(size)
-        meta = ScoreTableMeta(metaBytes)
+        print('meta offset')
+        print(metaOffsetFromEnd)
+        fileObj.seek(-1*metaOffsetFromEnd, os.SEEK_END)
+        metaBytes = fileObj.read()
+        meta = ScoreTableMeta.fromBytes(metaBytes)
         return cls(fileObj, meta)
 
-    def addAllele(self, allele, netmhcCaller, peptideIterator):
-        if allele in self.alleleList:
+    def addAllele(self, netmhcCaller, allele, peptideIterator):
+        if allele in self.tableMeta.alleleList:
             return False
         else:
             scoreIter = netmhcCaller.scorePeptides(allele, peptideIterator)
             location = struct.calcsize('!L') + self.tableMeta.computeScoreSectionSizeInBytes()
             numScoresWritten = self.appendScores(scoreIter, location)
-            if len(self.alleleList) == 0:
+            if len(self.tableMeta.alleleList) == 0:
                 self.tableMeta.setNumPeptides(numScoresWritten)
             if numScoresWritten == self.tableMeta.getNumPeptides():                    
                 self.tableMeta.addAllele(allele)                
             self.writeMeta()
+            self.fileObj.flush()
             return True
     def appendScores(self, scoreIter, location):
         chunkSize = 2**10
         self.fileObj.seek(location)
         numScores = 0
         while True:
-            chunk = list(itertools.islice(chunkSize))
+            chunk = [int(x) for x in itertools.islice(scoreIter, chunkSize)]
             numScores += len(chunk)
             if len(chunk) == 0:
                 break
@@ -232,11 +254,15 @@ class ScoreTable:
     def writeMeta(self):
         beginningOffset = struct.calcsize('!L') + self.tableMeta.computeScoreSectionSizeInBytes()
         self.fileObj.seek(beginningOffset)
-        metaBytes = self.tableMeta.tobytes()
+        metaBytes = self.tableMeta.toBytes()
         self.fileObj.write(metaBytes)        
         self.fileObj.seek(0, os.SEEK_END)
         endLoc = self.fileObj.tell()
         self.fileObj.seek(0)
+        print('end loc')
+        print(endLoc)
+        print('beginning offset')
+        print(beginningOffset)
         self.fileObj.write(struct.pack('!L', endLoc - beginningOffset))
         
     def scoreIter(self, allele):
@@ -248,14 +274,15 @@ class ScoreTable:
             for i in range(0, self.tableMeta.getNumPeptides()):
                 score,  = struct.unpack(typecode, self.fileObj.read(size))
                 yield score
-        
+
+"""
 def readScoreTableHeader(fileObj):
     size = struct.calcsize('!L')
     headerOffsetFromEnd, = struct.unpack('!L', fileObj.read(size))
     fileObj.seek(headerOffsetFromEnd, os.SEEK_END)
     headerBytes = fileObj.read()
     return ScoreTableHeader(headerBytes)
-
+"""
 """"
 def setScoreTableHeader(fileObj, header, startLocation):
     headerBytes = header.toBytes()
@@ -266,7 +293,7 @@ fileObj.write(struct.pack('!L', offset))
     mmapObject.write(headerBytes)
     mmapObject.seek(currPos)
         
-"""
+
 
 class ScoreTableReader:
     def __init__(self, filename):
@@ -309,9 +336,9 @@ def addAlleleToScoreTable(fileObj, allele, netmhcCaller, peptideIterator):
     with tempfile.TemporaryFile() as f:
         memMap = mmap.mmap(f.fileno())
     
-
+"""
     
-    
+"""    
 class ScoreTable:
     def __init__(self, filename):
         self.typecode = 'H'
@@ -404,7 +431,7 @@ class ScoreTable:
         else:
             rowArray = array.array(self.typecode, rowBytes)
             return rowArray
-
+"""
 
 class AbstractScorer(ABC):
     @abstractmethod

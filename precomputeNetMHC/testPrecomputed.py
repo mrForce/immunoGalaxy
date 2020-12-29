@@ -35,7 +35,15 @@ for pep in pepIter:
     print(pep.getPeptideSequence())
 """
 #os.remove('scores.bin')
-scoreTable = ScoreTable('scores.bin')
+scorePath = 'scores.bin'
+scoreFileObj = None
+scoreTable = None
+if os.path.isfile(scorePath):
+    scoreFileObj = open(scorePath, 'rb+')
+    scoreTable = ScoreTable.readExisting(scoreFileObj)
+else:
+    scoreFileObj = open(scorePath, 'wb+')
+    scoreTable = ScoreTable.empty(scoreFileObj, 'H', 1, ' ')
 """first_scorer = DummyScorer(0)
 second_scorer = DummyScorer(1)
 third_scorer = DummyScorer(2)
@@ -64,6 +72,22 @@ try:
 except NetMHCRunFailedError as e:
     print(e.message)
     sys.exit(1)
+scoreFileObj.close()
+scoreFileObj = open(scorePath, 'rb')
+scoreTable = ScoreTable.readExisting(scoreFileObj)
+scores = list(scoreTable.scoreIter('HLA-A0101'))
+peptides = list(getPeptideGen(chainCollection, fastaPath, pepLen))
+for i in range(0, len(scores)):
+    print('peptide: ' + peptides[i] + ' score: ' + str(scores[i]))
+
+
+print('HLA-A0201')
+scores = list(scoreTable.scoreIter('HLA-A0201'))
+for i in range(0, len(scores)):
+    print('peptide: ' + peptides[i] + ' score: ' + str(scores[i]))
+    
+scoreFileObj.close()
+"""    
 num_peptides = 0
 for peptide, row in itertools.zip_longest(getPeptideGen(chainCollection, fastaPath, pepLen), scoreTable):
     print('peptide: ' + peptide)
@@ -72,4 +96,4 @@ for peptide, row in itertools.zip_longest(getPeptideGen(chainCollection, fastaPa
     num_peptides += 1
 print('num peptides')
 print(num_peptides)
-
+"""

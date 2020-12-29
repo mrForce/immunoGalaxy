@@ -26,8 +26,14 @@ chainCollection = None
 with open(args.chains, 'rb') as f:
     chainCollection = pickle.load(f)
 
-scoreTable = ScoreTable(args.scoreTable)
-
+scoreTableFile = None
+scoreTable = None
+if os.path.isfile(args.scoreTable):
+    scoreTableFile = open(args.scoreTable, 'rb+')
+    scoreTable = ScoreTable.readExisting(scoreTableFile)
+else:
+    scoreTableFile = open(args.scoreTable, 'wb+')
+    scoreTable = ScoreTable.empty(scoreTableFile, 'H', 1, ' ')
 scorer = NetMHCScorer(args.netMHC, 5000)
 
 def getPeptideGen(chainCollection, fastaPath, pepLen):
