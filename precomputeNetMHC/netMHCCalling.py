@@ -119,6 +119,8 @@ def runNetMHC(peptides, commandGenerator, fieldsToExtract):
         stdoutFD, stdoutPath = tempfile.mkstemp()
         command = commandGenerator(inputFilePath)
         stderrFD, stderrPath = tempfile.mkstemp()
+        os.close(stdoutFD)
+        os.close(stderrFD)
         print('stdout: ' + stdoutPath + ', stderr: ' + stderrPath)
         rc = subprocess.call(command, stdout=stdoutFD, stderr=stderrFD)            
         run = NetMHCRun(stdoutPath, stderrPath, rc, ' '.join(command))
@@ -126,8 +128,6 @@ def runNetMHC(peptides, commandGenerator, fieldsToExtract):
         tries += 1
         if rc == 0:
             scores = extractScores(stdoutPath, fieldsToExtract)
-            os.close(stdoutFD)
-            os.close(stderrFD)
             scoredPeptides = set([x[0] for x in scores])
             pepSub = unknownSub(peptides)
             peptideSet = set(pepSub)
