@@ -18,6 +18,9 @@ import hashlib
 from abc import ABC, abstractmethod
 MAX_SCORE = 50000
 
+def replaceNoneZero(l):
+    return [0 if x == None else x for x in l]
+    
 class ChainLink:
     def __init__(self, sequenceStart, nextChainIndex, nextChainPosition, lastChainIndex, lastChainPosition):
         self.sequenceStart = sequenceStart
@@ -30,7 +33,7 @@ class ChainLink:
     @property
     def hashAttributeList(self):
         #must return a list of integers
-        return [self.sequenceStart, self.nextChainIndex, self.nextChainPosition, self.lastChainIndex, self.lastChainPosition]
+        return replaceNoneZero([self.sequenceStart, self.nextChainIndex, self.nextChainPosition, self.lastChainIndex, self.lastChainPosition])
 
 
 class Chain(UserList):
@@ -44,7 +47,7 @@ class Chain(UserList):
     @property
     def hashAttributeList(self):
         #must return a list of integers
-        return [self.proteinLength, len(self.data), list(itertools.chain.from_iterable([x.hashAttributeList for x in self.data]))]
+        return [self.proteinLength, len(self.data)] + list(itertools.chain.from_iterable([x.hashAttributeList for x in self.data]))
 
 def fileMD5(path):
     with open(path, 'rb') as f:
@@ -68,6 +71,8 @@ class ChainCollection(UserList):
     def checksum(self):
         hasher = hashlib.md5()
         attributeList = list(itertools.chain.from_iterable([x.hashAttributeList for x in self.data]))
+        print('attribute list')
+        print(attributeList)
         a = array.array('L', attributeList)
         hasher.update(a.tobytes())
         #16 byte hash

@@ -46,8 +46,8 @@ if os.path.isfile(args.scoreTable):
     scoreTableFile = open(args.scoreTable, 'rb+')
     scoreTable = ScoreTable.readExisting(scoreTableFile)
     if scoreTable.chainHash != chainHash:
-        print('checksum for chains used to create score table: ' + str(scoreTable.chainHash))
-        print('checksum for these chains: ' + str(chainHash))
+        print('checksum for chains used to create score table: ' + scoreTable.chainHash.hex())
+        print('checksum for these chains: ' + chainHash.hex())
         print('These are not the same. Exiting')
         assert(False)
 else:
