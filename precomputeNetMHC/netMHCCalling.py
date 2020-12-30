@@ -44,6 +44,9 @@ class NetMHCRun:
         self.success = False
     def __del__(self):
         if self.success:
+            print('removing files')
+            print(self.stdoutPath)
+            print(self.stderrPath)
             os.remove(self.stdoutPath)
             os.remove(self.stderrPath)
         
@@ -115,13 +118,16 @@ def runNetMHC(peptides, commandGenerator, fieldsToExtract):
     while tries <= NUM_RETRY:
         stdoutFD, stdoutPath = tempfile.mkstemp()
         command = commandGenerator(inputFilePath)
-        stderrFD, stderrPath = tempfile.mkstemp()        
+        stderrFD, stderrPath = tempfile.mkstemp()
+        print('stdout: ' + stdoutPath + ', stderr: ' + stderrPath)
         rc = subprocess.call(command, stdout=stdoutFD, stderr=stderrFD)            
         run = NetMHCRun(stdoutPath, stderrPath, rc, ' '.join(command))
         runs.addRun(run)
         tries += 1
         if rc == 0:
             scores = extractScores(stdoutPath, fieldsToExtract)
+            os.close(stdoutFD)
+            os.close(stderrFD)
             scoredPeptides = set([x[0] for x in scores])
             pepSub = unknownSub(peptides)
             peptideSet = set(pepSub)
