@@ -113,6 +113,7 @@ def runNetMHC(peptides, commandGenerator, fieldsToExtract):
     with open(inputFilePath, 'w') as f:
         for x in peptides:
             f.write(x + '\n')
+    os.close(fdIn)
     runs = NetMHCRuns(inputFilePath)
     tries = 0
     while tries <= NUM_RETRY:
