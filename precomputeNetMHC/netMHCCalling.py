@@ -155,7 +155,8 @@ class CoordinatedOutput:
             self.cv.notify_all()
     def getDataAndIncrement(self):
         with self.cv:
-            self.cv.wait_for(lambda: self.dataSet)
+            status = self.cv.wait_for(lambda: self.dataSet)
+
             self.dataSet = False
             self.counter += 1
             data = self.data
@@ -175,8 +176,8 @@ class NetMHCRunnerThread(threading.Thread):
             batch = None
             i = -1
             try:
-                i, batch = self.inputQ.get(timeout=1)
-            except queue.Empty:
+                i, batch = self.inputQ.get()
+            except queue.Empty:                      
                 return
             else:
                 if batch is None:
