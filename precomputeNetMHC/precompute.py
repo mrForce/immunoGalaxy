@@ -38,16 +38,19 @@ else:
     scoreTableFile = open(args.scoreTable, 'wb+')
     scoreTable = ScoreTable.empty(scoreTableFile, 'H', 1, ' ')
 
-def generateNetMHCCommand(netmhcPath, allele, inputFilePath, outputFilePath):
-    return [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath]
 
+if args.allele in scoreTable.getAlleles():
+    print('Allele already in score table. Exiting')
+    sys.exit(1)
+def generateNetMHCCommand(netmhcPath, allele, inputFilePath):
+    return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath]
 commandGen = functools.partial(generateNetMHCCommand, args.path, args.allele)
 scorer = NetMHCScorer(5000, commandGen, args.threads)
-scoreIter = map(lambda x: x[0], scorer.scorePeptides(getPeptideGen(chainCollection, args.fasta, args.length), ['nM']))
 def getPeptideGen(chainCollection, fastaPath, pepLen):
     return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
+scoreIter = map(lambda x: x[0], scorer.scorePeptides(getPeptideGen(chainCollection, args.fasta, args.length), ['Affinity(nM)']))
 try:
-    scoreTable.addAllele(args.allele, scoreIter)
+    result = scoreTable.addAllele(args.allele, scoreIter)
 except NetMHCRunFailedError as e:
     for x in e.runs.runs:
         print(x.success)

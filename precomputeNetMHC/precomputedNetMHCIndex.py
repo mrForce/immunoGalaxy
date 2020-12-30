@@ -3,6 +3,7 @@ import array
 import os
 import itertools
 import mmap
+from enum import Enum
 import pdb
 import csv
 import subprocess
@@ -143,16 +144,28 @@ def peptideGenerator(chains, fastaPath, pepLen):
                 chainPosition += 1
             proteinPosition += 1
     openFASTA.close()
-        
+
+class ScoreCategory(Enum):
+    PAN_SCORE_EL = 1
+    PAN_RANK_EL = 2
+    PAN_SCORE_BA = 3
+    PAN_RANK_BA = 4
+    PAN_AFF = 5
+    #above were for NetMHCPan, below for regular NetMHC
+    AFFINITY = 6
+    RANK = 7
+
 class ScoreTableMeta:
     """   
     In terms of bytes, this is structured as follows:
 
-+------------+----------+--------------+--------------+--------------------------------------+---------+
-| Multiplier | Typecode | Num Peptides | Allele Delim | Size of following alleles (in bytes) | Alleles |
-+------------+----------+--------------+--------------+--------------------------------------+---------+
++------------+----------------+----------+--------------+--------------+--------------------------------------+---------+
+| Multiplier | Score Category | Typecode | Num Peptides | Allele Delim | Size of following alleles (in bytes) | Alleles |
++------------+----------------+----------+--------------+--------------+--------------------------------------+---------+
 
-The multiplier, typecode, num Peptides, allele delim, and size of alleles are stored as a packed struct using Python's struct module, with the following format string: !HbQbL
+The multiplier, score type, typecode, num Peptides, allele delim, and size of alleles are stored as a packed struct using Python's struct module, with the following format string: !HbQbL
+
+Score category is one of the values for the ScoreCategory enum, indicating what kind of score it is. NetMHCPan gives 5 scores: elution score, elution rank, binding score, binding rank, predicted affinity. NetMHC gives 2 scores: Predicted affinity and rank.
 
 Typecode is the typecode used in the array module for storing the NetMHC scores.
 
@@ -160,7 +173,8 @@ The list of allele names are stored as an ASCII string, with 'allele delim' sepe
 
 Note that both allele delim and typecode are stored as ascii characters (so a signed byte). But, pass them to the constructor as normal python strings. 
     """
-    def __init__(self, multiplier, alleleSeperator, alleleList, numPeptides, scoreTypecode):
+    STRUCT_FORMAT='!HIcQcL'
+    def __init__(self, multiplier, alleleSeperator, alleleList, numPeptides, scoreTypecode, scoreCategory):
         self.multiplier = multiplier        
         self.alleleSeperator = alleleSeperator.encode('ascii')
         assert(len(self.alleleSeperator) == 1)
@@ -168,6 +182,8 @@ Note that both allele delim and typecode are stored as ascii characters (so a si
         self.numPeptides = numPeptides
         self.scoreTypecode = scoreTypecode.encode('ascii')
         assert(len(self.scoreTypecode) == 1)
+        assert(isinstance(scoreCategory, ScoreCategory))
+        self.scoreCategory = scoreCategory
     def getMultiplier(self):
         return self.multiplier
     def getAlleles(self):
@@ -186,6 +202,8 @@ Note that both allele delim and typecode are stored as ascii characters (so a si
         return self.numPeptides*index*a.itemsize
     def getScoreTypecode(self):
         return self.scoreTypecode.decode('ascii')
+    def getScoreCategory(self):
+        return self.scoreCategory
     def computeScoreSectionSizeInBytes(self):
         a = array.array(self.getScoreTypecode())
         return self.numPeptides*len(self.alleleList)*a.itemsize
@@ -193,41 +211,48 @@ Note that both allele delim and typecode are stored as ascii characters (so a si
     def fromBytes(cls, byteArray):
         print('byte array')
         print(byteArray)
-        structSize = struct.calcsize('!HcQcL')
-        multiplier, scoreTypecode, numPeptides, alleleSeperator, alleleArraySize = struct.unpack('!HcQcL', byteArray[0:structSize])        
+        structSize = struct.calcsize(cls.STRUCT_FORMAT)
+        multiplier, scoreCategoryInt, scoreTypecode, numPeptides, alleleSeperator, alleleArraySize = struct.unpack(cls.STRUCT_FORMAT, byteArray[0:structSize])        
         alleleArrayBytes = byteArray[structSize:(structSize + alleleArraySize)]
         alleleList = [x.decode('ascii') for x in alleleArrayBytes.split(alleleSeperator)]
-        return cls(multiplier, alleleSeperator.decode('ascii'), alleleList, numPeptides, scoreTypecode.decode('ascii'))
+        return cls(multiplier, alleleSeperator.decode('ascii'), alleleList, numPeptides, scoreTypecode.decode('ascii'), ScoreCategory(scoreCategoryInt))
     def toBytes(self):
         alleleArrayBytes = self.alleleSeperator.join(self.alleleList)
-        metaHeader = struct.pack('!HcQcL', self.multiplier, self.scoreTypecode, self.numPeptides, self.alleleSeperator, len(alleleArrayBytes))
+        metaHeader = struct.pack(self.STRUCT_FORMAT, self.multiplier, self.scoreCategory.value, self.scoreTypecode, self.numPeptides, self.alleleSeperator, len(alleleArrayBytes))
         return metaHeader + alleleArrayBytes
 
 
 class ScoreTable:
+    """
+    The ScoreTable file should start with the MAGIC 4 bytes (4344382b in hex. It's just the ascii string 'CD8+' converted to a hex number). 
+    """
+    MAGIC=0X4344382b
     def __init__(self, fileObj, tableMeta):
         self.fileObj = fileObj
         self.tableMeta = tableMeta
+    def getAlleles(self):
+        return self.tableMeta.getAlleles()
     @classmethod
-    def empty(cls, fileObj, scoreTypecode, multiplier, alleleSeperator):
-        meta = ScoreTableMeta(multiplier, alleleSeperator, [], 0, scoreTypecode)
+    def empty(cls, fileObj, scoreCategory, scoreTypecode, multiplier, alleleSeperator):
+        meta = ScoreTableMeta(multiplier, alleleSeperator, [], 0, scoreTypecode, scoreCategory)
         return cls(fileObj, meta)
     @classmethod
     def readExisting(cls, fileObj):
-        size = struct.calcsize('!L')        
-        metaOffsetFromEnd, = struct.unpack('!L', fileObj.read(size))
+        size = struct.calcsize('!IL')        
+        magic, metaOffsetFromEnd = struct.unpack('!IL', fileObj.read(size))
         print('meta offset')
         print(metaOffsetFromEnd)
+        assert(magic == cls.MAGIC)
         fileObj.seek(-1*metaOffsetFromEnd, os.SEEK_END)
         metaBytes = fileObj.read()
         meta = ScoreTableMeta.fromBytes(metaBytes)
         return cls(fileObj, meta)
 
     def addAllele(self, allele, scoreIter):
-        if allele in self.tableMeta.alleleList:
+        if allele in self.tableMeta.getAlleles():
             return False
         else:
-            location = struct.calcsize('!L') + self.tableMeta.computeScoreSectionSizeInBytes()
+            location = struct.calcsize('!IL') + self.tableMeta.computeScoreSectionSizeInBytes()
             numScoresWritten = self.appendScores(scoreIter, location)
             if len(self.tableMeta.alleleList) == 0:
                 self.tableMeta.setNumPeptides(numScoresWritten)
@@ -242,6 +267,8 @@ class ScoreTable:
         numScores = 0
         while True:
             chunk = [int(x) for x in itertools.islice(scoreIter, chunkSize)]
+            print('chunk')
+            print(chunk)
             numScores += len(chunk)
             if len(chunk) == 0:
                 break
@@ -250,7 +277,7 @@ class ScoreTable:
             self.fileObj.write(chunkBytes)
         return numScores
     def writeMeta(self):
-        beginningOffset = struct.calcsize('!L') + self.tableMeta.computeScoreSectionSizeInBytes()
+        beginningOffset = struct.calcsize('!IL') + self.tableMeta.computeScoreSectionSizeInBytes()
         self.fileObj.seek(beginningOffset)
         metaBytes = self.tableMeta.toBytes()
         self.fileObj.write(metaBytes)        
@@ -261,11 +288,11 @@ class ScoreTable:
         print(endLoc)
         print('beginning offset')
         print(beginningOffset)
-        self.fileObj.write(struct.pack('!L', endLoc - beginningOffset))
+        self.fileObj.write(struct.pack('!IL', self.MAGIC, endLoc - beginningOffset))
         
     def scoreIter(self, allele):
         if allele in self.tableMeta.getAlleles():
-            loc = struct.calcsize('!L') + self.tableMeta.computeAlleleOffset(allele)
+            loc = struct.calcsize('!IL') + self.tableMeta.computeAlleleOffset(allele)
             self.fileObj.seek(loc)
             typecode = self.tableMeta.getScoreTypecode()            
             size = struct.calcsize(typecode)

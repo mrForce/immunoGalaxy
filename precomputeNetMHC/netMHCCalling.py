@@ -23,17 +23,15 @@ class NetMHCRunFailedError(NetMHCError):
             messageLines.append('return code: ' + str(x.returnCode))
             messageLines.append('stdout file: ' + x.stdoutPath)
             messageLines.append('stderr file: ' + x.stderrPath)
-            messageLines.append('scores file: ' + x.scoresPath)
         self.message = '\n'.join(messageLines)
 
 
 
 
 class NetMHCRun:
-    def __init__(self, stdoutPath, stderrPath, scoresPath, returnCode, command):
+    def __init__(self, stdoutPath, stderrPath, returnCode, command):
         self.stdoutPath = stdoutPath
         self.stderrPath = stderrPath
-        self.scoresPath = scoresPath
         self.returnCode = returnCode
         self.command = command
         self.success = True
@@ -48,7 +46,6 @@ class NetMHCRun:
         if self.success:
             os.remove(self.stdoutPath)
             os.remove(self.stderrPath)
-            os.remove(self.scoresPath)
         
 class NetMHCRuns:
     def __init__(self, peptidesFilePath):
@@ -72,17 +69,34 @@ class NetMHCRuns:
 def extractScores(outputFilePath, fieldsToExtract):
     results = []
     with open(outputFilePath, 'r') as outputFile:
-        outputFile.readline()
-        reader = csv.DictReader(outputFile, delimiter='\t')
-        for line in reader:
-            results.append((line['Peptide'], [float(line[x]) for x in fieldsToExtract]))
+        lines = outputFile.readlines()
+        fields = []
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if fields:
+                if line.strip().startswith('-'):
+                    fields = []
+                else:
+                    parts = line.split()
+                    lineDict = dict(zip(fields, parts))
+                    if 'peptide' in lineDict and 'Peptide' not in lineDict:
+                        lineDict['Peptide'] = lineDict['peptide']
+                        
+                    results.append((lineDict['Peptide'], [float(lineDict[x]) for x in fieldsToExtract]))
+                i += 1
+            elif line.strip().lower().startswith('pos') and i >= 1 and lines[i - 1].startswith('-') and i + 1 < len(lines) and lines[i + 1].startswith('-'):
+                fields = [x.strip() for x in line.split()]
+                i += 2
+            else:
+                i += 1
     return results
 def writePeptidesToFile(peptides, filePath):
     with open(filePath, 'w') as f:
         for x in peptides:
             f.write(x + '\n')
-def runNetMHC(peptides, runCommand, fieldsToExtract):
-    #runCommand is a function that takes in the input file path and output file path, and returns the command to run
+def runNetMHC(peptides, commandGenerator, fieldsToExtract):
+    #commandGenerator is a function that takes in the input file path and output file path, and returns the command to run
     fdIn, inputFilePath  = tempfile.mkstemp()
     with open(inputFilePath, 'w') as f:
         for x in peptides:
@@ -90,17 +104,18 @@ def runNetMHC(peptides, runCommand, fieldsToExtract):
     runs = NetMHCRuns(inputFilePath)
     tries = 0
     while tries <= NUM_RETRY:
-        fd, outputFilePath = tempfile.mkstemp(suffix='.xls')
-        #command = [netmhcPath, '-a', allele, '-p', '-xls', '-xlsfile', outputFilePath, '-f', inputFilePath]
-        command = runCommand(inputFilePath, outputFilePath)
         stdoutFD, stdoutPath = tempfile.mkstemp()
-        stderrFD, stderrPath = tempfile.mkstemp()
+        command = commandGenerator(inputFilePath)
+        stderrFD, stderrPath = tempfile.mkstemp()        
         rc = subprocess.call(command, stdout=stdoutFD, stderr=stderrFD)            
-        run = NetMHCRun(stdoutPath, stderrPath, outputFilePath, rc, ' '.join(command))
+        run = NetMHCRun(stdoutPath, stderrPath, rc, ' '.join(command))
         runs.addRun(run)
         tries += 1
         if rc == 0:
-            scores = extractScores(outputFilePath, fieldsToExtract)
+            print('stdout path: ' + stdoutPath)
+            scores = extractScores(stdoutPath, fieldsToExtract)
+            print('scores')
+            print(scores)
             scoredPeptides = set([x[0] for x in scores])
             peptideSet = set(peptides)
             if scoredPeptides <= peptideSet and peptideSet <= scoredPeptides:
@@ -134,9 +149,9 @@ class CoordinatedOutput:
             return data
 
 class NetMHCRunnerThread(threading.Thread):
-    def __init__(self, runCommand,  fieldsToExtract, inputQ, coordOutput):
+    def __init__(self, commandGenerator,  fieldsToExtract, inputQ, coordOutput):
         threading.Thread.__init__(self)
-        self.runCommand = runCommand
+        self.commandGenerator = commandGenerator
         self.fieldsToExtract = fieldsToExtract
         self.inputQ = inputQ
         self.coordOutput = coordOutput
@@ -155,7 +170,7 @@ class NetMHCRunnerThread(threading.Thread):
                     self.coordOutput.waitToSet(i, None)
                     return
                 else:
-                    runs = runNetMHC(batch, self.runCommand, self.fieldsToExtract)
+                    runs = runNetMHC(batch, self.commandGenerator, self.fieldsToExtract)
                     success = runs.success
                     self.coordOutput.waitToSet(i, runs)
                     if not success:
@@ -181,8 +196,8 @@ class QueueInserterThread(threading.Thread):
                     self.q.put((x + i, None))
                 return
 class NetMHCScorer(AbstractScorer):
-    def __init__(self, batchSize, runCommand, numThreads):
-        self.runCommand = runCommand
+    def __init__(self, batchSize, commandGenerator, numThreads):
+        self.commandGenerator = commandGenerator
         self.batchSize = batchSize
         self.numThreads = numThreads
     def scorePeptides(self, pepIter, fieldsToExtract):
@@ -192,7 +207,7 @@ class NetMHCScorer(AbstractScorer):
         qThread = QueueInserterThread(inputQ, pepIter, self.batchSize, self.numThreads)
         qThread.start()
         for t in range(0, self.numThreads):
-            thread = NetMHCRunnerThread(self.runCommand, fieldsToExtract, inputQ, coordOutput)
+            thread = NetMHCRunnerThread(self.commandGenerator, fieldsToExtract, inputQ, coordOutput)
             threads.append(thread)
         for t in threads:
             t.start()
