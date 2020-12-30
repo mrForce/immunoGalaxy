@@ -4,15 +4,16 @@ import os
 import pickle
 import sys
 import functools
-from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable
+from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, ScoreCategory, fileMD5
 from netMHCCalling import NetMHCScorer, NetMHCRunFailedError
 
 
-parser = argparse.ArgumentParser(description='Precompute NetMHC scores for peptides')
-parser.add_argument('path', help='Path to NetMHC executable')
+parser = argparse.ArgumentParser(description='Precompute NetMHCPan scores for peptides')
+parser.add_argument('path', help='Path to NetMHCPan executable')
 parser.add_argument('fasta')
 parser.add_argument('chains')
-parser.add_argument('scoreTable')
+parser.add_argument('eluteScoreTable')
+parser.add_argument('bindingScoreTable')
 
 parser.add_argument('allele')
 parser.add_argument('length', type=int)
@@ -29,26 +30,70 @@ chainCollection = None
 with open(args.chains, 'rb') as f:
     chainCollection = pickle.load(f)
 
-scoreTableFile = None
-scoreTable = None
-if os.path.isfile(args.scoreTable):
-    scoreTableFile = open(args.scoreTable, 'rb+')
-    scoreTable = ScoreTable.readExisting(scoreTableFile)
+originalFASTAChecksum = chainCollection.md5
+currentFASTAChecksum = fileMD5(args.fasta)
+if currentFASTAChecksum != originalFASTAChecksum:
+    print('MD5 of FASTA used to create chains file: ' + str(originalFASTAChecksum))
+    print('MD5 of the given FASTA: '  + str(currentFASTAChecksum))
+    print('These are not the same. Exiting')
+    assert(False)
+
+assert(args.length == chainCollection.peptideLength)
+
+chainHash = chainCollection.checksum()
+
+    
+eluteScoreTableFile = None
+eluteScoreTable = None
+if os.path.isfile(args.eluteScoreTable):
+    eluteScoreTableFile = open(args.eluteScoreTable, 'rb+')
+    eluteScoreTable = ScoreTable.readExisting(eluteScoreTableFile)
+    if eluteScoreTable.chainHash != chainHash:
+        print('checksum for chains used to create elute score table: ' + eluteScoreTable.chainHash.hex())
+        print('checksum for these chains: ' + chainHash.hex())
+        print('These are not the same. Exiting')
+        assert(False)
 else:
-    scoreTableFile = open(args.scoreTable, 'wb+')
-    scoreTable = ScoreTable.empty(scoreTableFile, 'H', 1, ' ')
+    eluteScoreTableFile = open(args.eluteScoreTable, 'wb+')
+    eluteScoreTable = ScoreTable.empty(eluteScoreTableFile, ScoreCategory.PAN_SCORE_EL, 'H', 65535, ' ', args.length, chainHash)
+    
+
+assert(eluteScoreTable.peptideLength == chainCollection.peptideLength)
+
+bindingScoreTableFile = None
+bindingScoreTable = None
+if os.path.isfile(args.bindingScoreTable):
+    bindingScoreTableFile = open(args.bindingScoreTable, 'rb+')
+    bindingScoreTable = ScoreTable.readExisting(bindingScoreTableFile)
+    if bindingScoreTable.chainHash != chainHash:
+        print('checksum for chains used to create binding score table: ' + bindingScoreTable.chainHash.hex())
+        print('checksum for these chains: ' + chainHash.hex())
+        print('These are not the same. Exiting')
+        assert(False)
+else:
+    bindingScoreTableFile = open(args.bindingScoreTable, 'wb+')
+    bindingScoreTable = ScoreTable.empty(bindingScoreTableFile, ScoreCategory.PAN_AFF, 'H', 1, ' ', args.length, chainHash)
+    
+
+assert(bindingScoreTable.peptideLength == chainCollection.peptideLength)
 
 
-if args.allele in scoreTable.getAlleles():
-    print('Allele already in score table. Exiting')
+
+if args.allele in eluteScoreTable.getAlleles():
+    print('Allele already in elute score table. Exiting')
+    sys.exit(1)
+if args.allele in bindingScoreTable.getAlleles():
+    print('Allele already in binding score table. Exiting')
     sys.exit(1)
 def generateNetMHCCommand(netmhcPath, allele, inputFilePath):
-    return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath]
+    return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath, '-BA']
 commandGen = functools.partial(generateNetMHCCommand, args.path, args.allele)
 scorer = NetMHCScorer(5000, commandGen, args.threads)
 def getPeptideGen(chainCollection, fastaPath, pepLen):
     return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
-scoreIter = map(lambda x: x[0], scorer.scorePeptides(getPeptideGen(chainCollection, args.fasta, args.length), ['Affinity(nM)']))
+
+#gives back an iterator 
+scoreIter = scorer.scorePeptides(getPeptideGen(chainCollection, args.fasta, args.length), ['Score_EL', 'Aff(nM)'])
 try:
     result = scoreTable.addAllele(args.allele, scoreIter)
 except NetMHCRunFailedError as e:
