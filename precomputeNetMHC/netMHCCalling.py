@@ -95,6 +95,15 @@ def writePeptidesToFile(peptides, filePath):
     with open(filePath, 'w') as f:
         for x in peptides:
             f.write(x + '\n')
+
+KNOWN_AMINOS=set('ACDEFGHIKLMNPQRSTVWY')
+def unknownSub(peptides):
+    pep = []
+    for x in peptides:
+        sub = ''.join([y if y in KNOWN_AMINOS else 'X' for y in x])
+        pep.append(sub)
+    return pep
+    
 def runNetMHC(peptides, commandGenerator, fieldsToExtract):
     #commandGenerator is a function that takes in the input file path and output file path, and returns the command to run
     fdIn, inputFilePath  = tempfile.mkstemp()
@@ -114,10 +123,11 @@ def runNetMHC(peptides, commandGenerator, fieldsToExtract):
         if rc == 0:
             scores = extractScores(stdoutPath, fieldsToExtract)
             scoredPeptides = set([x[0] for x in scores])
-            peptideSet = set(peptides)
+            pepSub = unknownSub(peptides)
+            peptideSet = set(pepSub)
             if scoredPeptides <= peptideSet and peptideSet <= scoredPeptides:
                 scoreDict = dict(scores)
-                run.setResults([scoreDict[x] for x in peptides])
+                run.setResults([scoreDict[x] for x in pepSub])
                 return runs
         run.setFailed()
     runs.setFailed()
