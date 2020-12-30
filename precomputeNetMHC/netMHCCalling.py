@@ -119,10 +119,10 @@ def runNetMHC(peptides, commandGenerator, fieldsToExtract):
         stdoutFD, stdoutPath = tempfile.mkstemp()
         command = commandGenerator(inputFilePath)
         stderrFD, stderrPath = tempfile.mkstemp()
+        print('stdout: ' + stdoutPath + ', stderr: ' + stderrPath)
+        rc = subprocess.call(command, stdout=stdoutFD, stderr=stderrFD)
         os.close(stdoutFD)
         os.close(stderrFD)
-        print('stdout: ' + stdoutPath + ', stderr: ' + stderrPath)
-        rc = subprocess.call(command, stdout=stdoutFD, stderr=stderrFD)            
         run = NetMHCRun(stdoutPath, stderrPath, rc, ' '.join(command))
         runs.addRun(run)
         tries += 1
