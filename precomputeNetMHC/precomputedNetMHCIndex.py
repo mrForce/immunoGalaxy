@@ -27,6 +27,10 @@ class ChainLink:
         self.lastChainPosition = lastChainPosition
     def __str__(self):
         return '({}, {}, {}, {}, {})'.format(self.sequenceStart, self.nextChainIndex, self.nextChainPosition, self.lastChainIndex, self.lastChainPosition)
+    @property
+    def hashAttributeList(self):
+        #must return a list of integers
+        return [self.sequenceStart, self.nextChainIndex, self.nextChainPosition, self.lastChainIndex, self.lastChainPosition]
 
 
 class Chain(UserList):
@@ -37,7 +41,10 @@ class Chain(UserList):
 
     def __str__(self):
         return 'length: {}, header: {}, links: {}'.format(self.proteinLength, self.header, '->'.join([str(x) for x in self.data]))
-
+    @property
+    def hashAttributeList(self):
+        #must return a list of integers
+        return [self.proteinLength, len(self.data), list(itertools.chain.from_iterable([x.hashAttributeList for x in self.data]))]
 
 def fileMD5(path):
     with open(path, 'rb') as f:
@@ -58,6 +65,16 @@ class ChainCollection(UserList):
         self.initChains(recordIterator)
         self.pruneChains()
         f.close()
+    def checksum(self):
+        hasher = hashlib.md5()
+        attributeList = list(itertools.chain.from_iterable([x.hashAttributeList for x in self.data]))
+        a = array.array('L', attributeList)
+        hasher.update(a.tobytes())
+        #16 byte hash
+        return hasher.digest()
+    @property
+    def peptideLength(self):
+        return self.pepLen
     def __getstate__(self):
         state = {'md5': self.md5, 'data': self.data.copy(), 'pepLen': self.pepLen}
         return state
@@ -159,11 +176,13 @@ class ScoreTableMeta:
     """   
     In terms of bytes, this is structured as follows:
 
-+------------+----------------+----------+--------------+--------------+--------------------------------------+---------+
-| Multiplier | Score Category | Typecode | Num Peptides | Allele Delim | Size of following alleles (in bytes) | Alleles |
-+------------+----------------+----------+--------------+--------------+--------------------------------------+---------+
++------------+----------------+----------------+--------------+--------------+--------------------------------------+---------+
+| Chain Hash | Multiplier | Score Category | Peptide Length | Typecode | Num Peptides | Allele Delim | Size of following alleles (in bytes) | Alleles |
++------------+----------------+----------------+--------------+--------------+--------------------------------------+---------+
 
-The multiplier, score type, typecode, num Peptides, allele delim, and size of alleles are stored as a packed struct using Python's struct module, with the following format string: !HbQbL
+The chain hash is a 16 byte (128 bit) md5 checksum of the chains used to create the score table. The idea here is that if the FASTA is the same, then the peptides are defined by their length and starting positions within the proteins. 
+
+The multiplier, score category, peptide length, typecode, num Peptides, allele delim, and size of alleles are stored as a packed struct using Python's struct module.
 
 Score category is one of the values for the ScoreCategory enum, indicating what kind of score it is. NetMHCPan gives 5 scores: elution score, elution rank, binding score, binding rank, predicted affinity. NetMHC gives 2 scores: Predicted affinity and rank.
 
@@ -173,17 +192,25 @@ The list of allele names are stored as an ASCII string, with 'allele delim' sepe
 
 Note that both allele delim and typecode are stored as ascii characters (so a signed byte). But, pass them to the constructor as normal python strings. 
     """
-    STRUCT_FORMAT='!HIcQcL'
-    def __init__(self, multiplier, alleleSeperator, alleleList, numPeptides, scoreTypecode, scoreCategory):
+    STRUCT_FORMAT='!16sHIIcQcL'
+    def __init__(self, multiplier, alleleSeperator, alleleList, numPeptides, scoreTypecode, scoreCategory, peptideLength, chainHash):
         self.multiplier = multiplier        
         self.alleleSeperator = alleleSeperator.encode('ascii')
         assert(len(self.alleleSeperator) == 1)
         self.alleleList = [x.encode('ascii') for x in alleleList]
         self.numPeptides = numPeptides
+        self._peptideLength = peptideLength
         self.scoreTypecode = scoreTypecode.encode('ascii')
         assert(len(self.scoreTypecode) == 1)
         assert(isinstance(scoreCategory, ScoreCategory))
         self.scoreCategory = scoreCategory
+        self._chainHash = chainHash
+    @property
+    def chainHash(self):
+        return self._chainHash
+    @property
+    def peptideLength(self):
+        return self._peptideLength
     def getMultiplier(self):
         return self.multiplier
     def getAlleles(self):
@@ -212,13 +239,13 @@ Note that both allele delim and typecode are stored as ascii characters (so a si
         print('byte array')
         print(byteArray)
         structSize = struct.calcsize(cls.STRUCT_FORMAT)
-        multiplier, scoreCategoryInt, scoreTypecode, numPeptides, alleleSeperator, alleleArraySize = struct.unpack(cls.STRUCT_FORMAT, byteArray[0:structSize])        
+        chainHash, multiplier, scoreCategoryInt, peptideLength, scoreTypecode, numPeptides, alleleSeperator, alleleArraySize = struct.unpack(cls.STRUCT_FORMAT, byteArray[0:structSize])        
         alleleArrayBytes = byteArray[structSize:(structSize + alleleArraySize)]
         alleleList = [x.decode('ascii') for x in alleleArrayBytes.split(alleleSeperator)]
-        return cls(multiplier, alleleSeperator.decode('ascii'), alleleList, numPeptides, scoreTypecode.decode('ascii'), ScoreCategory(scoreCategoryInt))
+        return cls(multiplier, alleleSeperator.decode('ascii'), alleleList, numPeptides, scoreTypecode.decode('ascii'), ScoreCategory(scoreCategoryInt), peptideLength, chainHash)
     def toBytes(self):
         alleleArrayBytes = self.alleleSeperator.join(self.alleleList)
-        metaHeader = struct.pack(self.STRUCT_FORMAT, self.multiplier, self.scoreCategory.value, self.scoreTypecode, self.numPeptides, self.alleleSeperator, len(alleleArrayBytes))
+        metaHeader = struct.pack(self.STRUCT_FORMAT, self.chainHash, self.multiplier, self.scoreCategory.value, self.peptideLength, self.scoreTypecode, self.numPeptides, self.alleleSeperator, len(alleleArrayBytes))
         return metaHeader + alleleArrayBytes
 
 
@@ -232,9 +259,16 @@ class ScoreTable:
         self.tableMeta = tableMeta
     def getAlleles(self):
         return self.tableMeta.getAlleles()
+    @property
+    def chainHash(self):
+        return self.tableMeta.chainHash
+    @property
+    def peptideLength(self):
+        return self.tableMeta.peptideLength
     @classmethod
-    def empty(cls, fileObj, scoreCategory, scoreTypecode, multiplier, alleleSeperator):
-        meta = ScoreTableMeta(multiplier, alleleSeperator, [], 0, scoreTypecode, scoreCategory)
+    def empty(cls, fileObj, scoreCategory, scoreTypecode, multiplier, alleleSeperator, peptideLength, chainHash):
+        #chain hash should be a bytes object
+        meta = ScoreTableMeta(multiplier, alleleSeperator, [], 0, scoreTypecode, scoreCategory, peptideLength, chainHash)
         return cls(fileObj, meta)
     @classmethod
     def readExisting(cls, fileObj):

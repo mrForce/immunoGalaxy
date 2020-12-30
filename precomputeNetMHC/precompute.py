@@ -4,7 +4,7 @@ import os
 import pickle
 import sys
 import functools
-from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable
+from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, ScoreCategory, fileMD5
 from netMHCCalling import NetMHCScorer, NetMHCRunFailedError
 
 
@@ -29,14 +29,33 @@ chainCollection = None
 with open(args.chains, 'rb') as f:
     chainCollection = pickle.load(f)
 
+originalFASTAChecksum = chainCollection.md5
+currentFASTAChecksum = fileMD5(args.fasta)
+if currentFASTAChecksum != originalFASTAChecksum:
+    print('MD5 of FASTA used to create chains file: ' + str(originalFASTAChecksum))
+    print('MD5 of the given FASTA: '  + str(currentFASTAChecksum))
+    print('These are not the same. Exiting')
+    assert(False)
+
+chainHash = chainCollection.checksum()
+
+    
 scoreTableFile = None
 scoreTable = None
 if os.path.isfile(args.scoreTable):
     scoreTableFile = open(args.scoreTable, 'rb+')
     scoreTable = ScoreTable.readExisting(scoreTableFile)
+    if scoreTable.chainHash != chainHash:
+        print('checksum for chains used to create score table: ' + str(scoreTable.chainHash))
+        print('checksum for these chains: ' + str(chainHash))
+        print('These are not the same. Exiting')
+        assert(False)
 else:
     scoreTableFile = open(args.scoreTable, 'wb+')
-    scoreTable = ScoreTable.empty(scoreTableFile, 'H', 1, ' ')
+    scoreTable = ScoreTable.empty(scoreTableFile, ScoreCategory.AFFINITY, 'H', 1, ' ', args.length, chainHash)
+    
+assert(args.length == chainCollection.peptideLength)
+assert(scoreTable.peptideLength == chainCollection.peptideLength)
 
 
 if args.allele in scoreTable.getAlleles():
