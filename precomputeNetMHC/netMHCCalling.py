@@ -112,10 +112,7 @@ def runNetMHC(peptides, commandGenerator, fieldsToExtract):
         runs.addRun(run)
         tries += 1
         if rc == 0:
-            print('stdout path: ' + stdoutPath)
             scores = extractScores(stdoutPath, fieldsToExtract)
-            print('scores')
-            print(scores)
             scoredPeptides = set([x[0] for x in scores])
             peptideSet = set(peptides)
             if scoredPeptides <= peptideSet and peptideSet <= scoredPeptides:

@@ -71,8 +71,6 @@ class ChainCollection(UserList):
     def checksum(self):
         hasher = hashlib.md5()
         attributeList = list(itertools.chain.from_iterable([x.hashAttributeList for x in self.data]))
-        print('attribute list')
-        print(attributeList)
         a = array.array('L', attributeList)
         hasher.update(a.tobytes())
         #16 byte hash
@@ -227,8 +225,6 @@ Note that both allele delim and typecode are stored as ascii characters (so a si
     def setNumPeptides(self, numPeptides):
         self.numPeptides = numPeptides
     def computeAlleleOffset(self, allele):
-        print('list')
-        print(self.alleleList)
         index = self.alleleList.index(allele.encode('ascii'))
         a = array.array(self.getScoreTypecode())
         return self.numPeptides*index*a.itemsize
@@ -241,8 +237,6 @@ Note that both allele delim and typecode are stored as ascii characters (so a si
         return self.numPeptides*len(self.alleleList)*a.itemsize
     @classmethod
     def fromBytes(cls, byteArray):
-        print('byte array')
-        print(byteArray)
         structSize = struct.calcsize(cls.STRUCT_FORMAT)
         chainHash, multiplier, scoreCategoryInt, peptideLength, scoreTypecode, numPeptides, alleleSeperator, alleleArraySize = struct.unpack(cls.STRUCT_FORMAT, byteArray[0:structSize])        
         alleleArrayBytes = byteArray[structSize:(structSize + alleleArraySize)]
@@ -279,8 +273,6 @@ class ScoreTable:
     def readExisting(cls, fileObj):
         size = struct.calcsize('!IL')        
         magic, metaOffsetFromEnd = struct.unpack('!IL', fileObj.read(size))
-        print('meta offset')
-        print(metaOffsetFromEnd)
         assert(magic == cls.MAGIC)
         fileObj.seek(-1*metaOffsetFromEnd, os.SEEK_END)
         metaBytes = fileObj.read()
@@ -306,8 +298,6 @@ class ScoreTable:
         numScores = 0
         while True:
             chunk = [int(x) for x in itertools.islice(scoreIter, chunkSize)]
-            print('chunk')
-            print(chunk)
             numScores += len(chunk)
             if len(chunk) == 0:
                 break
@@ -323,10 +313,6 @@ class ScoreTable:
         self.fileObj.seek(0, os.SEEK_END)
         endLoc = self.fileObj.tell()
         self.fileObj.seek(0)
-        print('end loc')
-        print(endLoc)
-        print('beginning offset')
-        print(beginningOffset)
         self.fileObj.write(struct.pack('!IL', self.MAGIC, endLoc - beginningOffset))
         
     def scoreIter(self, allele):
