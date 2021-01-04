@@ -259,6 +259,9 @@ class ScoreTable:
     def getAlleles(self):
         return self.tableMeta.getAlleles()
     @property
+    def numPeptides(self):
+        return self.tableMeta.getNumPeptides()
+    @property
     def chainHash(self):
         return self.tableMeta.chainHash
     @property
