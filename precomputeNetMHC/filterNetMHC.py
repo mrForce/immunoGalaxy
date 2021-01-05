@@ -9,11 +9,14 @@ def getPeptideGen(chainCollection, fastaPath, pepLen):
     return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
 
 def scoreDistribution(scoreIter, peptideGen, peptidesToExclude):
-    count = collections.Counter()
-    for peptide, score in itertools.zip_longest(peptideGen, scoreIter):
-        if peptide not in peptidesToExclude:
-            count[score] += 1
-    return count
+    if peptidesToExclude:
+        count = collections.Counter()
+        for peptide, score in itertools.zip_longest(peptideGen, scoreIter):
+            if peptide not in peptidesToExclude:
+                count[score] += 1    
+        return count
+    else:
+        return collections.Counter(scoreIter)
 
 
 def computeScoreThreshold(distribution, k):
@@ -50,22 +53,23 @@ def filterOnThreshold(scoreIter, peptideHolderGen, threshold):
 def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta, additionalScoreTable, additionalChainCollection, additionalFasta, k):
     baseScoreDist = collections.Counter()    
     if baseScoreTable and baseChainCollection and baseFasta:
-        exclusion = set()
+        exclusion = None
         if additionalChainCollection:
             additionalGen = getPeptideGen(additionalChainCollection, additionalFasta, length)
-            for peptide in additionalGen:                
-                exclusion.add(peptide)
+            exclusion = set(additionalGen)
         baseGen = getPeptideGen(baseChainCollection, baseFasta, length)
-        baseScoreDist = scoreDistribution(baseScoreTable, allele, baseGen, exclusion)
+        baseScoreDist = scoreDistribution(baseScoreTable.scoreIter(allele), baseGen, exclusion)
     additionalScoreDist = collections.Counter()
     if additionalScoreTable and additionalChainCollection and additionalFasta:
         additionalGen = getPeptideGen(additionalChainCollection, additionalFasta, length)
-        additionalScoreDist = scoreDistribution(additionalScoreTable, allele, additionalGen, set())
+        additionalScoreDist = scoreDistribution(additionalScoreTable.scoreIter(allele), additionalGen, None)
     combinedScoreDist = additionalScoreDist + baseScoreDist
     threshold = computeScoreThreshold(combinedScoreDist, k)
     peptides = set()
     if baseScoreTable and baseChainCollection and baseFasta:
-        peptides.update(filterOnThreshold(baseScoreTable, allele, getPeptideGen(baseChainCollection, baseFasta, length), threshold))
+        gen = peptideGenerator(baseChainCollection, baseFasta, length)
+        peptides.update(filterOnThreshold(baseScoreTable.scoreIter(allele), gen, threshold))
     if additionalScoreTable and additionalChainCollection and additionalFasta:
-        peptides.update(filterOnThreshold(additionalScoreTable, allele, getPeptideGen(additionalChainCollection, additionalFasta, length), threshold))
+        gen = peptideGenerator(additionalChainCollection, additionalFasta, length)
+        peptides.update(filterOnThreshold(additionalScoreTable.scoreIter(allele), gen, threshold))
     return peptides
