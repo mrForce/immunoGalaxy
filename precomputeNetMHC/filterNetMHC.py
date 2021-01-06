@@ -43,12 +43,15 @@ def extractPeptidesAndScores(scoreIter, peptideHolderGen, indices):
             
 
 def filterOnThreshold(scoreIter, peptideHolderGen, threshold):
-    peptides = set()
+    peptides = []
     for peptideHolder, score in itertools.zip_longest(peptideHolderGen, scoreIter):
         if score <= threshold:
-            peptides.add(peptideHolder.getPeptideSequence())
+            peptides.append(peptideHolder)
     return peptides
-    
+
+def mapPeptideToHeaders(peptideHolders):
+    return {x.getPeptideSequence():x.getHeaders() for x in peptideHolders}
+
 
 def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta, additionalScoreTable, additionalChainCollection, additionalFasta, k):
     baseScoreDist = collections.Counter()    
@@ -65,11 +68,17 @@ def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta,
         additionalScoreDist = scoreDistribution(additionalScoreTable.scoreIter(allele), additionalGen, None)
     combinedScoreDist = additionalScoreDist + baseScoreDist
     threshold = computeScoreThreshold(combinedScoreDist, k)
-    peptides = set()
+    peptides = []
+    pepToHeader = defaultdict(list)
     if baseScoreTable and baseChainCollection and baseFasta:
         gen = peptideGenerator(baseChainCollection, baseFasta, length)
-        peptides.update(filterOnThreshold(baseScoreTable.scoreIter(allele), gen, threshold))
+        pep = filterOnThreshold(baseScoreTable.scoreIter(allele), gen, threshold)
+        for k, v in pep.items():
+            pepToHeader[k].append(v)
     if additionalScoreTable and additionalChainCollection and additionalFasta:
-        gen = peptideGenerator(additionalChainCollection, additionalFasta, length)
-        peptides.update(filterOnThreshold(additionalScoreTable.scoreIter(allele), gen, threshold))
-    return peptides
+        gen = peptideGenerator(additionalChainCollection, additionalFasta, length)        
+        pep = filterOnThreshold(additionalScoreTable.scoreIter(allele), gen, threshold)
+        for k,v in pep.items():
+            pepToHeader[k].append(v)
+    
+    return pepToHeader

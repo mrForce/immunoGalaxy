@@ -2,8 +2,11 @@
 import sys
 import argparse
 import subprocess
+from precomputedNetMHCIndex import ChainCollection
+from filterNetMHC import filterNetMHC
 import glob
 import tempfile
+from collections import defaultdict
 import shutil
 import os
 import itertools
@@ -13,6 +16,21 @@ import uuid
 NETMHC = ''
 NETMHCPAN = ''
 MSGFPLUS = ''
+CRUX=''
+MSGF2PIN=''
+THREADS=16
+PRECOMPUTE_SCRIPTS=''
+
+def writePeptideHeaderMapToFasta(peptideToHeaders, fastaPath):
+    #pass in a dictionary mapping each peptide to a set of headers
+    with open(fastaPath, 'w') as f:
+        for k,v in peptideToHeaders.items():
+            header = '>' + ' @@ '.join(list(v))
+            f.write(header + '\n')
+            f.write(k + '\n')
+def addRevcat(fastaPath):
+    root, ext = os.path.splitext(fastaPath)
+    return root + '.revCat' + ext
 def getMemory():
     p = subprocess.run(['free'], stdout=subprocess.PIPE)
     s = p.stdout.decode()
@@ -69,6 +87,8 @@ peptide_lengths = []
 
 tempDir = tempfile.mkdtemp(prefix='pipelineRun')
 outputPath = os.path.join(tempDir, 'search.mzid')
+revCatFastaPath = None
+pinOutputPath = os.path.join(tempDir, 'search.mzid.pin')
 msgfCommand = ['java', '-Xmx' + str(int(memory/2048)), '-jar', MSGFPLUS,
                '-s', args.mgf,
                '-ignoreMetCleavage', '1',
@@ -92,7 +112,42 @@ if filtered:
     msgfCommand.extend(['-e', '9'])
     msgfCommand.extend(['-minLength', str(min(lengths))])
     msgfCommand.extend(['-maxLength', str(max(lengths))])
-    #TODO: Create chain and score table files for additional proteome, then create filtered FASTA
+    if args.additional_proteome:
+        for x in lengths:
+            chains = ChainCollection(args.additional_proteome, x)
+            chainPath = os.path.join(tempDir, str(x) + 'additional.chains')
+            with open(chainPath, 'wb') as f:
+                pickle.dump(chains, f)
+            scoreTablePath = os.path.join(tempDir, str(x) + 'additional.scores')
+            for allele in args.allele:
+                precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, args.additional_proteome, chainPath, scoreTablePath, allele, str(x), str(THREADS)]
+                proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
+                outs, errors = proc.communicate()
+    pepToHeaders = defaultdict(set)
+    for x in lengths:
+        additionalChains = None
+        additionalScoreTable = None
+        if args.additional_proteome:
+            with open(os.path.join(tempDir, str(x) + 'additional.chains'), 'rb') as f:
+                additionalChains = pickle.load(f)
+            with open(os.path.join(tempDir, str(x) + 'additional.scores'), 'rb') as f:
+                additionalScoreTable = ScoreTable.readExisting(f)
+        baseChains = None
+        with open(os.path.join(args.baseDirectory, str(x) + '.chains'), 'rb') as f:
+            baseChains = pickle.load(f)
+        baseScoreTable = None
+        with open(os.path.join(args.baseDirectory, str(x) + '.scores'), 'rb') as f:
+            baseScoreTable = ScoreTable.readExisting(f)
+        additionalFasta = args.additional_proteome if args.additional_proteome else None
+        for allele in args.alleles:            
+            pepToHeader = filterNetMHC(allele, x, baseScoreTable, baseChains, args.baseFasta, additionalScoreTable, additionalChains, additionalFasta, args.rank_filter/100.0)
+            for k,v in pepToHeader.items():
+                pepToHeaders[k].add(v)
+    fasta = os.path.join(tempDir, 'peptides.fasta')
+    revCatFastaPath  = addRevcat(fasta)
+    writePeptideHeaderMapToFasta(pepToHeaders, fasta)
+    msgfCommand.extend(['-d', fasta])
+    
 else:
     msgfCommand.extend(['-e', '0'])
     if args.minLength > 0:
@@ -105,85 +160,38 @@ else:
         fasta = os.path.join(tempDir, 'combined.fasta')
         f = open(fasta, 'w')
         proc = subprocess.Popen(command, stdout=f)
-        outs, errors = proc.communicate()
+        assert(proc.wait() == 0)
+    revCatFastaPath  = addRevcat(fasta)
     msgfCommand.extend(['-d', fasta])
-length_to_allele_to_netmhc_map = {}
-if filtered:
-    for x in peptide_lengths:
-        length_to_allele_to_netmhc_map[x] = {}
-        for allele in args.allele:
-            length_to_allele_to_netmhc_map[x][allele] = ['Proteome' + x + 'Mers_' + allele]
-        
-
-proteome = 'proteome'
-fasta_link = os.path.join(project_directory, 'proteome.fasta')
-if args.additional_proteome:
-    i = 0
-    additional_fasta_names = []
-    for additional_fasta in args.additional_proteome:
-        name = '%d_add' % i
-        additional_fasta_names.append(name)
-        command = ['python3', 'AddFASTA.py', project_directory, additional_fasta, name]
-        print('going to call AddFASTA. Command: %s' % ' '.join(command))
-        if TEST:
-            print('skipping AddFASTA because of TEST')
-        else:
-            p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
-            assert(p.wait() == 0)
-    if not filtered:
-        """
-        If we're doing NetMHC filtering, then there's no point in combining FASTA files.
-        """
-        command = ['python3', 'ConcatFASTA.py', project_directory, '--source', 'cproteome', 'proteome'] + additional_fasta_names
-        print('going to call ConcatFASTA. Command: %s' % ' '.join(command))
-        if TEST:
-            print('skipping ConcatFASTA because of TEST')
-        else:
-            p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
-            assert(p.wait() == 0)
-        proteome = 'cproteome'
-    else:
-        for x in peptide_lengths:
-            x = x.strip()
-            for fasta in additional_fasta_names:
-                peptide_list_name = fasta + '_' + x
-                command = ['python3', 'KChop.py', project_directory, fasta, x, peptide_list_name]
-                print('going to call KChop. Command: %s' % ' '.join(command))
-                if TEST:
-                    print('skipping KChop because of TEST')
-                else:
-                    p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
-                    assert(p.wait() == 0)
-                for allele in args.allele:
-                    netmhc_command = ['python3', 'RunNetMHC.py', project_directory, peptide_list_name, allele]
-                    print('going to call RunNetMHC. Command: %s' % ' '.join(netmhc_command))
-                    if TEST:
-                        print('skipping RunNetMHC because of TEST')
-                    else:
-                        p = subprocess.Popen(netmhc_command, cwd=tools_location, stderr= sys.stdout.fileno())
-                        assert(p.wait() == 0)
-                    netmhc_name = peptide_list_name + '_' + allele
-                    length_to_allele_to_netmhc_map[x][allele].append(netmhc_name)
-
-
-#use half the available memory. Divide by 1024 to get megabytes. Divide by 2 to cut in half. 
-command = ['python3', 'RunMSGFPlusSearch.py', project_directory, 'mgf', 'index', 'search', '--modifications_name', 'mod', '--memory', str(int(memory/2048)), '--thread', '4', '--n', str(args.num_matches_per_spectrum), '--t', args.precursor_tolerance]
-if args.minLength > 0:
-    command.append('--minLength')
-    command.append(str(args.minLength))
-if args.maxLength > 0:
-    command.append('--maxLength')
-    command.append(str(args.maxLength))
 print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(command))
 if TEST:
     print('skipping RunMSGFPlusSearch because of TEST')
 else:
-    p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
+    p = subprocess.Popen(msgfCommand, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
 print('ran msgfplus search')
 
-command = ['python3', 'RunPercolator.py', project_directory, 'msgfplus', 'search', 'percolator', '--num_matches_per_spectrum', str(args.num_matches_per_spectrum)]
+"""
+Run msgf2pin
+"""
+
+msgf2pinCommand = [MSGF2PIN, outputPath, '-o', pinOutputPath, '-e', 'no_enzyme', '-P', 'XXX_', '-m', str(args.num_matches_per_spectrum), '-F', revCatFastaPath]
+p = subprocess.Popen(msgf2pinCommand, stderr=sys.stdout.fileno())
+assert(p.wait() == 0)
+
+
+"""
+Need to run Percolator
+"""
+
+percolatorOutputDir = os.path.join(tempDir, 'percolatorOutput')
+percolatorCommand = [CRUX, 'percolator', '--top-match', str(args.num_matches_per_spectrum), '--output-dir', percolatorOutputDir, pinOutputPath]
+
+
 if args.mode == 'netMHCPercolator':
+    """
+    This one is tricky. We need to call netmhc and insert the scores into the pin file.
+    """
     command.append('--allele')
     for x in args.allele:
         command.append(x)
