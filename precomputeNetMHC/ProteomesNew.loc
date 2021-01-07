@@ -1,0 +1,2 @@
+#value	name	fasta	netmhcScoreDir	netmhcPanScoresDir  organism
+/gene-data/jordan/newPrecomputed/human	Human	Human.fasta netmhcScores	netmhcPanScores	Human
