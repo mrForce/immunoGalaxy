@@ -18,13 +18,13 @@ import itertools
 import uuid
 
 #locations of needed tools
-NETMHC = ''
+NETMHC = '/home/jordan/netMHC-4.0/netMHC'
 NETMHCPAN = ''
-MSGFPLUS = ''
-CRUX=''
-MSGF2PIN=''
+MSGFPLUS = '/home/jordan/MSGFPlus/MSGFPlus.jar'
+CRUX='/home/jordan/crux'
+MSGF2PIN='/home/jordan/msgf2pin'
 THREADS=16
-PRECOMPUTE_SCRIPTS=''
+PRECOMPUTE_SCRIPTS='/home/jordan/github/immunoGalaxy/precomputeNetMHC'
 
 def generateNetMHCCommand(netmhcPath, allele, inputFilePath):
     return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath]
