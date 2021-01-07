@@ -1,8 +1,13 @@
 #!/usr/bin/python
 import sys
 import argparse
+import pickle
+import re
+import functools
 import subprocess
-from precomputedNetMHCIndex import ChainCollection
+from PINFile import PINFile
+from precomputedNetMHCIndex import ChainCollection,  ScoreTable
+from netMHCCalling import NetMHCScorer
 from filterNetMHC import filterNetMHC
 import glob
 import tempfile
@@ -20,6 +25,11 @@ CRUX=''
 MSGF2PIN=''
 THREADS=16
 PRECOMPUTE_SCRIPTS=''
+
+def generateNetMHCCommand(netmhcPath, allele, inputFilePath):
+    return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath]
+
+
 
 def writePeptideHeaderMapToFasta(peptideToHeaders, fastaPath):
     #pass in a dictionary mapping each peptide to a set of headers
@@ -61,7 +71,7 @@ parser.add_argument('--precursor_tolerance', type=str)
 parser.add_argument('--mgf', type=str)
 parser.add_argument('--archive', type=str)
 parser.add_argument('--msgf_unfiltered', type=str)
-.parser.add_argument('--percolator_unfiltered', type=str)
+parser.add_argument('--percolator_unfiltered', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
 parser.add_argument('--minLength', type=int, default=0)
 parser.add_argument('--maxLength', type=int, default=0)
@@ -179,62 +189,51 @@ msgf2pinCommand = [MSGF2PIN, outputPath, '-o', pinOutputPath, '-e', 'no_enzyme',
 p = subprocess.Popen(msgf2pinCommand, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
-
-"""
-Need to run Percolator
-"""
-
-percolatorOutputDir = os.path.join(tempDir, 'percolatorOutput')
-percolatorCommand = [CRUX, 'percolator', '--top-match', str(args.num_matches_per_spectrum), '--output-dir', percolatorOutputDir, pinOutputPath]
-
+#msgf unfiltered
+if args.msgf_unfiltered:
+    with open(pinOutputPath, 'r') as f:
+        with open(args.msgf_unfiltered, 'w') as g:
+            lines = f.readlines()
+            #remove the direction row
+            lines.pop(1)
+            for line in lines:
+                g.write(line)
 
 if args.mode == 'netMHCPercolator':
-    """
-    This one is tricky. We need to call netmhc and insert the scores into the pin file.
-    """
-    command.append('--allele')
-    for x in args.allele:
-        command.append(x)
-print('going to call RunPercolator. Command: %s' % ' '.join(command))
-if TEST:
-    print('skipping RunPercolator because of TEST')
-else:
-    p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
-    assert(p.wait() == 0)
+    peptide_regex = re.compile('^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$')
+    ptm_removal_regex = re.compile('\[[^\]]*\]')
+    pin = PINFile(pinOutputPath)
+    peptides = list(pin.peptides)
+    scoreDict = defaultdict(list)
+    for allele in args.alleles:
+        commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele)
+        scorer = NetMHCScorer(5000, commandGen, 1)
+        scores = [x[0] for x in scorer.scorePeptides(peptides, ['Affinity(nM)'])]
+        assert(len(scores) == len(peptides))
+        for i in range(0, len(scores)):
+            scoreDict[peptides[i]].append(scores[i])
+    singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
+    pin.addScores(singleScoreDict, 'NetMHC', '-1')
+    
+    
+percolatorOutputDir = os.path.join(tempDir, 'percolatorOutput')
+percolatorCommand = [CRUX, 'percolator', '--top-match', str(args.num_matches_per_spectrum), '--output-dir', percolatorOutputDir, pinOutputPath]
+p = subprocess.Popen(percolatorCommand, stderr=sys.stdout.fileno())
+assert(p.wait() == 0)
 
 print('ran percolator')
-#print('going to call ExportPeptidesWithQValues. Command: %s' % ' '.join(['python3', 'ExportPeptidesWithQValues.py', project_directory, 'percolator', os.path.abspath(args.peptide_output)]))
-#p = subprocess.Popen(['python3', 'ExportPeptidesWithQValues.py', project_directory, 'percolator', os.path.abspath(args.peptide_output)], cwd=tools_location, stderr=sys.stdout.fileno())
-#assert(p.wait() == 0)
-#print('ran peptides with q values')
+percolator_target_path = os.path.join(percolatorOutputDir, 'percolator.target.psms.txt')
+percolator_decoy_path = os.path.join(percolatorOutputDir, 'percolator.decoy.psms.txt')
+assert(os.path.isfile(percolator_target_path))
+assert(os.path.isfile(percolator_decoy_path))
 
-#print('going to call ExportPSMWithQValues. Command: %s' % ' '.join(['python3', 'ExportPSMWithQValues.py', project_directory, 'percolator', os.path.abspath(args.psm_output)]))
-#p = subprocess.Popen(['python3', 'ExportPSMWithQValues.py', project_directory, 'percolator', os.path.abspath(args.psm_output)], cwd=tools_location, stderr=sys.stdout.fileno())
-#assert(p.wait() == 0)
-#print('got psms')
-
-command = ['python3', 'ExportElliePIN.py', project_directory, 'search', '0.01', '/dev/null', args.msgf_unfiltered]
-print('going to call ExportElliePIN. Command: %s' % ' '.join(command))
-if TEST:
-    print('skipping ExportElliePIN because of TEST')
-else:
-    p = subprocess.Popen(command, cwd=tools_location, stderr=sys.stdout.fileno())
-    if p.wait() != 0:
-        print('COULD NOT CREATE ELLIE PIN')
-
-
-
-percolator_target_file = glob.glob(project_directory + '/**/percolator.target.psms.txt', recursive=True)
-assert(len(percolator_target_file) == 1)
-percolator_decoy_file = glob.glob(project_directory + '/**/percolator.decoy.psms.txt', recursive=True)
-assert(len(percolator_decoy_file) == 1)
 
 with tempfile.NamedTemporaryFile() as f:
-    command = ['awk', 'BEGIN {OFS="\t"} NR==1 {print "Label", $0} NR>1 {print 1, $0}', percolator_target_file[0]]
+    command = ['awk', 'BEGIN {OFS="\t"} NR==1 {print "Label", $0} NR>1 {print 1, $0}', percolator_target_path]
     p = subprocess.Popen(command, stdout=f)
     assert(p.wait() == 0)
     with tempfile.NamedTemporaryFile() as g:
-        command = ['awk', 'BEGIN {OFS="\t"} NR>1 {print -1, $0}', percolator_decoy_file[0]]
+        command = ['awk', 'BEGIN {OFS="\t"} NR>1 {print -1, $0}', percolator_decoy_path]
         p = subprocess.Popen(command, stdout=g)
         assert(p.wait() == 0)
         command = ['cat', f.name, g.name]
@@ -242,19 +241,7 @@ with tempfile.NamedTemporaryFile() as f:
             p = subprocess.Popen(command, stdout=h)
             assert(p.wait() == 0)
 
-"""
-#use custom script for FDR calculations.
-command = ['python3', '/galaxy-prod/galaxy/tools/MSEpitope/custom_filter.py', 'other', args.ellie_unknowns, '--peptide_column', 'Peptide', '--label_column', 'Label', '--score_column', 'lnEValue', '--target_label', '1', '--decoy_label', '-1', '--score_direction', '+', '--threshold', str(args.ellie_fdr), '--psm_q_output', args.ellie_positives, '--psm_fdr_output', '/dev/null', '--peptide_fdr_output', '/dev/null', '--peptide_q_output', '/dev/null']
-print('going to call custom_filter. Command: %s' % ' '.join(command))
-p = subprocess.Popen(command, stderr=sys.stdout.fileno())
-assert(p.wait() == 0)
-print('got ellie positive output')
-"""
-
 if args.archive:
-    print('project directory: %s' % project_directory)
-    print('archive: %s' % args.archive)
-    subprocess.run(['zip', '-r', args.archive + '.zip', os.path.join(project_directory, 'database.db'), os.path.join(project_directory, 'percolator_results'), os.path.join(project_directory, 'msgfplus_search_results'), os.path.join(project_directory, 'msgfplus_indices'), os.path.join(project_directory, 'MGF'), os.path.join(project_directory, 'Modifications')])
-    #subprocess.run(['zip', '-r', args.archive + '.zip', project_directory])
+    subprocess.run(['zip', '-r', args.archive + '.zip', tempDir])
     shutil.move(args.archive + '.zip', args.archive)
     print('Zip file size: %d' % os.path.getsize(args.archive))
