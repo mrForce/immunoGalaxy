@@ -150,13 +150,15 @@ if filtered:
         with open(os.path.join(args.baseDirectory, str(x) + '.chains'), 'rb') as f:
             baseChains = pickle.load(f)
         baseScoreTable = None
-        with open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores'), 'rb') as f:
-            baseScoreTable = ScoreTable.readExisting(f)
+        scoresFile = open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores'), 'rb')
+
+        baseScoreTable = ScoreTable.readExisting(scoresFile)
         additionalFasta = args.additional_proteome if args.additional_proteome else None
         for allele in args.allele:
             pepToHeader = filterNetMHC(allele, x, baseScoreTable, baseChains, args.baseFasta, additionalScoreTable, additionalChains, additionalFasta, args.rank_filter/100.0)
             for k,v in pepToHeader.items():
                 pepToHeaders[k].add(v)
+        scoresFile.close()
     fasta = os.path.join(tempDir, 'peptides.fasta')
     revCatFastaPath  = addRevcat(fasta)
     writePeptideHeaderMapToFasta(pepToHeaders, fasta)
