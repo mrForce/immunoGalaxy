@@ -113,12 +113,13 @@ msgfCommand = ['java', '-Xmx' + str(int(memory/2048)) + 'M', '-jar', MSGFPLUS,
                '-inst', args.instrument,
                '-o', outputPath
                ]
-if args.mod:
-    modPath = os.path.join(tempDir, 'mods.txt')
-    with open(modPath, 'w') as f:
+
+modPath = os.path.join(tempDir, 'mods.txt')
+with open(modPath, 'w') as f:
+    if args.mod:
         for mod in args.mod:
             f.write(mod + '\n')
-    msgfCommand.extend(['-mod', modPath])
+msgfCommand.extend(['-mod', modPath])
 
 if filtered:
     lengths = [int(x) for  x in args.pep_len.split(',')]
