@@ -96,13 +96,16 @@ if args.mode == 'filtered':
 peptide_lengths = []
 
 tempDir = tempfile.mkdtemp(prefix='pipelineRun')
+
 outputPath = os.path.join(tempDir, 'search.mzid')
 revCatFastaPath = None
 pinOutputPath = os.path.join(tempDir, 'search.mzid.pin')
-msgfCommand = ['java', '-Xmx' + str(int(memory/2048)), '-jar', MSGFPLUS,
-               '-s', args.mgf,
+mgf = os.path.join(tempDir, 'spectra.mgf')
+shutil.copyfile(args.mgf, mgf)
+msgfCommand = ['java', '-Xmx' + str(int(memory/2048)) + 'M', '-jar', MSGFPLUS,
+               '-s', mgf,
                '-ignoreMetCleavage', '1',
-               '-t', args.precursorTolerance,
+               '-t', args.precursor_tolerance,
                '-tda', '1',
                '-addFeatures', '1',
                '-n', str(args.num_matches_per_spectrum),
@@ -164,16 +167,20 @@ else:
         msgfCommand.extend(['-minLength', str(args.minLength)])
     if args.maxLength > 0:
         msgfCommand.extend(['-maxLength', str(args.maxLength)])
-    fasta = args.baseFasta
+    fasta = os.path.join(args.baseDirectory, args.baseFasta)
     if args.additional_proteome:
-        command = ['awk', '1', args.baseFasta, args.additional_proteome]
+        command = ['awk', '1', os.path.join(args.baseDirectory, args.baseFasta), args.additional_proteome]
         fasta = os.path.join(tempDir, 'combined.fasta')
         f = open(fasta, 'w')
         proc = subprocess.Popen(command, stdout=f)
         assert(proc.wait() == 0)
+    else:
+        fasta = os.path.join(tempDir, 'base.fasta')
+        shutil.copyfile(os.path.join(args.baseDirectory, args.baseFasta), fasta)
+        
     revCatFastaPath  = addRevcat(fasta)
     msgfCommand.extend(['-d', fasta])
-print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(command))
+print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(msgfCommand))
 if TEST:
     print('skipping RunMSGFPlusSearch because of TEST')
 else:

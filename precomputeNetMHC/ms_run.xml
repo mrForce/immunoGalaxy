@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<tool id="msgfplus_runner" name="MS-GF+Percolator Database Search" version="20.06">
-  <command interpreter="python3">runPipeline.py
+<tool id="msgfplus_runner_new" name="MS-GF+Percolator Database Search New" version="20.06">
+  <command interpreter="python3">runPipelineNew.py
   
-  '${proteome.fields.value}' '${proteome.fields.fasta}' '${proteome.fields.netmhcScoreDir}' '${proteome.fields.netmhcPanScoreDir}'
+  '${proteome.fields.value}' '${proteome.fields.fasta}' '${proteome.fields.netmhcScoreDir}' '${proteome.fields.netmhcPanScoresDir}'
 
   #if $fasta
   --additional_proteome '$fasta'
