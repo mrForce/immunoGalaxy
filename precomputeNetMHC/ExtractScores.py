@@ -33,7 +33,7 @@ length = st.peptideLength
 n = st.numPeptides
 assert(args.k <= n)
 pepGen = peptideGenerator(chainCollection, args.fasta, length)
-selection = random.sample(range(0, n), args.k)
+selection = sorted(random.sample(range(0, n), args.k))
 scoreIter = st.scoreIter(args.allele)
 pepAndScores = extractPeptidesAndScores(scoreIter, pepGen, selection)
 for pep, score in pepAndScores:
