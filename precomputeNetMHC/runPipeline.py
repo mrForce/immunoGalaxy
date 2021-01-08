@@ -150,7 +150,7 @@ if filtered:
         with open(os.path.join(args.baseDirectory, str(x) + '.chains'), 'rb') as f:
             baseChains = pickle.load(f)
         baseScoreTable = None
-        with open(os.path.join(args.baseDirectory, str(x) + '.scores'), 'rb') as f:
+        with open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores'), 'rb') as f:
             baseScoreTable = ScoreTable.readExisting(f)
         additionalFasta = args.additional_proteome if args.additional_proteome else None
         for allele in args.alleles:            
