@@ -23,7 +23,7 @@ def computeScoreThreshold(distribution, k):
     numPeptides = sum(distribution.values())
     maxVal = max(distribution.keys())
     numIncluded = 0
-    for score,count in distribution:
+    for score,count in distribution.items():
         numIncluded += count
         #return the score for the bucket that pushes us over the edge
         if numIncluded >= k*numPeptides:
@@ -69,7 +69,7 @@ def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta,
     combinedScoreDist = additionalScoreDist + baseScoreDist
     threshold = computeScoreThreshold(combinedScoreDist, k)
     peptides = []
-    pepToHeader = defaultdict(list)
+    pepToHeader = collections.defaultdict(list)
     if baseScoreTable and baseChainCollection and baseFasta:
         gen = peptideGenerator(baseChainCollection, baseFasta, length)
         pep = filterOnThreshold(baseScoreTable.scoreIter(allele), gen, threshold)
