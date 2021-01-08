@@ -153,7 +153,7 @@ if filtered:
         with open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores'), 'rb') as f:
             baseScoreTable = ScoreTable.readExisting(f)
         additionalFasta = args.additional_proteome if args.additional_proteome else None
-        for allele in args.alleles:            
+        for allele in args.allele:
             pepToHeader = filterNetMHC(allele, x, baseScoreTable, baseChains, args.baseFasta, additionalScoreTable, additionalChains, additionalFasta, args.rank_filter/100.0)
             for k,v in pepToHeader.items():
                 pepToHeaders[k].add(v)
@@ -213,7 +213,7 @@ if args.mode == 'netMHCPercolator':
     pin = PINFile(pinOutputPath)
     peptides = list(pin.peptides)
     scoreDict = defaultdict(list)
-    for allele in args.alleles:
+    for allele in args.allele:
         commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele)
         scorer = NetMHCScorer(5000, commandGen, 1)
         scores = [x[0] for x in scorer.scorePeptides(peptides, ['Affinity(nM)'])]
