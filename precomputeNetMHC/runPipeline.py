@@ -151,11 +151,11 @@ if filtered:
             baseChains = pickle.load(f)
         baseScoreTable = None
         scoresFile = open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores'), 'rb')
-
+        
         baseScoreTable = ScoreTable.readExisting(scoresFile)
         additionalFasta = args.additional_proteome if args.additional_proteome else None
         for allele in args.allele:
-            pepToHeader = filterNetMHC(allele, x, baseScoreTable, baseChains, args.baseFasta, additionalScoreTable, additionalChains, additionalFasta, args.rank_filter/100.0)
+            pepToHeader = filterNetMHC(allele, x, baseScoreTable, baseChains, os.path.join(args.baseDirectory, args.baseFasta), additionalScoreTable, additionalChains, additionalFasta, args.rank_filter/100.0)
             for k,v in pepToHeader.items():
                 pepToHeaders[k].add(v)
         scoresFile.close()
