@@ -128,12 +128,18 @@ class PeptideHolder:
     def getPeptideSequence(self):
         return self.proteinSequence[self.startPosition:(self.startPosition + self.pepLen)]
     def getHeaders(self):
+        assert(self.chainIndex is not None)
         assert(self.chainIndex < len(self.chains))
         chainIndex = self.chainIndex
         chainPos = self.chainPosition
         headers = set([self.chains[chainIndex].header])
         while chainPos != None:
+            if chainIndex is None:
+                print('chain index is none')
+                print('chain pos')
+                print(chainPos)
             headers.add(self.chains[chainIndex].header)
+
             tempChainPos = self.chains[chainIndex][chainPos].nextChainPosition
             chainIndex = self.chains[chainIndex][chainPos].nextChainIndex
             chainPos = tempChainPos
