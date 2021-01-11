@@ -98,7 +98,7 @@ class ChainCollection(UserList):
                 chain.append(link)
                 if pep in peptides:
                     chainIndex, chainPosition = peptides[pep]
-                    
+                    assert(protIndex is not None)
                     self.data[chainIndex][chainPosition].nextChainIndex = protIndex
                     self.data[chainIndex][chainPosition].nextChainPosition = i
                     link.lastChainIndex = chainIndex
@@ -111,7 +111,18 @@ class ChainCollection(UserList):
             for x in self.data[i]:
                 if x.lastChainIndex != None or x.nextChainIndex != None:
                     if x.lastChainIndex != None:
-                        self.data[x.lastChainIndex][x.lastChainPosition].nextChainPosition = len(tempChain)
+                        if self.data[x.lastChainIndex][x.lastChainPosition].nextChainIndex is None:
+                            assert(x.lastChainIndex == i)
+                            print('next chain index is none')
+                            print('i: ' + str(i))
+                            print('len(tempChain): ' + str(len(tempChain)))
+                            print('last chain index: ')
+                            print(x.lastChainIndex)
+                            print('header: ' + self.data[i].header)
+                            assert(self.data[x.lastChainIndex][x.lastChainPosition].nextChainPosition is None)
+                            print('last thing: ')
+                            print(self.data[x.lastChainIndex][x.lastChainPosition])
+                        self.data[x.lastChainIndex][x.lastChainPosition].nextChainPosition  = len(tempChain)
                     if x.nextChainIndex != None:
                         self.data[x.nextChainIndex][x.nextChainPosition].lastChainPosition = len(tempChain)
                     tempChain.append(x)
