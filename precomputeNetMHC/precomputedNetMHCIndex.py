@@ -98,7 +98,7 @@ class ChainCollection(UserList):
                 chain.append(link)
                 if pep in peptides:
                     chainIndex, chainPosition = peptides[pep]
-                    
+                    assert(protIndex is not None)
                     self.data[chainIndex][chainPosition].nextChainIndex = protIndex
                     self.data[chainIndex][chainPosition].nextChainPosition = i
                     link.lastChainIndex = chainIndex
@@ -115,9 +115,12 @@ class ChainCollection(UserList):
                         If x.lastChainIndex is i, then we need to reference the tempChain, because we haven't replaced self.data[i] with tempChain yet.
                         """
                         if x.lastChainIndex == i:
+                            assert(tempChain[x.lastChainPosition].nextChainIndex is not None)
                             tempChain[x.lastChainPosition].nextChainPosition = len(tempChain)
                         else:
+                            assert(self.data[x.lastChainIndex][x.lastChainPosition].nextChainIndex is not None)
                             self.data[x.lastChainIndex][x.lastChainPosition].nextChainPosition = len(tempChain)
+
                     if x.nextChainIndex != None:
                         self.data[x.nextChainIndex][x.nextChainPosition].lastChainPosition = len(tempChain)
                     tempChain.append(x)
