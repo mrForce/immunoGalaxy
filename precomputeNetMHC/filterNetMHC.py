@@ -69,17 +69,17 @@ def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta,
     combinedScoreDist = additionalScoreDist + baseScoreDist
     threshold = computeScoreThreshold(combinedScoreDist, k)
     peptides = []
-    pepToHeader = collections.defaultdict(list)
+    pepToHeader = collections.defaultdict(set)
     if baseScoreTable and baseChainCollection and baseFasta:
         gen = peptideGenerator(baseChainCollection, baseFasta, length)
         pep = filterOnThreshold(baseScoreTable.scoreIter(allele), gen, threshold)
         
         for holder in pep:
-            pepToHeader[holder.getPeptideSequence()].append(holder.getHeaders())
+            pepToHeader[holder.getPeptideSequence()].update(holder.getHeaders())
     if additionalScoreTable and additionalChainCollection and additionalFasta:
         gen = peptideGenerator(additionalChainCollection, additionalFasta, length)        
         pep = filterOnThreshold(additionalScoreTable.scoreIter(allele), gen, threshold)
         for holder in pep:
-            pepToHeader[holder.getPeptideSequence()].append(holder.getHeaders())
+            pepToHeader[holder.getPeptideSequence()].update(holder.getHeaders())
     
     return pepToHeader
