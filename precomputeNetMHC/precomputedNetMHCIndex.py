@@ -111,7 +111,13 @@ class ChainCollection(UserList):
             for x in self.data[i]:
                 if x.lastChainIndex != None or x.nextChainIndex != None:
                     if x.lastChainIndex != None:
-                        self.data[x.lastChainIndex][x.lastChainPosition].nextChainPosition = len(tempChain)
+                        """
+                        If x.lastChainIndex is i, then we need to reference the tempChain, because we haven't replaced self.data[i] with tempChain yet.
+                        """
+                        if x.lastChainIndex == i:
+                            tempChain[x.lastChainPosition].nextChainPosition = len(tempChain)
+                        else:
+                            self.data[x.lastChainIndex][x.lastChainPosition].nextChainPosition = len(tempChain)
                     if x.nextChainIndex != None:
                         self.data[x.nextChainIndex][x.nextChainPosition].lastChainPosition = len(tempChain)
                     tempChain.append(x)
