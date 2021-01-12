@@ -219,7 +219,7 @@ if args.mode == 'netMHCPercolator':
     for allele in args.allele:
         commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele)
         scorer = NetMHCScorer(5000, commandGen, 1)
-        scores = [x[0] for x in scorer.scorePeptides(peptides, ['Affinity(nM)'])]
+        scores = [x[0] for x in scorer.scorePeptides(iter(peptides), ['Affinity(nM)'])]
         assert(len(scores) == len(peptides))
         for i in range(0, len(scores)):
             scoreDict[peptides[i]].append(scores[i])
