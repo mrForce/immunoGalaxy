@@ -22,9 +22,7 @@ class PINFile:
                 peptide = parse_peptide(row['Peptide'], self.peptide_regex, self.ptm_removal_regex)
                 assert(peptide)
                 self.peptides.add(peptide)
-    @property
-    def peptides(self):
-        return self.peptides
+
     def addScores(self, scoreDict, columnHeader, columnDirection):
         #inserts the scores
         rows = []

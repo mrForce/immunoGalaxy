@@ -214,6 +214,7 @@ if args.mode == 'netMHCPercolator':
     print('Pin output path: ' + pinOutputPath)
     pin = PINFile(pinOutputPath)
     peptides = list(pin.peptides)
+    print('number of peptides: ' + str(len(peptides)))
     scoreDict = defaultdict(list)
     for allele in args.allele:
         commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele)
