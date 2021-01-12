@@ -157,7 +157,7 @@ if filtered:
         for allele in args.allele:
             pepToHeader = filterNetMHC(allele, x, baseScoreTable, baseChains, os.path.join(args.baseDirectory, args.baseFasta), additionalScoreTable, additionalChains, additionalFasta, args.rank_filter/100.0)
             for k,v in pepToHeader.items():
-                pepToHeaders[k].add(v)
+                pepToHeaders[k].update(v)
         scoresFile.close()
     fasta = os.path.join(tempDir, 'peptides.fasta')
     revCatFastaPath  = addRevcat(fasta)
