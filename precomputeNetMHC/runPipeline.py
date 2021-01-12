@@ -210,8 +210,8 @@ if args.msgf_unfiltered:
                 g.write(line)
 
 if args.mode == 'netMHCPercolator':
-    peptide_regex = re.compile('^[A-Z\-]\.(?P<peptide>.*)\.[A-Z\-]$')
-    ptm_removal_regex = re.compile('\[[^\]]*\]')
+    print('NetMHC + Percolator')
+    print('Pin output path: ' + pinOutputPath)
     pin = PINFile(pinOutputPath)
     peptides = list(pin.peptides)
     scoreDict = defaultdict(list)
