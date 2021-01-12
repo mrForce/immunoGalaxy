@@ -177,7 +177,8 @@ else:
             fasta = os.path.join(tempDir, 'base.fasta')
             shutil.copyfile(os.path.join(args.baseDirectory, args.baseFasta), fasta)
     else:
-        fasta = args.additional_proteome
+        fasta = os.path.join(tempDir, 'additional.fasta')
+        shutil.copyfile(args.additional_proteome, fasta)
     assert(fasta)
     assert(os.path.isfile(fasta))
     revCatFastaPath  = addRevcat(fasta)
