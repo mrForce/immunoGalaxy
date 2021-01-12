@@ -28,6 +28,7 @@ class PINFile:
         rows = []
         with open(self.path, 'r') as f:
             reader = csv.DictReader(f, self.fieldnames, delimiter='\t', restkey='Proteins')
+            next(reader)
             direction = dict(next(reader))
             for row in reader:
                 rows.append(row)
@@ -39,5 +40,7 @@ class PINFile:
             writer.writerow(direction)
             for row in rows:
                 row_copy = dict(row)
+                print('row')
+                print(row)
                 row_copy[columnHeader] = str(scoreDict[row['Peptide']])
                 writer.writerow(row_copy)
