@@ -52,7 +52,7 @@ parser.add_argument('baseFasta')
 parser.add_argument('netmhcScoreDir')
 parser.add_argument('netmhcPanScoreDir')
 parser.add_argument('--allele', action='append')
-parser.add_argument('--additional_proteome', action='append')
+parser.add_argument('--additional_proteome', type=str)
 parser.add_argument('--mod', action='append')
 parser.add_argument('--mode', choices=['filtered', 'unfiltered', 'netMHCPercolator'])
 parser.add_argument('--pep_len', type=str)
@@ -72,7 +72,10 @@ parser.add_argument('--maxLength', type=int, default=0)
 args = parser.parse_args()
 print('args')
 print(args)
-
+usingBase = True
+if args.baseDirectory == 'None':
+    assert(args.additional_proteome)
+    usingBase = False
 
 
 
