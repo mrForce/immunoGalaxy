@@ -52,7 +52,6 @@
     <param name="Name" type="text" label="Search name" />
     <param name="proteome" type="select" label="Select a proteome">
       <options from_data_table="ProteomesNew" />
-      <option value="None">No Proteome</option>
     </param>
 
 
