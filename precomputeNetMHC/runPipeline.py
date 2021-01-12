@@ -138,16 +138,18 @@ if filtered:
                 additionalChains = pickle.load(f)
             with open(os.path.join(tempDir, str(x) + 'additional.scores'), 'rb') as f:
                 additionalScoreTable = ScoreTable.readExisting(f)
-        baseChains = None
-        with open(os.path.join(args.baseDirectory, str(x) + '.chains'), 'rb') as f:
-            baseChains = pickle.load(f)
         baseScoreTable = None
-        scoresFile = open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores'), 'rb')
-        
-        baseScoreTable = ScoreTable.readExisting(scoresFile)
+        baseChains = None
+        baseFasta = None
+        if usingBase:
+            with open(os.path.join(args.baseDirectory, str(x) + '.chains'), 'rb') as f:
+                baseChains = pickle.load(f)
+            scoresFile = open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores'), 'rb')
+            baseScoreTable = ScoreTable.readExisting(scoresFile)
+            baseFasta = os.path.join(args.baseDirectory, args.baseFasta)
         additionalFasta = args.additional_proteome if args.additional_proteome else None
         for allele in args.allele:
-            pepToHeader = filterNetMHC(allele, x, baseScoreTable, baseChains, os.path.join(args.baseDirectory, args.baseFasta), additionalScoreTable, additionalChains, additionalFasta, args.rank_filter/100.0)
+            pepToHeader = filterNetMHC(allele, x, baseScoreTable, baseChains, baseFasta, additionalScoreTable, additionalChains, additionalFasta, args.rank_filter/100.0)
             for k,v in pepToHeader.items():
                 pepToHeaders[k].update(v)
         scoresFile.close()
@@ -162,17 +164,22 @@ else:
         msgfCommand.extend(['-minLength', str(args.minLength)])
     if args.maxLength > 0:
         msgfCommand.extend(['-maxLength', str(args.maxLength)])
-    fasta = os.path.join(args.baseDirectory, args.baseFasta)
-    if args.additional_proteome:
-        command = ['awk', '1', os.path.join(args.baseDirectory, args.baseFasta), args.additional_proteome]
-        fasta = os.path.join(tempDir, 'combined.fasta')
-        f = open(fasta, 'w')
-        proc = subprocess.Popen(command, stdout=f)
-        assert(proc.wait() == 0)
+    fasta = None
+    if usingBase:
+        fasta = os.path.join(args.baseDirectory, args.baseFasta)
+        if args.additional_proteome:
+            command = ['awk', '1', os.path.join(args.baseDirectory, args.baseFasta), args.additional_proteome]
+            fasta = os.path.join(tempDir, 'combined.fasta')
+            f = open(fasta, 'w')
+            proc = subprocess.Popen(command, stdout=f)
+            assert(proc.wait() == 0)
+        else:
+            fasta = os.path.join(tempDir, 'base.fasta')
+            shutil.copyfile(os.path.join(args.baseDirectory, args.baseFasta), fasta)
     else:
-        fasta = os.path.join(tempDir, 'base.fasta')
-        shutil.copyfile(os.path.join(args.baseDirectory, args.baseFasta), fasta)
-        
+        fasta = args.additional_proteome
+    assert(fasta)
+    assert(os.path.isfile(fasta))
     revCatFastaPath  = addRevcat(fasta)
     msgfCommand.extend(['-d', fasta])
 print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(msgfCommand))
