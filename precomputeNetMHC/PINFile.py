@@ -42,5 +42,6 @@ class PINFile:
                 row_copy = dict(row)
                 print('row')
                 print(row)
-                row_copy[columnHeader] = str(scoreDict[row['Peptide']])
+                peptide = parse_peptide(row['Peptide'], self.peptide_regex, self.ptm_removal_regex)
+                row_copy[columnHeader] = str(scoreDict[peptide])
                 writer.writerow(row_copy)
