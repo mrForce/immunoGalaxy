@@ -41,15 +41,7 @@ def writePeptideHeaderMapToFasta(peptideToHeaders, fastaPath):
 def addRevcat(fastaPath):
     root, ext = os.path.splitext(fastaPath)
     return root + '.revCat' + ext
-def getMemory():
-    p = subprocess.run(['free'], stdout=subprocess.PIPE)
-    s = p.stdout.decode()
-    lines = s.split('\n')
-    for line in lines[1::]:
-        split_line = line.split()
-        if split_line[0] == 'Mem:':
-            return int(split_line[-1])
-    return -1
+
     
 parser = argparse.ArgumentParser()
 
@@ -83,9 +75,6 @@ print(args)
 
 
 
-memory = getMemory()
-print('Memory: ' + str(memory))
-assert(memory > 0)
 
 
 
@@ -102,7 +91,7 @@ revCatFastaPath = None
 pinOutputPath = os.path.join(tempDir, 'search.mzid.pin')
 mgf = os.path.join(tempDir, 'spectra.mgf')
 shutil.copyfile(args.mgf, mgf)
-msgfCommand = ['java', '-Xmx' + str(int(memory/2048)) + 'M', '-jar', MSGFPLUS,
+msgfCommand = ['java', '-Xmx1000M', '-jar', MSGFPLUS,
                '-s', mgf,
                '-ignoreMetCleavage', '1',
                '-t', args.precursor_tolerance,
