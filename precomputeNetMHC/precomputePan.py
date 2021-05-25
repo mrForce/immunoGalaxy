@@ -4,7 +4,7 @@ import os
 import pickle
 import sys
 import functools
-from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, ScoreCategory, fileMD5
+from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, ScoreCategory, fileMD5, ScoreTableGroup
 from netMHCCalling import NetMHCScorer, NetMHCRunFailedError
 
 
@@ -92,10 +92,15 @@ scorer = NetMHCScorer(5000, commandGen, args.threads)
 def getPeptideGen(chainCollection, fastaPath, pepLen):
     return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
 
-#gives back an iterator 
+#gives back an iterator
+"""
+This was the problem: how do we split up the iterators?
+"""
 scoreIter = scorer.scorePeptides(getPeptideGen(chainCollection, args.fasta, args.length), ['Score_EL', 'Aff(nM)'])
+scoreTableGroup = ScoreTableGroup(eluteScoreTable, bindingScoreTable)
+
 try:
-    result = scoreTable.addAllele(args.allele, scoreIter)
+    result = scoreTableGroup.addAllele(args.allele, scoreIter)
 except NetMHCRunFailedError as e:
     for x in e.runs.runs:
         print(x.success)

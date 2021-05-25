@@ -343,6 +343,42 @@ class ScoreTable:
                 score,  = struct.unpack(typecode, self.fileObj.read(size))
                 yield score
 
+class ScoreTableGroup:
+    def __init__(self, *scoreTables):
+        self.scoreTables = scoreTables
+        self.numScoreTables = len(scoreTables)
+    def addAllele(self, allele, scoreIter):
+        if any([allele in table.tableMeta.getAlleles() for table in self.scoreTables]):
+            return False
+        else:
+            locations = [struct.calcsize('!IL') + table.tableMeta.computeScoreSectionSizeInBytes() for table in self.scoreTables]
+            numScoresWritten = self.appendScores(scoreIter, locations)
+            for table in self.scoreTables:
+                if len(table.tableMeta.alleleList) == 0:
+                    table.tableMeta.setNumPeptides(numScoresWritten)
+                assert(numScoresWritten == table.tableMeta.getNumPeptides())
+                table.writeMeta()
+                table.fileObj.flush()
+            return True
+    def appendScores(self, scoreIter, locations):
+        chunkSize = 2**10
+        for i in range(0, self.numScoreTables):
+            self.scoreTables[i].fileObj.seek(locations[i])
+        numScores = 0
+        while True:
+            chunk = [list(x) for x in itertools.islice(scoreIter, chunkSize)]
+            numScores += len(chunk)
+            if len(chunk) == 0:
+                break
+            for i in range(0, self.numScoreTables):
+                table = self.scoreTables[i]
+                chunkForTable = [x[i] for x in chunk]
+                chunkArray = array.array(table.tableMeta.getScoreTypecode(), chunkForTable)
+                chunkBytes = chunkArray.tobytes()
+                table.fileObj.write(chunkBytes)
+        return numScores
+        
+
 
 class AbstractScorer(ABC):
     @abstractmethod
