@@ -341,7 +341,7 @@ class ScoreTable:
             size = struct.calcsize(typecode)
             for i in range(0, self.tableMeta.getNumPeptides()):
                 score,  = struct.unpack(typecode, self.fileObj.read(size))
-                yield score
+                yield float(score)/self.tableMeta.getMultiplier()
 
 class ScoreTableGroup:
     def __init__(self, *scoreTables):
@@ -372,7 +372,8 @@ class ScoreTableGroup:
                 break
             for i in range(0, self.numScoreTables):
                 table = self.scoreTables[i]
-                chunkForTable = [x[i] for x in chunk]
+                multiplier = table.tableMeta.getMultiplier()
+                chunkForTable = [x[i]*multiplier for x in chunk]
                 chunkArray = array.array(table.tableMeta.getScoreTypecode(), chunkForTable)
                 chunkBytes = chunkArray.tobytes()
                 table.fileObj.write(chunkBytes)
