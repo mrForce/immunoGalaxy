@@ -314,8 +314,9 @@ class ScoreTable:
         chunkSize = 2**10
         self.fileObj.seek(location)
         numScores = 0
+        multiplier = self.tableMeta.getMultiplier()
         while True:
-            chunk = [int(x) for x in itertools.islice(scoreIter, chunkSize)]
+            chunk = [int(x*multiplier) for x in itertools.islice(scoreIter, chunkSize)]
             numScores += len(chunk)
             if len(chunk) == 0:
                 break
@@ -373,7 +374,7 @@ class ScoreTableGroup:
             for i in range(0, self.numScoreTables):
                 table = self.scoreTables[i]
                 multiplier = table.tableMeta.getMultiplier()
-                chunkForTable = [x[i]*multiplier for x in chunk]
+                chunkForTable = [int(x[i]*multiplier) for x in chunk]
                 chunkArray = array.array(table.tableMeta.getScoreTypecode(), chunkForTable)
                 chunkBytes = chunkArray.tobytes()
                 table.fileObj.write(chunkBytes)
