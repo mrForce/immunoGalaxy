@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<tool id="msgfplus_runner_new" name="MS-GF+Percolator Database Search New" version="20.06">
+<tool id="msgfplus_runner_new" name="MS-GF+Percolator Database Search New" version="21.05">
   <command interpreter="python3">runPipelineNew.py
   
   '${proteome.fields.value}' '${proteome.fields.fasta}' '${proteome.fields.netmhcScoreDir}' '${proteome.fields.netmhcPanScoresDir}'
@@ -57,8 +57,19 @@
 
     <param optional="true" name="fasta" type="data" label="Select a FASTA file" format="fasta" />
 
-
-    <param name="mgf" type="data" label="Select an MGF file" format="mgf" />
+    <conditional name="mgf_input">
+      <param name="mgf_input_selector" type="select" label="Single MGF or collection of MGFs" help="Select either a single MGF or a collection of MGF files">
+	<option value="single">Single File</option>
+	<option value="collection">Collection</option>
+      </param>
+      <when value="single">
+	<param name="mgf" type="data" label="Select an MGF file" format="mgf" />
+      </when>
+      <when value="collection">
+	<param name="mgf_collection" type="data_collection" format="mgf" label="Select an MGF collection"/>
+      </when>
+    </conditional>
+    
 
     <param name="frag_method" type="select" label="Select the fragmentation method">
       <option value="1">CID</option>
