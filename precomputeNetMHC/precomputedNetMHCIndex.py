@@ -305,8 +305,8 @@ class ScoreTable:
             numScoresWritten = self.appendScores(scoreIter, location)
             if len(self.tableMeta.alleleList) == 0:
                 self.tableMeta.setNumPeptides(numScoresWritten)
-            if numScoresWritten == self.tableMeta.getNumPeptides():                    
-                self.tableMeta.addAllele(allele)                
+            assert(numScoresWritten == self.tableMeta.getNumPeptides())
+            self.tableMeta.addAllele(allele)                
             self.writeMeta()
             self.fileObj.flush()
             return True
@@ -358,6 +358,7 @@ class ScoreTableGroup:
                 if len(table.tableMeta.alleleList) == 0:
                     table.tableMeta.setNumPeptides(numScoresWritten)
                 assert(numScoresWritten == table.tableMeta.getNumPeptides())
+                table.tableMeta.addAllele(allele)
                 table.writeMeta()
                 table.fileObj.flush()
             return True
