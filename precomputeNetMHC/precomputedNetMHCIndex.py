@@ -378,7 +378,11 @@ class ScoreTableGroup:
             for i in range(0, self.numScoreTables):
                 table = self.scoreTables[i]
                 multiplier = table.tableMeta.getMultiplier()
-                chunkForTable = [int(x[i]*multiplier) for x in chunk]
+                chunkForTable = None
+                if table.tableMeta.getScoreTypecode() in ['f', 'd']:
+                    chunkForTable = [float(x[i]*multiplier) for x in chunk]
+                else:
+                    chunkForTable = [int(x[i]*multiplier) for x in chunk]
                 chunkArray = array.array(table.tableMeta.getScoreTypecode(), chunkForTable)
                 chunkBytes = chunkArray.tobytes()
                 table.fileObj.write(chunkBytes)

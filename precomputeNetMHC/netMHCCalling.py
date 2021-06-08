@@ -239,6 +239,6 @@ class NetMHCScorer(AbstractScorer):
                 else:
                     raise NetMHCRunFailedError(runs)
                         
-        for t in threads:
-            #they should all be gone by now, but do this for safety
-            t.join()
+        #for t in threads:
+        #they should all be gone by now, but do this for safety
+        #    t.join()

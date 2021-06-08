@@ -27,11 +27,14 @@ with open(args.chains, 'rb') as f:
 
 f = open(args.scoreTable, 'rb')
 st = ScoreTable.readExisting(f)
+print('alleles: ')
+print(st.getAlleles())
 assert(args.allele in st.getAlleles())
 
 length = st.peptideLength
 n = st.numPeptides
 assert(args.k <= n)
+print('num peptides: ' + str(n))
 pepGen = peptideGenerator(chainCollection, args.fasta, length)
 selection = sorted(random.sample(range(0, n), args.k))
 scoreIter = st.scoreIter(args.allele)
