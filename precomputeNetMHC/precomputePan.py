@@ -55,7 +55,7 @@ if os.path.isfile(args.eluteScoreTable):
         assert(False)
 else:
     eluteScoreTableFile = open(args.eluteScoreTable, 'wb+')
-    eluteScoreTable = ScoreTable.empty(eluteScoreTableFile, ScoreCategory.PAN_SCORE_EL, 'H', 65535, ' ', args.length, chainHash)
+    eluteScoreTable = ScoreTable.empty(eluteScoreTableFile, ScoreCategory.PAN_SCORE_EL, 'f', 1, ' ', args.length, chainHash)
     
 
 assert(eluteScoreTable.peptideLength == chainCollection.peptideLength)

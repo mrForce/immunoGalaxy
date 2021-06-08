@@ -316,7 +316,10 @@ class ScoreTable:
         numScores = 0
         multiplier = self.tableMeta.getMultiplier()
         while True:
-            chunk = [int(x*multiplier) for x in itertools.islice(scoreIter, chunkSize)]
+            if self.tableMeta.getScoreTypecode() in ['f', 'd']:
+                chunk = [float(x*multiplier) for x in itertools.islice(scoreIter, chunkSize)]
+            else:
+                chunk = [int(x*multiplier) for x in itertools.islice(scoreIter, chunkSize)]
             numScores += len(chunk)
             if len(chunk) == 0:
                 break
