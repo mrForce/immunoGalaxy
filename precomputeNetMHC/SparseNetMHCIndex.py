@@ -94,6 +94,57 @@ Note that both allele delim and typecode are stored as ascii characters (so a si
         metaHeader = struct.pack(self.STRUCT_FORMAT, self.chainHash, self.multiplier, self.scoreCategory.value, self.peptideLength, self.scoreTypecode, self.numPeptides, self.numSparsePeptides, self.alleleSeperator, len(alleleArrayBytes))
         return metaHeader + alleleArrayBytes
 
+class ScoreAndIndex:
+    def __init__(self, score, index, direction):
+        self.score = score
+        self.index = index
+        self.direction = direction
+    def __lt__(self, other):
+        if self.direction > 0:
+            return self.score >= other.score
+        if self.direction < 0:
+            return self.score < other.score
+    
+class BestScoreStore:
+    def __init__(self, approxSize, direction):
+        #direction is positive if lower scores are better, or negative if higher scores are better
+        self.heap = []
+        self.approxSize = approxSize
+        self.worstValueInHeap = None
+        self.worstValueCounter = 0
+        self.direction = direction
+    def add(self, x, index):
+        """
+        This is so complicated because we have to deal with ties at the boundary. 
+        """
+        s = ScoreAndIndex(x, index, self.direction)
+        if self.heapMax is None and self.heapMin is None:
+            assert(len(self.heap) == 0)
+            self.worstValueInHeap = x
+            self.worstValueCounter = 1
+            heapq.heappush(self.heap, s)
+        elif len(self.heap) < self.approxSize:
+            if s < ScoreAndIndex(self.worstValueInHeap, 0, self.direction):
+                self.worstValueInHeap = x
+                self.worstValueCounter = 1
+            elif x == self.worstValueInHeap:
+                self.worstValueCounter += 1
+            heapq.heappush(self.heap, s)
+        elif x == self.worstValueInHeap:
+            self.worstValueCounter += 1
+            heapq.heappush(self.heap, s)
+        elif ScoreAndIndex(self.worstValueInHeap, 0, self.direction) < s:
+            heapq.heappush(self.heap, s)
+            if len(self.heap) - self.worstValueCounter >= self.approxSize:                
+                for i in range(0, self.worstValueCounter):
+                    worst = heapq.heappop(self.heap)
+                    assert(worst.score == self.worstValueInHeap)
+                self.worstValueCounter = 0
+                self.worstValueInHeap = None
+    def getHeap(self):
+        return self.heap
+            
+    
 
 class SparseScoresForAllele:
     @property
@@ -103,8 +154,16 @@ class SparseScoresForAllele:
     def scoreVector(self):
         return self._scoreVector
     @classmethod
-    def sparsify(cls, scoreIter, numSparse):
-        pass
+    def sparsify(cls, scoreIter, approxNumSparse, direction):
+        #numSparse is the number of peptides to store scores for.
+        #direction is positive if lower scores are better (like affinity), or negative if higher scores are better.
+        store = BestScoreStore(approxNumSparse, direction)
+        for score, index in zip(scoreIter, itertools.count(0)):
+            store.add(score, index)
+        #sort based on index
+        sortedScoresAndIndices = sorted(store.getHeap(), key=lambda x: x.index)
+        self._scoreVector = [x.index for x in sortedScoresAndIndices]
+        #Constuct the bit vector. 
     @classmethod
     def fromBytes(cls, fileObj, numPeptides, numSparsePeptides, scoreType):
         pass
