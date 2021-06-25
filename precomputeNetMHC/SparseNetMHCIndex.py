@@ -2,9 +2,11 @@ import io
 import argparse
 import os
 import pickle
+from bitarray import bitarray
 import typing
 import sys
 import functools
+import struct
 from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, ScoreCategory, fileMD5, ScoreTableGroup
 
 """
@@ -148,8 +150,8 @@ class BestScoreStore:
 
 class SparseScoresForAllele:
     @property
-    def bitVector(self):
-        return self._bitVector
+    def bitArray(self):
+        return self._bitArray
     @property
     def scoreVector(self):
         return self._scoreVector
@@ -163,12 +165,23 @@ class SparseScoresForAllele:
         #sort based on index
         sortedScoresAndIndices = sorted(store.getHeap(), key=lambda x: x.index)
         self._scoreVector = [x.index for x in sortedScoresAndIndices]
-        #Constuct the bit vector. 
+        #Constuct the bit array
+        self._bitArray = bitarray(endian='big')
+        lastIndex = 0
+        for scoreAndIndex in sortedScoresAndIndices:
+            index = scoreAndIndex.index
+            self._bitArray.extend([0]*(index - lastIndex))
+            self._bitArray.append(1)
+            lastIndex = index + 1
     @classmethod
-    def fromBytes(cls, fileObj, numPeptides, numSparsePeptides, scoreType):
+    def fromBytes(cls, fileObj):
+        #finish fromBytes
+        size = int(fileObj.read(struct.calcsize('Q!')))
         pass
     def toBytes(self):
-        pass
+        bitArrayBytes = self.bitArray.tobytes()
+        size = len(bitArrayBytes)
+        return struct.pack('Q!', size) + bitArrayBytes
     def scoreIter(self):
         pass
         
