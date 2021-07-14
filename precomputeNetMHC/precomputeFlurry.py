@@ -2,13 +2,12 @@ import io
 import argparse
 import os
 import pickle
-import mhcflurry
 import numpy as np
 import sys
 import functools
 from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, ScoreCategory, fileMD5, ScoreTableGroup
 
-mhcflurry.common.configure_tensorflow(backend='tensorflow-default')
+
 parser = argparse.ArgumentParser(description='Precompute MHCFlurry scores for peptides')
 parser.add_argument('fasta')
 parser.add_argument('chains')
@@ -18,9 +17,13 @@ parser.add_argument('allele')
 parser.add_argument('length', type=int)
 
 args = parser.parse_args()
+
+
 assert(args.length >= 8 and args.length <= 13)
 assert(os.path.isfile(args.fasta))
 assert(os.path.isfile(args.chains))
+import mhcflurry
+mhcflurry.common.configure_tensorflow(backend='tensorflow-default')
 
 chainCollection = None
 with open(args.chains, 'rb') as f:
