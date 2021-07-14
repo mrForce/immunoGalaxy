@@ -68,7 +68,7 @@ def getPeptideGen(chainCollection, fastaPath, pepLen):
 
 
 predictor=mhcflurry.Class1AffinityPredictor.load()
-peptides = (getPeptideGen(chainCollection, args.fasta, args.length)
+peptides = [x.getPeptideSequence() for x in peptideGenerator(chainCollection, args.fasta, args.length)]
 scores = list(predictor.predict(allele=args.allele, peptides=peptides))
 
 
