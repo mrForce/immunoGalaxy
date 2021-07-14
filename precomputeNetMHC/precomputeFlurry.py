@@ -71,8 +71,16 @@ def getPeptideGen(chainCollection, fastaPath, pepLen):
 
 
 predictor=mhcflurry.Class1AffinityPredictor.load()
+KNOWN_AMINOS=set('ACDEFGHIKLMNPQRSTVWY')
+def unknownSub(peptides):
+    pep = []
+    for x in peptides:
+        sub = ''.join([y if y in KNOWN_AMINOS else 'X' for y in x])
+        pep.append(sub)
+    return pep
 peptides = [x.getPeptideSequence() for x in peptideGenerator(chainCollection, args.fasta, args.length)]
-scores = list(predictor.predict(allele=args.allele, peptides=peptides))
+peptidesWithUnknown = unknownSub(peptides)
+scores = list(predictor.predict(allele=args.allele, peptides=peptidesWithUnknown))
 
 
 result = bindingScoreTable.addAllele(args.allele, iter(scores))
