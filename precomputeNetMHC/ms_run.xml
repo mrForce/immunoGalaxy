@@ -89,9 +89,20 @@
       </param>
       <when value="filtered">
 	<repeat name="mhcalleles" title="Select MHC Alleles">
-	  <param name="allele" type="select" label="Select an allele">
-	    <options from_data_table="Alleles" />
+	  <param name="source" type="select" label="Select scoring source for allele">
+	    <option value="netmhcPanPrecompute">NetMHCPan precomputed</option>
+	    <option value="netmhcPanOnFly">NetMHCPan On the fly</option>
 	  </param>
+	  <when value="netmhcPanPrecompute">
+	    <param name="allele" type="select" label="Select an allele">
+	      <options from_data_table="NetMHCPanPrecomputeAlleles" />
+	    </param>
+	  </when>
+	  <when value="netmhcPanOnFly">
+	    <param name="allele" type="select" label="Select an allele">
+	      <options from_data_table="Alleles" />
+	    </param>
+	  </when>
 	</repeat>
 	<param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
 	  <option value="8"></option>
