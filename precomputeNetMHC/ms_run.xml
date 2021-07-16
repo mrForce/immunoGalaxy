@@ -10,8 +10,9 @@
 
   #if str($search_type.search_type_selector) == 'filtered'
   --mode filtered
-  #for $r in $search_type.mhcalleles.source_type
-  --allele str(dir($r))
+  #for $r in $search_type.mhcalleles
+  --allele str($r.source_type_selector)
+  --thing str($r.sort_type)
   #end for
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
