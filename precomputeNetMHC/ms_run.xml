@@ -10,7 +10,7 @@
 
   #if str($search_type.search_type_selector) == 'filtered'
   --mode filtered
-  #for $r in $search_type.source_type.allele
+  #for $r in $search_type.mhcalleles
   --allele str($r)
   #end for
   --pep_len '$search_type.length'
@@ -20,9 +20,6 @@
   --minLength $search_type.minLength
   --maxLength $search_type.maxLength
   #else
-  #for $r in $search_type.source_type.allele
-  --allele str($r)
-  #end for
   --mode netMHCPercolator
   --minLength $search_type.minLength
   --maxLength $search_type.maxLength
