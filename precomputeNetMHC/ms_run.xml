@@ -21,7 +21,7 @@
   --maxLength $search_type.maxLength
   #else
   #for $r in $search_type.source_type.allele
-  --allele $r.allele.value
+  --allele str($r)
   #end for
   --mode netMHCPercolator
   --minLength $search_type.minLength
