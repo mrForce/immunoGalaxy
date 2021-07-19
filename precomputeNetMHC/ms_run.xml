@@ -12,7 +12,7 @@
   --mode filtered
   #for $r in $search_type.mhcalleles
   --allele str($r.source_type_selector)
-  --thing str($r.sort_type)
+  --thing str($r.source_type)
   #end for
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
