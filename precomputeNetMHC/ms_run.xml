@@ -11,7 +11,8 @@
   #if str($search_type.search_type_selector) == 'filtered'
   --mode filtered
   #for $r in $search_type.mhcalleles
-  --thing str($r.source_type)
+  --thing '$r.source_type.source_type_selector'
+  --one '$r.source_type.allele'
   #end for
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
