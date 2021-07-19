@@ -98,10 +98,18 @@
 	    <param name="allele" type="select" label="Select an allele">
 	      <options from_data_table="NetMHCPanPrecomputeAlleles" />
 	    </param>
+	    <param name="scoreType" type="select" label="Select score type" display="radio">
+	      <option value="ba">Binding Affinity</option>
+	      <option value="elute">Elution Score</option>
+	    </param>
 	  </when>
 	  <when value="netmhcPanOnFly">
 	    <param name="allele" type="select" label="Select an allele">
 	      <options from_data_table="Alleles" />
+	    </param>
+	    <param name="scoreType" type="select" label="Select score type" display="radio">
+	      <option value="ba">Binding Affinity</option>
+	      <option value="elute">Elution Score</option>
 	    </param>
 	  </when>
 	  <when value="netmhcPrecompute">
