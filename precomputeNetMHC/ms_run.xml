@@ -2,8 +2,7 @@
 <tool id="msgfplus_runner_new" name="MS-GF+Percolator Database Search New" version="21.05">
   <command interpreter="python3">runPipelineNew.py
   
-  '${proteome.fields.value}' '${proteome.fields.fasta}' '${proteome.fields.netmhcScoreDir}' '${proteome.fields.netmhcPanScoresDir}'
-
+  '${proteome.fields.value}' '${proteome.fields.fasta}' '${proteome.fields.netmhcScoreDir}' '${proteome.fields.netmhcPanScoresDir}' '${proteome.fields.mhcFlurryScoresDir}'
   #if $fasta
   --additional_proteome '$fasta'
   #end if
@@ -11,8 +10,7 @@
   #if str($search_type.search_type_selector) == 'filtered'
   --mode filtered
   #for $r in $search_type.mhcalleles
-  --thing '$r.source_type.source_type_selector'
-  --one '$r.source_type.allele'
+  --allele '$r.source_type.source_type_selector' '$r.source_type.allele'
   #end for
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
