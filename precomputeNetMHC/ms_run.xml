@@ -10,7 +10,11 @@
   #if str($search_type.search_type_selector) == 'filtered'
   --mode filtered
   #for $r in $search_type.mhcalleles
+  #if str($r.source_type.source_type_selector) in ['netmhcPanPrecompute', 'netmhcPanOnFly']
+  --panAllele '$r.source_type.source_type_selector' '$r.source_type.allele' '$r.source_type.score_type'
+  #else
   --allele '$r.source_type.source_type_selector' '$r.source_type.allele'
+  #end if
   #end for
   --pep_len '$search_type.length'
   --rank_filter '$search_type.rank_filter'
@@ -98,7 +102,7 @@
 	    <param name="allele" type="select" label="Select an allele">
 	      <options from_data_table="NetMHCPanPrecomputeAlleles" />
 	    </param>
-	    <param name="scoreType" type="select" label="Select score type" display="radio">
+	    <param name="score_type" type="select" label="Select score type" display="radio">
 	      <option value="ba">Binding Affinity</option>
 	      <option value="elute">Elution Score</option>
 	    </param>
