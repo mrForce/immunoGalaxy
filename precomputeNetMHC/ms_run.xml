@@ -88,7 +88,11 @@
 	  <conditional name="source_type">
 	  <param name="source_type_selector" type="select" label="Select scoring source for allele">
 	    <option value="netmhcPanPrecompute" selected="true">NetMHCPan precomputed</option>
-	    <option value="netmhcPanOnFly">NetMHCPan On the fly</option>
+	    <option value="netmhcPanOnFly">NetMHCPan on the fly</option>
+	    <option value="netmhcPrecompute">NetMHC precomputed</option>
+	    <option value="netmhcOnFly">NetMHC on the fly</option>
+	    <option value="MHCFlurryPrecompute">MHCFlurry precomputed</option>
+	    <option value="MHCFlurryOnFly">MHCFlurry on the fly</option>
 	  </param>
 	  <when value="netmhcPanPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
@@ -96,6 +100,26 @@
 	    </param>
 	  </when>
 	  <when value="netmhcPanOnFly">
+	    <param name="allele" type="select" label="Select an allele">
+	      <options from_data_table="Alleles" />
+	    </param>
+	  </when>
+	  <when value="netmhcPrecompute">
+	    <param name="allele" type="select" label="Select an allele">
+	      <options from_data_table="NetMHCPrecomputeAlleles" />
+	    </param>
+	  </when>
+	  <when value="netmhcOnFly">
+	    <param name="allele" type="select" label="Select an allele">
+	      <options from_data_table="Alleles" />
+	    </param>
+	  </when>
+	  <when value="MHCFlurryPrecompute">
+	    <param name="allele" type="select" label="Select an allele">
+	      <options from_data_table="MHCFlurryPrecomputeAlleles" />
+	    </param>
+	  </when>
+	  <when value="MHCFlurryOnFly">
 	    <param name="allele" type="select" label="Select an allele">
 	      <options from_data_table="Alleles" />
 	    </param>
