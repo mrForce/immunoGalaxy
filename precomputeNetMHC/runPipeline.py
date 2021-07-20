@@ -26,6 +26,8 @@ MSGF2PIN='/home/jordan/msgf2pin'
 THREADS=16
 PRECOMPUTE_SCRIPTS='/home/jordan/github/immunoGalaxy/precomputeNetMHC'
 
+
+
 def generateNetMHCCommand(netmhcPath, allele, inputFilePath):
     return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath]
 
@@ -51,7 +53,9 @@ parser.add_argument('baseDirectory')
 parser.add_argument('baseFasta')
 parser.add_argument('netmhcScoreDir')
 parser.add_argument('netmhcPanScoreDir')
-parser.add_argument('--allele', action='append')
+parser.add_argument('mhcFlurryScoreDir')
+parser.add_argument('--allele', action='append', nargs=2)
+parser.add_argument('--panAllele', action='append', nargs=3)
 parser.add_argument('--additional_proteome', type=str)
 parser.add_argument('--mod', action='append')
 parser.add_argument('--mode', choices=['filtered', 'unfiltered', 'netMHCPercolator'])
@@ -72,13 +76,15 @@ parser.add_argument('--maxLength', type=int, default=0)
 args = parser.parse_args()
 print('args')
 print(args)
+for x in args.allele:
+    assert(x[0] in ['netmhcPrecompute', 'netmhcOnFly', 'MHCFlurryPrecompute', 'MHCFlurryOnFly'])
+for x in args.panAllele:
+    assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly'])
+    assert(x[2] in ['ba', 'elute'])
 usingBase = True
 if args.baseDirectory == 'None':
     assert(args.additional_proteome)
     usingBase = False
-
-
-
 
 
 allele_list = []
@@ -124,12 +130,28 @@ if filtered:
             chainPath = os.path.join(tempDir, str(x) + 'additional.chains')
             with open(chainPath, 'wb') as f:
                 pickle.dump(chains, f)
-            scoreTablePath = os.path.join(tempDir, str(x) + 'additional.scores')
-            for allele in args.allele:
-                precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, args.additional_proteome, chainPath, scoreTablePath, allele, str(x), str(THREADS)]
+            panBAScoreTablePath = os.path.join(tempDir, str(x) + 'additional_pan_ba.scores')
+            panEluteScoreTablePath = os.path.join(tempDir, str(x) + 'additional_pan_elute.scores')
+            netMHCscoreTablePath = os.path.join(tempDir, str(x) + 'additional.scores')
+            flurryScoreTablePath = os.path.join(tempDir, str(x) + 'additional_flurry.scores')
+            for allele in args.panAllele:
+                precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputePan.py'), NETMHCPAN, args.additional_proteome, chainPath, panEluteScoreTablePath, panBAScoreTablePath, allele[1], str(x), str(THREADS)]
                 proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                 outs, errors = proc.communicate()
+            for allele in args.allele:
+                if allele[0] in ['netmhcPrecompute', 'netmhcOnFly']:                    
+                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, args.additional_proteome, chainPath, scoreTablePath, allele[1], str(x), str(THREADS)]
+                    proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
+                    outs, errors = proc.communicate()
+                elif allele[0] in ['MHCFlurryPrecompute', 'MHCFlurryOnFly']:
+                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputeRemoteFlurry.py'), args.additional_proteome, chainPath, flurryScoreTablePath, allele[1], str(x)]
+                    proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
+                    outs, errors = proc.communicate()
+
+
     pepToHeaders = defaultdict(set)
+    for allele in args.allele:        
+        pass
     for x in lengths:
         additionalChains = None
         additionalScoreTable = None

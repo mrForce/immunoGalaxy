@@ -19,11 +19,12 @@ def scoreDistribution(scoreIter, peptideGen, peptidesToExclude):
         return collections.Counter(scoreIter)
 
 
-def computeScoreThreshold(distribution, k):
+def computeScoreThreshold(distribution, k, reverse=False):
     numPeptides = sum(distribution.values())
-    maxVal = max(distribution.keys())
+    maxVal = min(distribution.key()) if reverse else max(distribution.keys())
     numIncluded = 0
-    for score,count in distribution.items():
+    sortedDistribution = sorted(distribution.items(), key=lambda x: x[0], reverse=reverse)
+    for score,count in sortedDistribution:
         numIncluded += count
         #return the score for the bucket that pushes us over the edge
         if numIncluded >= k*numPeptides:
@@ -42,10 +43,10 @@ def extractPeptidesAndScores(scoreIter, peptideHolderGen, indices):
         i += 1
             
 
-def filterOnThreshold(scoreIter, peptideHolderGen, threshold):
+def filterOnThreshold(scoreIter, peptideHolderGen, threshold, reverse=False):
     peptides = []
     for peptideHolder, score in itertools.zip_longest(peptideHolderGen, scoreIter):
-        if score <= threshold:
+        if (score >= threshold if reverse else score <= threshold):
             peptides.append(peptideHolder)
     return peptides
 
@@ -53,7 +54,7 @@ def mapPeptideToHeaders(peptideHolders):
     return {x.getPeptideSequence():x.getHeaders() for x in peptideHolders}
 
 
-def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta, additionalScoreTable, additionalChainCollection, additionalFasta, k):
+def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta, additionalScoreTable, additionalChainCollection, additionalFasta, k, reverse=False):
     baseScoreDist = collections.Counter()    
     if baseScoreTable and baseChainCollection and baseFasta:
         exclusion = None
@@ -67,18 +68,18 @@ def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta,
         additionalGen = getPeptideGen(additionalChainCollection, additionalFasta, length)
         additionalScoreDist = scoreDistribution(additionalScoreTable.scoreIter(allele), additionalGen, None)
     combinedScoreDist = additionalScoreDist + baseScoreDist
-    threshold = computeScoreThreshold(combinedScoreDist, k)
+    threshold = computeScoreThreshold(combinedScoreDist, k, reverse)
     peptides = []
     pepToHeader = collections.defaultdict(set)
     if baseScoreTable and baseChainCollection and baseFasta:
         gen = peptideGenerator(baseChainCollection, baseFasta, length)
-        pep = filterOnThreshold(baseScoreTable.scoreIter(allele), gen, threshold)
+        pep = filterOnThreshold(baseScoreTable.scoreIter(allele), gen, threshold, reverse)
         
         for holder in pep:
             pepToHeader[holder.getPeptideSequence()].update(holder.getHeaders())
     if additionalScoreTable and additionalChainCollection and additionalFasta:
         gen = peptideGenerator(additionalChainCollection, additionalFasta, length)        
-        pep = filterOnThreshold(additionalScoreTable.scoreIter(allele), gen, threshold)
+        pep = filterOnThreshold(additionalScoreTable.scoreIter(allele), gen, threshold, reverse)
         for holder in pep:
             pepToHeader[holder.getPeptideSequence()].update(holder.getHeaders())
     
