@@ -84,7 +84,7 @@ else:
 if args.panAlleles:
     for x in args.panAllele:
         assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly'])
-        assert(x[2] ain ['ba', 'elute'])
+        assert(x[2] in ['ba', 'elute'])
 else:
     args.panAlleles = []
 usingBase = True
