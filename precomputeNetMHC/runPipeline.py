@@ -81,12 +81,12 @@ if args.allele:
         assert(x[0] in ['netmhcPrecompute', 'netmhcOnFly', 'MHCFlurryPrecompute', 'MHCFlurryOnFly'])
 else:
     args.allele = []
-if args.panAlleles:
+if args.panAllele:
     for x in args.panAllele:
         assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly'])
         assert(x[2] in ['ba', 'elute'])
 else:
-    args.panAlleles = []
+    args.panAllele = []
 usingBase = True
 if args.baseDirectory == 'None':
     assert(args.additional_proteome)
