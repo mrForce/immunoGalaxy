@@ -76,11 +76,17 @@ parser.add_argument('--maxLength', type=int, default=0)
 args = parser.parse_args()
 print('args')
 print(args)
-for x in args.allele:
-    assert(x[0] in ['netmhcPrecompute', 'netmhcOnFly', 'MHCFlurryPrecompute', 'MHCFlurryOnFly'])
-for x in args.panAllele:
-    assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly'])
-    assert(x[2] in ['ba', 'elute'])
+if args.allele:
+    for x in args.allele:
+        assert(x[0] in ['netmhcPrecompute', 'netmhcOnFly', 'MHCFlurryPrecompute', 'MHCFlurryOnFly'])
+else:
+    args.allele = []
+if args.panAlleles:
+    for x in args.panAllele:
+        assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly'])
+        assert(x[2] ain ['ba', 'elute'])
+else:
+    args.panAlleles = []
 usingBase = True
 if args.baseDirectory == 'None':
     assert(args.additional_proteome)
