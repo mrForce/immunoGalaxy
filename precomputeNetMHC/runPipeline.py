@@ -179,14 +179,14 @@ if filtered:
                         assert(0)
                 elif allele[0] == 'netmhcPanOnFly':
                     eluteScoresFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_elute_netmhcpan_fly.scores')
-                    baScoresFileName = os.path.join(tempDir, allele[1] + '_' str(x) + '_ba_netmhcpan_fly.scores')
+                    baScoresFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_ba_netmhcpan_fly.scores')
                     precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputePan.py'), NETMHCPAN, baseFasta, baseChainPath, eluteScoresFileName, baScoresFileName, allele[1], str(x), str(THREADS)]
                     proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                     outs, errors = proc.communicate()
                     if allele[2] == 'elute':
-                        baseScoreFile = open(eluteScoresFile, 'rb')
+                        baseScoreFile = open(eluteScoresFileName, 'rb')
                     elif allele[2] == 'ba':
-                        baseScoreFile = open(baScoresFile, 'rb')
+                        baseScoreFile = open(baScoresFileName, 'rb')
                     else:
                         assert(0)
                 baseScoreTable = ScoreTable.readExisting(baseScoreFile)
@@ -223,13 +223,13 @@ if filtered:
                 elif allele[0] == 'MHCFlurryPrecompute':
                     baseScoreFile = open(os.path.join(args.baseDirectory, args.mhcFlurryScoreDir, str(x) + '_top_alleles.scores'), 'rb')
                 elif allele[0] == 'netmhcOnFly':
-                    baseScoreFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_netmhc_fly.scores'))
+                    baseScoreFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_netmhc_fly.scores')
                     precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, baseFasta, baseChainPath, baseScoreFileName, allele[1], str(x), str(THREADS)]
                     proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                     outs, errors = proc.communicate()
                     baseScoreFile = open(baseScoreFileName, 'rb')
                 elif allele[0] == 'MHCFlurryOnFly':
-                    baseScoreFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_mhcflurry_fly.scores'))
+                    baseScoreFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_mhcflurry_fly.scores')
                     precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputeRemoteFlurry.py'), baseFasta, baseChainPath, baseScoreFileName, allele[1], str(x)]
                     proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                     outs, errors = proc.communicate()
