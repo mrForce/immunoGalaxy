@@ -19,7 +19,7 @@ import uuid
 
 #locations of needed tools
 NETMHC = '/home/jordan/netMHC-4.0/netMHC'
-NETMHCPAN = ''
+NETMHCPAN = '/data5/jordan/netMHCpan-4.1/netMHCpan'
 MSGFPLUS = '/home/jordan/MSGFPlus/MSGFPlus.jar'
 CRUX='/home/jordan/crux'
 MSGF2PIN='/home/jordan/msgf2pin'
