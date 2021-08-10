@@ -25,7 +25,7 @@ CRUX='/home/jordan/crux'
 MSGF2PIN='/home/jordan/msgf2pin'
 THREADS=16
 PRECOMPUTE_SCRIPTS='/home/jordan/github/immunoGalaxy/precomputeNetMHC'
-
+MAX_HEADER_LENGTH=5000
 
 
 def generateNetMHCCommand(netmhcPath, allele, inputFilePath):
@@ -38,6 +38,8 @@ def writePeptideHeaderMapToFasta(peptideToHeaders, fastaPath):
     with open(fastaPath, 'w') as f:
         for k,v in peptideToHeaders.items():
             header = '>' + ' @@ '.join(list(v))
+            if len(header) > MAX_HEADER_LENGTH:
+                header = header[0:MAX_HEADER_LENGTH]
             f.write(header + '\n')
             f.write(k + '\n')
 def addRevcat(fastaPath):
