@@ -9,7 +9,7 @@ import functools
 import subprocess
 from precomputedNetMHCIndex import ChainCollection, peptideGenerator, ScoreTable, ScoreCategory, fileMD5, ScoreTableGroup
 
-SCRIPT_LOCATION='/galaxy-prod/galaxy/tool-dependencies/bin/run_MHCFlurry_on_cd9.sh'
+SCRIPT_LOCATION='/galaxy-prod/galaxy/tools-dependencies/bin/run_MHCFlurry_on_cd9.sh'
 parser = argparse.ArgumentParser(description='Precompute MHCFlurry scores for peptides on remote server')
 parser.add_argument('fasta')
 parser.add_argument('chains')
@@ -84,8 +84,8 @@ peptidesWithUnknown = unknownSub(peptides)
 
 peptidesFile = tempfile.NamedTemporaryFile(mode='wt')
 for x in peptidesWithUnknown:
-    f.write(x + '\n')
-f.flush()
+    peptidesFile.write(x + '\n')
+peptidesFile.flush()
 scoresFile = tempfile.NamedTemporaryFile(mode='rb')
 command = [SCRIPT_LOCATION, peptidesFile.name, scoresFile.name, args.allele]
 proc = subprocess.Popen(command, stdout=subprocess.DEVNULL)
