@@ -21,7 +21,7 @@ def scoreDistribution(scoreIter, peptideGen, peptidesToExclude):
 
 def computeScoreThreshold(distribution, k, reverse=False):
     numPeptides = sum(distribution.values())
-    maxVal = min(distribution.key()) if reverse else max(distribution.keys())
+    maxVal = min(distribution.keys()) if reverse else max(distribution.keys())
     numIncluded = 0
     sortedDistribution = sorted(distribution.items(), key=lambda x: x[0], reverse=reverse)
     for score,count in sortedDistribution:
