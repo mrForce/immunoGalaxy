@@ -9,6 +9,8 @@ def getPeptideGen(chainCollection, fastaPath, pepLen):
     return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
 
 def scoreDistribution(scoreIter, peptideGen, peptidesToExclude):
+    print('peptides to exclude')
+    print(peptidesToExclude)
     if peptidesToExclude:
         count = collections.Counter()
         for peptide, score in itertools.zip_longest(peptideGen, scoreIter):
