@@ -204,6 +204,7 @@ if filtered:
                 if allele[0] in ['netmhcPrecompute', 'netmhcOnFly']:                    
                     precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, args.additional_proteome, additionalChainPath, additionalNetMHCscoreTablePath, allele[1].strip(), str(x), str(THREADS)]
                     additionalScoreTablePath = additionalNetMHCscoreTablePath
+                    print('additional score table path: ' + additionalScoreTablePath)
                 elif allele[0] in ['MHCFlurryPrecompute', 'MHCFlurryOnFly']:
                     precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputeRemoteFlurry.py'), args.additional_proteome, additionalChainPath, additionalFlurryScoreTablePath, allele[1].strip(), str(x)]
                     additionalScoreTablePath = additionalFlurryScoreTablePath                    
