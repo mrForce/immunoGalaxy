@@ -63,6 +63,7 @@ def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta,
             additionalGen = getPeptideGen(additionalChainCollection, additionalFasta, length)
             exclusion = set(additionalGen)
         baseGen = getPeptideGen(baseChainCollection, baseFasta, length)
+        print('allele: ' + allele)
         baseScoreDist = scoreDistribution(baseScoreTable.scoreIter(allele), baseGen, exclusion)
         print('base score dist')
         print(baseScoreDist)
