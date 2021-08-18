@@ -9,8 +9,6 @@ def getPeptideGen(chainCollection, fastaPath, pepLen):
     return map(lambda x: x.getPeptideSequence(), peptideGenerator(chainCollection, fastaPath, pepLen))
 
 def scoreDistribution(scoreIter, peptideGen, peptidesToExclude):
-    print('peptides to exclude')
-    print(peptidesToExclude)
     if peptidesToExclude:
         count = collections.Counter()
         for peptide, score in itertools.zip_longest(peptideGen, scoreIter):
@@ -59,22 +57,14 @@ def mapPeptideToHeaders(peptideHolders):
 def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta, additionalScoreTable, additionalChainCollection, additionalFasta, k, reverse=False):
     baseScoreDist = collections.Counter()
     if baseScoreTable and baseChainCollection and baseFasta:
-        print('in if block')
         exclusion = None
         if additionalChainCollection:
             additionalGen = getPeptideGen(additionalChainCollection, additionalFasta, length)
             exclusion = set(additionalGen)
         baseGen = getPeptideGen(baseChainCollection, baseFasta, length)
-        print('allele: ' + allele)
-        print('allele length: ' + str(len(allele)))
-        print('alleles: ')
-        print(baseScoreTable.getAlleles())
         assert(allele in baseScoreTable.getAlleles())
         l = list(baseScoreTable.scoreIter(allele))
-        print('scores length: '+ str(len(l)))
         baseScoreDist = scoreDistribution(l, baseGen, exclusion)
-        print('base score dist')
-        print(baseScoreDist)
     additionalScoreDist = collections.Counter()
     if additionalScoreTable and additionalChainCollection and additionalFasta:
         additionalGen = getPeptideGen(additionalChainCollection, additionalFasta, length)
