@@ -222,7 +222,7 @@ if filtered:
                 baseFasta = os.path.join(args.baseDirectory, args.baseFasta)
                 if allele[0] == 'netmhcPrecompute':
                     filePath = os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores')
-                    assert(os.path.isfile(filePath))
+                    print('base score path: ' + filePath)
                     baseScoreFile = open(filePath, 'rb')
                 elif allele[0] == 'MHCFlurryPrecompute':
                     baseScoreFile = open(os.path.join(args.baseDirectory, args.mhcFlurryScoreDir, str(x) + '_top_alleles.scores'), 'rb')
