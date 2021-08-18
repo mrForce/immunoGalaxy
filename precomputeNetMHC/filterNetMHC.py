@@ -66,6 +66,7 @@ def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta,
             exclusion = set(additionalGen)
         baseGen = getPeptideGen(baseChainCollection, baseFasta, length)
         print('allele: ' + allele)
+        print('allele length: ' + str(len(allele)))
         print('alleles: ')
         print(baseScoreTable.getAlleles())
         assert(allele in baseScoreTable.getAlleles())
