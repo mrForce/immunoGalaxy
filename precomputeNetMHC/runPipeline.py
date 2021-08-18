@@ -221,7 +221,7 @@ if filtered:
                 baseScoreFile = None
                 baseFasta = os.path.join(args.baseDirectory, args.baseFasta)
                 if allele[0] == 'netmhcPrecompute':
-                    baseScoreFile = open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '_top_alleles.scores'), 'rb')
+                    baseScoreFile = open(os.path.join(args.baseDirectory, args.netmhcScoreDir, str(x) + '.scores'), 'rb')
                 elif allele[0] == 'MHCFlurryPrecompute':
                     baseScoreFile = open(os.path.join(args.baseDirectory, args.mhcFlurryScoreDir, str(x) + '_top_alleles.scores'), 'rb')
                 elif allele[0] == 'netmhcOnFly':
