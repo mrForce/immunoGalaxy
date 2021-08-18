@@ -109,7 +109,7 @@
 	  </when>
 	  <when value="netmhcPanOnFly">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="Alleles" />
+	      <options from_data_table="NetMHCPanAlleles" />
 	    </param>
 	    <param name="score_type" type="select" label="Select score type" display="radio">
 	      <option value="ba">Binding Affinity</option>
