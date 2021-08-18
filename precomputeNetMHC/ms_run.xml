@@ -133,7 +133,7 @@
 	  </when>
 	  <when value="MHCFlurryOnFly">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="Alleles" />
+	      <options from_data_table="MHCFlurryAlleles" />
 	    </param>
 	  </when>
 	  </conditional>
