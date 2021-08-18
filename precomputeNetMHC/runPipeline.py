@@ -152,7 +152,7 @@ if filtered:
         for allele in args.panAllele:
             additionalScoreTable = None
             if args.additional_proteome:
-                precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputePan.py'), NETMHCPAN, args.additional_proteome, additionalChainPath, additionalPanEluteScoreTablePath, additionalPanBAScoreTablePath, allele[1], str(x), str(THREADS)]
+                precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputePan.py'), NETMHCPAN, args.additional_proteome, additionalChainPath, additionalPanEluteScoreTablePath, additionalPanBAScoreTablePath, allele[1].strip(), str(x), str(THREADS)]
                 proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                 outs, errors = proc.communicate()
                 additionalScoreFile = None
@@ -180,9 +180,9 @@ if filtered:
                     else:
                         assert(0)
                 elif allele[0] == 'netmhcPanOnFly':
-                    eluteScoresFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_elute_netmhcpan_fly.scores')
-                    baScoresFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_ba_netmhcpan_fly.scores')
-                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputePan.py'), NETMHCPAN, baseFasta, baseChainPath, eluteScoresFileName, baScoresFileName, allele[1], str(x), str(THREADS)]
+                    eluteScoresFileName = os.path.join(tempDir, allele[1].strip() + '_' + str(x) + '_elute_netmhcpan_fly.scores')
+                    baScoresFileName = os.path.join(tempDir, allele[1].strip() + '_' + str(x) + '_ba_netmhcpan_fly.scores')
+                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputePan.py'), NETMHCPAN, baseFasta, baseChainPath, eluteScoresFileName, baScoresFileName, allele[1].strip(), str(x), str(THREADS)]
                     proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                     outs, errors = proc.communicate()
                     if allele[2] == 'elute':
@@ -193,7 +193,7 @@ if filtered:
                         assert(0)
                 baseScoreTable = ScoreTable.readExisting(baseScoreFile)
             reverse = True if allele[2] == 'elute' else False
-            pepToHeader = filterNetMHC(allele[1], x, baseScoreTable, baseChains, baseFasta, additionalScoreTable, additionalChains, args.additional_proteome,  args.rank_filter/100.0, reverse)
+            pepToHeader = filterNetMHC(allele[1].strip(), x, baseScoreTable, baseChains, baseFasta, additionalScoreTable, additionalChains, args.additional_proteome,  args.rank_filter/100.0, reverse)
             for k,v in pepToHeader.items():
                 pepToHeaders[k].update(v)
         for allele in args.allele:
@@ -202,10 +202,10 @@ if filtered:
                 additionalScoreTablePath = None
                 precomputeCommand = None
                 if allele[0] in ['netmhcPrecompute', 'netmhcOnFly']:                    
-                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, args.additional_proteome, additionalChainPath, additionalNetMHCscoreTablePath, allele[1], str(x), str(THREADS)]
+                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, args.additional_proteome, additionalChainPath, additionalNetMHCscoreTablePath, allele[1].strip(), str(x), str(THREADS)]
                     additionalScoreTablePath = additionalNetMHCscoreTablePath
                 elif allele[0] in ['MHCFlurryPrecompute', 'MHCFlurryOnFly']:
-                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputeRemoteFlurry.py'), args.additional_proteome, additionalChainPath, additionalFlurryScoreTablePath, allele[1], str(x)]
+                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputeRemoteFlurry.py'), args.additional_proteome, additionalChainPath, additionalFlurryScoreTablePath, allele[1].strip(), str(x)]
                     additionalScoreTablePath = additionalFlurryScoreTablePath                    
                 proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                 outs, errors = proc.communicate()
@@ -227,14 +227,14 @@ if filtered:
                 elif allele[0] == 'MHCFlurryPrecompute':
                     baseScoreFile = open(os.path.join(args.baseDirectory, args.mhcFlurryScoreDir, str(x) + '_top_alleles.scores'), 'rb')
                 elif allele[0] == 'netmhcOnFly':
-                    baseScoreFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_netmhc_fly.scores')
-                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, baseFasta, baseChainPath, baseScoreFileName, allele[1], str(x), str(THREADS)]
+                    baseScoreFileName = os.path.join(tempDir, allele[1].strip() + '_' + str(x) + '_netmhc_fly.scores')
+                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precompute.py'), NETMHC, baseFasta, baseChainPath, baseScoreFileName, allele[1].strip(), str(x), str(THREADS)]
                     proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                     outs, errors = proc.communicate()
                     baseScoreFile = open(baseScoreFileName, 'rb')
                 elif allele[0] == 'MHCFlurryOnFly':
-                    baseScoreFileName = os.path.join(tempDir, allele[1] + '_' + str(x) + '_mhcflurry_fly.scores')
-                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputeRemoteFlurry.py'), baseFasta, baseChainPath, baseScoreFileName, allele[1], str(x)]
+                    baseScoreFileName = os.path.join(tempDir, allele[1].strip() + '_' + str(x) + '_mhcflurry_fly.scores')
+                    precomputeCommand = ['python3', os.path.join(PRECOMPUTE_SCRIPTS, 'precomputeRemoteFlurry.py'), baseFasta, baseChainPath, baseScoreFileName, allele[1].strip(), str(x)]
                     proc = subprocess.Popen(precomputeCommand, stdout=subprocess.DEVNULL)
                     outs, errors = proc.communicate()
                     baseScoreFile = open(baseScoreFileName, 'rb')
@@ -242,7 +242,7 @@ if filtered:
                     assert(0)
                 baseScoreTable = ScoreTable.readExisting(baseScoreFile)
             reverse = True if allele[0] in ['MHCFlurryPrecompute', 'MHCFlurryOnFly'] else False
-            pepToHeader = filterNetMHC(allele[1], x, baseScoreTable, baseChains, baseFasta, additionalScoreTable, additionalChains, args.additional_proteome,  args.rank_filter/100.0, reverse)
+            pepToHeader = filterNetMHC(allele[1].strip(), x, baseScoreTable, baseChains, baseFasta, additionalScoreTable, additionalChains, args.additional_proteome,  args.rank_filter/100.0, reverse)
             for k,v in pepToHeader.items():
                 pepToHeaders[k].update(v)
             
@@ -312,7 +312,7 @@ if args.mode == 'netMHCPercolator':
     print('number of peptides: ' + str(len(peptides)))
     scoreDict = defaultdict(list)
     for allele in args.allele:
-        commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele)
+        commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele.strip())
         scorer = NetMHCScorer(5000, commandGen, 1)
         scores = [x[0] for x in scorer.scorePeptides(iter(peptides), ['Affinity(nM)'])]
         assert(len(scores) == len(peptides))
