@@ -55,8 +55,13 @@ def mapPeptideToHeaders(peptideHolders):
 
 
 def filterNetMHC(allele, length, baseScoreTable, baseChainCollection, baseFasta, additionalScoreTable, additionalChainCollection, additionalFasta, k, reverse=False):
-    baseScoreDist = collections.Counter()    
+    baseScoreDist = collections.Counter()
+    print('base score table, chain collection, and fasta')
+    print(baseScoreTable)
+    print(baseChainCollection)
+    print(baseFasta)
     if baseScoreTable and baseChainCollection and baseFasta:
+        print('in if block')
         exclusion = None
         if additionalChainCollection:
             additionalGen = getPeptideGen(additionalChainCollection, additionalFasta, length)
