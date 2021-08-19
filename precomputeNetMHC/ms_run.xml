@@ -119,7 +119,7 @@
 	  <when value="netmhcPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
 	      <options from_data_table="NetMHCPrecomputeAlleles" >
-		<filter type="remove_value" key="organism" value="Mouse"/>
+		<filter type="static_value" column="2" value="Mouse"/>
 	      </options>
 	    </param>
 	  </when>
