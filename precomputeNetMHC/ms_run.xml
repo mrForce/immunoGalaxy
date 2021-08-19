@@ -100,7 +100,9 @@
 	  </param>
 	  <when value="netmhcPanPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="NetMHCPanPrecomputeAlleles" />
+	      <options from_data_table="NetMHCPanPrecomputeAlleles" >
+		<filter type="static_value" column="2" value="Human"/>
+	      </options>
 	    </param>
 	    <param name="score_type" type="select" label="Select score type" display="radio">
 	      <option value="ba">Binding Affinity</option>
@@ -118,9 +120,7 @@
 	  </when>
 	  <when value="netmhcPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="NetMHCPrecomputeAlleles" >
-		<filter type="remove_value" value="H-2-Kb"/>
-	      </options>
+	      <options from_data_table="NetMHCPrecomputeAlleles" />
 	    </param>
 	  </when>
 	  <when value="netmhcOnFly">
