@@ -101,7 +101,7 @@
 	  <when value="netmhcPanPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
 	      <options from_data_table="NetMHCPanPrecomputeAlleles" >
-		<filter type="static_value" column="2" value="Human"/>
+		<filter type="param_value" column="2" ref="proteome" ref_attribute="organism" />
 	      </options>
 	    </param>
 	    <param name="score_type" type="select" label="Select score type" display="radio">
