@@ -118,7 +118,9 @@
 	  </when>
 	  <when value="netmhcPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="NetMHCPrecomputeAlleles" />
+	      <options from_data_table="NetMHCPrecomputeAlleles" >
+		<filter type="remove_value" key="organism" value="Mouse"/>
+	      </options>
 	    </param>
 	  </when>
 	  <when value="netmhcOnFly">
