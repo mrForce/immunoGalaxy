@@ -101,7 +101,7 @@
 	  <when value="netmhcPanPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
 	      <options from_data_table="NetMHCPanPrecomputeAlleles" >
-		<filter type="param_value" column="2" ref="proteome" key="proteome.organism" />
+		<filter type="param_value" column="2" ref="proteome" key="organism" />
 	      </options>
 	    </param>
 	    <param name="score_type" type="select" label="Select score type" display="radio">
@@ -111,7 +111,9 @@
 	  </when>
 	  <when value="netmhcPanOnFly">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="NetMHCPanAlleles" />
+	      <options from_data_table="NetMHCPanAlleles" >
+		<filter type="param_value" column="2" ref="proteome" />
+	      </options>
 	    </param>
 	    <param name="score_type" type="select" label="Select score type" display="radio">
 	      <option value="ba">Binding Affinity</option>
@@ -120,22 +122,30 @@
 	  </when>
 	  <when value="netmhcPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="NetMHCPrecomputeAlleles" />
+	      <options from_data_table="NetMHCPrecomputeAlleles" >
+		<filter type="param_value" column="2" ref="proteome" />
+	      </options>	      
 	    </param>
 	  </when>
 	  <when value="netmhcOnFly">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="Alleles" />
+	      <options from_data_table="Alleles">
+		<filter type="param_value" column="2" ref="proteome" />
+	      </options>	      
 	    </param>
 	  </when>
 	  <when value="MHCFlurryPrecompute">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="MHCFlurryPrecomputeAlleles" />
+	      <options from_data_table="MHCFlurryPrecomputeAlleles" >
+		<filter type="param_value" column="2" ref="proteome" />
+	      </options>
 	    </param>
 	  </when>
 	  <when value="MHCFlurryOnFly">
 	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="MHCFlurryAlleles" />
+	      <options from_data_table="MHCFlurryAlleles" >
+		<filter type="param_value" column="2" ref="proteome" />
+	      </options>
 	    </param>
 	  </when>
 	  </conditional>
