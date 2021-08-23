@@ -92,7 +92,7 @@
 	<option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
       </param>
     </when>
-    <when>
+    <when value="Thing">
       <param name="search_type_selector" type="select" label="Choose search type">
 	<option value="unfiltered" selected="true">Stuff</option>
 	<option value="filtered">Filtered Peptide Search</option>
