@@ -50,9 +50,7 @@
   </command>
   <inputs>
     <param name="Name" type="text" label="Search name" />
-    <param name="proteome" type="select" label="Select a proteome">
-      <options from_data_table="ProteomesNew" />
-    </param>
+   
 
 
     <param optional="true" name="fasta" type="data" label="Select a FASTA file" format="fasta" />
@@ -81,6 +79,28 @@
 
     <param name="numMatches" type="integer" value="1" label="Num matches per spectrum" />
     <!--- <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" /> -->
+    <conditional name="proteome_type">
+    <param name="proteome" type="select" label="Select a proteome">
+      <options from_data_table="ProteomesNew" >
+	<filter type="add_value" name="No base proteome" value="None"/>
+      </options>
+    </param>
+    <when value="None">
+      <param name="search_type_selector" type="select" label="Choose search type">
+	<option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
+	<option value="filtered">Filtered Peptide Search</option>
+	<option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
+      </param>
+    </when>
+    <when>
+      <param name="search_type_selector" type="select" label="Choose search type">
+	<option value="unfiltered" selected="true">Stuff</option>
+	<option value="filtered">Filtered Peptide Search</option>
+	<option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
+      </param>
+    </when>
+    </conditional>
+    <!--
     <conditional name="search_type">
       <param name="search_type_selector" type="select" label="Choose search type">
 	<option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
@@ -168,6 +188,7 @@
 	<param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
       </when>
     </conditional>
+-->
   </inputs>
   <outputs>
     <!--- <data format="tabular" name="peptides" label="Peptides for search ${Name}"/> -->
