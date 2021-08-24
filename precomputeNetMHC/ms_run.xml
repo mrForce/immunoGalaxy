@@ -50,7 +50,7 @@
   </command>
   <inputs>
     <param name="Name" type="text" label="Search name" />
-   
+    
 
 
     <param optional="true" name="fasta" type="data" label="Select a FASTA file" format="fasta" />
@@ -80,108 +80,255 @@
     <param name="numMatches" type="integer" value="1" label="Num matches per spectrum" />
     <!--- <param name="num_matches_per_spectrum" type="integer" value="1" label="Number of matches per spectrum" /> -->
     <conditional name="proteome_type">
-    <param name="proteome" type="select" label="Select a proteome">
-      <options from_data_table="ProteomesNew" >
-	<filter type="add_value" name="No base proteome" value="None"/>
-      </options>
-    </param>
-    <when value="None">
-      <param name="search_type_selector" type="select" label="Choose search type">
-	<option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
-	<option value="filtered">Filtered Peptide Search</option>
-	<option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
+      <param name="proteome" type="select" label="Select a proteome">
+	<options from_data_table="ProteomesNew" />
       </param>
-    </when>
-    </conditional>
-    <!--
-    <conditional name="search_type">
-      <param name="search_type_selector" type="select" label="Choose search type">
-	<option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
-	<option value="filtered">NetMHC Filtered Peptide Search</option>
-	<option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
-      </param>
-      <when value="filtered">
-	<repeat name="mhcalleles" title="Select MHC Alleles">
-	  <conditional name="source_type">
-	  <param name="source_type_selector" type="select" label="Select scoring source for allele">
-	    <option value="netmhcPanPrecompute" selected="true">NetMHCPan precomputed</option>
-	    <option value="netmhcPanOnFly">NetMHCPan on the fly</option>
-	    <option value="netmhcPrecompute">NetMHC precomputed</option>
-	    <option value="netmhcOnFly">NetMHC on the fly</option>
-	    <option value="MHCFlurryPrecompute">MHCFlurry precomputed</option>
-	    <option value="MHCFlurryOnFly">MHCFlurry on the fly</option>
+      <when value="/gene-data/jordan/newPrecomputed/humanLatest">
+	<conditional name="search_type">	
+	  <param name="search_type_selector" type="select" label="Choose search type">
+	    <option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
+	    <option value="filtered">Filtered Peptide Search</option>
+	    <option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
 	  </param>
-	  <when value="netmhcPanPrecompute">
-	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="NetMHCPanPrecomputeAlleles" >
-		<filter type="param_value" column="2" ref="proteome" />
-	      </options>
+          <when value="filtered">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <conditional name="source_type">
+		<param name="source_type_selector" type="select" label="Select scoring source for allele">
+		  <option value="netmhcPanPrecompute" selected="true">NetMHCPan Precomputed</option>
+		  <option value="netmhcPanOnFly">NetMHCPan on the fly</option>
+		  <option value="netmhcPrecompute">NetMHC Precomputed</option>
+		  <option value="netmhcOnFly">NetMHC on the fly</option>
+		  <option value="MHCFlurryPrecompute">MHCFlurry precomputed</option>
+		  <option value="MHCFlurryOnFly">MHCFlurry on the fly</option>
+		</param>
+		<when value="netmhcPanPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="NetMHCPanPrecomputeAlleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/humanLatest"/>
+		    </options>
+		  </param>
+		  <param name="score_type" type="select" label="Select score type" display="radio">
+		    <option value="ba">Binding Affinity</option>
+		    <option value="elute">Elution Score</option>
+		  </param>
+		</when>
+		<when value="netmhcPanOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="NetMHCPanAlleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/humanLatest"/>
+		    </options>
+		  </param>
+		  <param name="score_type" type="select" label="Select score type" display="radio">
+		    <option value="ba">Binding Affinity</option>
+		    <option value="elute">Elution Score</option>
+		  </param>
+		</when>
+		<when value="netmhcPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="Alleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/humanLatest"/>
+		    </options>
+		  </param>
+		</when>
+		<when value="netmhcOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="Alleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/humanLatest"/>
+		    </options>
+		  </param>
+		</when>
+		<when value="MHCFlurryPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="MHCFlurryPrecomputeAlleles" />		    
+		  </param>
+		</when>
+		<when value="MHCFlurryOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="MHCFlurryAlleles" />		    
+		  </param>
+		</when>
+	      </conditional>
+	    </repeat>
+	    <param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
+	      <option value="8"></option>
+	      <option value="9"></option>
+	      <option value="10"></option>
+	      <option value="11"></option>
+	      <option value="12"></option>
+	      <option value="13"></option>
 	    </param>
-	    <param name="score_type" type="select" label="Select score type" display="radio">
-	      <option value="ba">Binding Affinity</option>
-	      <option value="elute">Elution Score</option>
-	    </param>
+	    <param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
 	  </when>
-	  <when value="netmhcPanOnFly">
-	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="NetMHCPanAlleles" >
-		<filter type="param_value" column="2" ref="proteome" />
-	      </options>
-	    </param>
-	    <param name="score_type" type="select" label="Select score type" display="radio">
-	      <option value="ba">Binding Affinity</option>
-	      <option value="elute">Elution Score</option>
-	    </param>
+	  <when value="unfiltered">
+	    <param name="minLength" type="integer" value="6" label="Minimum Peptide Length" />
+	    <param name="maxLength" type="integer" value="40" label="Max Peptide Length" />
 	  </when>
-	  <when value="netmhcPrecompute">
-	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="NetMHCPrecomputeAlleles" >
-		<filter type="param_value" column="2" ref="proteome" />
-	      </options>
-	    </param>
+	  <when value="netmhcPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="Alleles" />
+	      </param>
+	    </repeat>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
 	  </when>
-	  <when value="netmhcOnFly">
-	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="Alleles" />
-	    </param>
-	  </when>
-	  <when value="MHCFlurryPrecompute">
-	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="MHCFlurryPrecomputeAlleles" />
-	    </param>
-	  </when>
-	  <when value="MHCFlurryOnFly">
-	    <param name="allele" type="select" label="Select an allele">
-	      <options from_data_table="MHCFlurryAlleles" />
-	    </param>
-	  </when>
-	  </conditional>
-	</repeat>
-	<param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
-	  <option value="8"></option>
-	  <option value="9"></option>
-	  <option value="10"></option>
-	  <option value="11"></option>
-	  <option value="12"></option>
-	  <option value="13"></option>
-	</param>
-	<param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
+	</conditional>
       </when>
-      <when value="unfiltered">
-	<param name="minLength" type="integer" value="6" label="Minimum Peptide Length" />
-	<param name="maxLength" type="integer" value="40" label="Max Peptide Length" />
-      </when>
-      <when value="netmhcPercolator">
-	<repeat name="mhcalleles" title="Select MHC Alleles">
-	  <param name="allele" type="select" label="Select an allele">
-	    <options from_data_table="Alleles" />
+      <when value="/gene-data/jordan/newPrecomputed/mouse_canonical">
+	<conditional name="search_type">	
+	  <param name="search_type_selector" type="select" label="Choose search type">
+	    <option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
+	    <option value="filtered">Filtered Peptide Search</option>
+	    <option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
 	  </param>
-	</repeat>
-	<param name="minLength" type="integer" value="8" label="Min Peptide Length" />
-	<param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+          <when value="filtered">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <conditional name="source_type">
+		<param name="source_type_selector" type="select" label="Select scoring source for allele">
+		  <option value="netmhcPanPrecompute" selected="true">NetMHCPan Precomputed</option>
+		  <option value="netmhcPanOnFly">NetMHCPan on the fly</option>
+		  <option value="netmhcPrecompute">NetMHC Precomputed</option>
+		  <option value="netmhcOnFly">NetMHC on the fly</option>
+		  <option value="MHCFlurryPrecompute">MHCFlurry precomputed</option>
+		  <option value="MHCFlurryOnFly">MHCFlurry on the fly</option>
+		</param>
+		<when value="netmhcPanPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="NetMHCPanPrecomputeAlleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		    </options>
+		  </param>
+		  <param name="score_type" type="select" label="Select score type" display="radio">
+		    <option value="ba">Binding Affinity</option>
+		    <option value="elute">Elution Score</option>
+		  </param>
+		</when>
+		<when value="netmhcPanOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="NetMHCPanAlleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		    </options>
+		  </param>
+		  <param name="score_type" type="select" label="Select score type" display="radio">
+		    <option value="ba">Binding Affinity</option>
+		    <option value="elute">Elution Score</option>
+		  </param>
+		</when>
+		<when value="netmhcPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="Alleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		    </options>
+		  </param>
+		</when>
+		<when value="netmhcOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="Alleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		    </options>
+		  </param>
+		</when>
+		<when value="MHCFlurryPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="MHCFlurryPrecomputeAlleles" />		    
+		  </param>
+		</when>
+		<when value="MHCFlurryOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="MHCFlurryAlleles" />		    
+		  </param>
+		</when>
+	      </conditional>
+	    </repeat>
+	    <param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
+	      <option value="8"></option>
+	      <option value="9"></option>
+	      <option value="10"></option>
+	      <option value="11"></option>
+	      <option value="12"></option>
+	      <option value="13"></option>
+	    </param>
+	    <param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
+	  </when>
+	  <when value="unfiltered">
+	    <param name="minLength" type="integer" value="6" label="Minimum Peptide Length" />
+	    <param name="maxLength" type="integer" value="40" label="Max Peptide Length" />
+	  </when>
+	  <when value="netmhcPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="Alleles" />
+	      </param>
+	    </repeat>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	</conditional>
+      </when>
+      <when value="None">
+	<conditional name="search_type">	
+	  <param name="search_type_selector" type="select" label="Choose search type">
+	    <option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
+	    <option value="filtered">Filtered Peptide Search</option>
+	    <option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
+	  </param>
+          <when value="filtered">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <conditional name="source_type">
+		<param name="source_type_selector" type="select" label="Select scoring source for allele">
+		  <option value="netmhcPan" selected="true">NetMHCPan</option>
+		  <option value="netmhc">NetMHC</option>
+		  <option value="MHCFlurry">MHCFlurry</option>
+		</param>
+		<when value="netmhcPan">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="NetMHCPanAlleles" />
+		  </param>
+		  <param name="score_type" type="select" label="Select score type" display="radio">
+		    <option value="ba">Binding Affinity</option>
+		    <option value="elute">Elution Score</option>
+		  </param>
+		</when>
+		<when value="netmhc">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="Alleles" />
+		  </param>
+		</when>
+		<when value="MHCFlurry">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="MHCFlurryAlleles" />
+		  </param>
+		</when>
+	      </conditional>
+	    </repeat>
+	    <param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
+	      <option value="8"></option>
+	      <option value="9"></option>
+	      <option value="10"></option>
+	      <option value="11"></option>
+	      <option value="12"></option>
+	      <option value="13"></option>
+	    </param>
+	    <param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
+	  </when>
+	  <when value="unfiltered">
+	    <param name="minLength" type="integer" value="6" label="Minimum Peptide Length" />
+	    <param name="maxLength" type="integer" value="40" label="Max Peptide Length" />
+	  </when>
+	  <when value="netmhcPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="Alleles" />
+	      </param>
+	    </repeat>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	</conditional>
       </when>
     </conditional>
--->
+
+
   </inputs>
   <outputs>
     <!--- <data format="tabular" name="peptides" label="Peptides for search ${Name}"/> -->
