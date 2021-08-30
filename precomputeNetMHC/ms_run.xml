@@ -240,7 +240,9 @@
 		</when>
 		<when value="MHCFlurryOnFly">
 		  <param name="allele" type="select" label="Select an allele">
-		    <options from_data_table="MHCFlurryAlleles" />
+		    <options from_data_table="MHCFlurryAlleles" >
+		    <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		  </options>
 		  </param>
 		</when>
 	      </conditional>
