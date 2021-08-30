@@ -233,16 +233,14 @@
 		</when>
 		<when value="MHCFlurryPrecompute">
 		  <param name="allele" type="select" label="Select an allele">
-		    <options from_data_table="MHCFlurryPrecomputeAlleles" >
-		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
-		    </options>
+		    <options from_data_table="MHCFlurryPrecomputeAlleles" />
+
 		  </param>
 		</when>
 		<when value="MHCFlurryOnFly">
 		  <param name="allele" type="select" label="Select an allele">
-		    <options from_data_table="MHCFlurryAlleles" >
-		    <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
-		  </options>
+		    <options from_data_table="MHCFlurryAlleles" />
+
 		  </param>
 		</when>
 	      </conditional>
