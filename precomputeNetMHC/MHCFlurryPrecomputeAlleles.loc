@@ -134,11 +134,4 @@ HLA-C01:02	HLA-C01:02	/gene-data/jordan/newPrecomputed/humanLatest
 HLA-C03:135	HLA-C03:135	/gene-data/jordan/newPrecomputed/humanLatest
 HLA-C05:01	HLA-C05:01	/gene-data/jordan/newPrecomputed/humanLatest
 HLA-C07:01	HLA-C07:01	/gene-data/jordan/newPrecomputed/humanLatest
-H-2-Db	H2-D*b	/gene-data/jordan/newPrecomputed/mouse_canonical
-H-2-Dd	H2-D*d	/gene-data/jordan/newPrecomputed/mouse_canonical
-H2-K*b	H2-K*b	/gene-data/jordan/newPrecomputed/mouse_canonical
-H2-K*d	H2-K*d	/gene-data/jordan/newPrecomputed/mouse_canonical
-H2-K*k	H2-K*k	/gene-data/jordan/newPrecomputed/mouse_canonical
-H2-K*q	H2-K*q	/gene-data/jordan/newPrecomputed/mouse_canonical
-H2-L*d	H2-L*d	/gene-data/jordan/newPrecomputed/mouse_canonical
-H2-L*q	H2-L*q	/gene-data/jordan/newPrecomputed/mouse_canonical
+H-2-Db	H-2-Db	/gene-data/jordan/newPrecomputed/mouse_canonical
