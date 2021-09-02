@@ -2,30 +2,30 @@
 <tool id="msgfplus_runner_new" name="MS-GF+Percolator Database Search New" version="21.05">
   <command interpreter="python3">runPipelineNew.py
   
-  '${proteome.fields.value}' '${proteome.fields.fasta}' '${proteome.fields.netmhcScoreDir}' '${proteome.fields.netmhcPanScoresDir}' '${proteome.fields.mhcFlurryScoresDir}'
+  '${proteome_type.proteome.fields.value}' '${proteome_type.proteome.fields.fasta}' '${proteome_type.proteome.fields.netmhcScoreDir}' '${proteome_type.proteome.fields.netmhcPanScoresDir}' '${proteome_type.proteome.fields.mhcFlurryScoresDir}'
   #if $fasta
   --additional_proteome '$fasta'
   #end if
 
-  #if str($search_type.search_type_selector) == 'filtered'
+  #if str($proteome_type.search_type.search_type_selector) == 'filtered'
   --mode filtered
-  #for $r in $search_type.mhcalleles
+  #for $r in $proteome_type.search_type.mhcalleles
   #if str($r.source_type.source_type_selector) in ['netmhcPanPrecompute', 'netmhcPanOnFly']
   --panAllele '$r.source_type.source_type_selector' '$r.source_type.allele' '$r.source_type.score_type'
   #else
   --allele '$r.source_type.source_type_selector' '$r.source_type.allele'
   #end if
   #end for
-  --pep_len '$search_type.length'
-  --rank_filter '$search_type.rank_filter'
-  #elif str($search_type.search_type_selector) == 'unfiltered'
+  --pep_len '$proteome_type.search_type.length'
+  --rank_filter '$proteome_type.search_type.rank_filter'
+  #elif str($proteome_type.search_type.search_type_selector) == 'unfiltered'
   --mode unfiltered
-  --minLength $search_type.minLength
-  --maxLength $search_type.maxLength
+  --minLength $proteome_type.search_type.minLength
+  --maxLength $proteome_type.search_type.maxLength
   #else
   --mode netMHCPercolator
-  --minLength $search_type.minLength
-  --maxLength $search_type.maxLength
+  --minLength $proteome_type.search_type.minLength
+  --maxLength $proteome_type.search_type.maxLength
   #end if
 
   #if $mods.value
