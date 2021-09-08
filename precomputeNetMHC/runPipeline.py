@@ -108,7 +108,7 @@ revCatFastaPath = None
 pinOutputPath = os.path.join(tempDir, 'search.mzid.pin')
 mgf = os.path.join(tempDir, 'spectra.mgf')
 shutil.copyfile(args.mgf, mgf)
-msgfCommand = ['java', '-Xmx1000M', '-jar', MSGFPLUS,
+msgfCommand = ['java', '-Xmx10000M', '-jar', MSGFPLUS,
                '-s', mgf,
                '-ignoreMetCleavage', '1',
                '-t', args.precursor_tolerance,
