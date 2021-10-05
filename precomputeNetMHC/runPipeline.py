@@ -28,6 +28,7 @@ PRECOMPUTE_SCRIPTS='/home/jordan/github/immunoGalaxy/precomputeNetMHC'
 MAX_HEADER_LENGTH=5000
 
 
+
 def generateNetMHCCommand(netmhcPath, allele, inputFilePath):
     return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath]
 
@@ -46,6 +47,26 @@ def addRevcat(fastaPath):
     root, ext = os.path.splitext(fastaPath)
     return root + '.revCat' + ext
 
+def create_decoy_file(targetFile, outputPath):
+    with tempfile.TemporaryDirectory() as tempDirObject:
+        tempDir = tempDirObject.name
+        shutil.copyfile(targetFile, tempDir)
+        buildSACommand = ['java', '-Xmx10000M', '-jar', MSGFPLUS, 'edu.ucsd.msjava.msdbsearch.BuildSA', '-d', os.path.join(tempDir, targetFile), '-tda', '1']
+        p = subprocess.Popen(buildSACommand, stderr=sys.stdout.fileno())
+        assert(p.wait() == 0)
+        revcatFile = os.path.join(tempDir, addRevcat(targetFile))
+        
+        assert(os.path.isfile(revcatFile))
+        f = open(outputPath, 'w')
+        g = open(revcatFile, 'r')
+        copyLines = False
+        for line in g:
+            if (not copyLines) and line.startswith('>XXX_'):
+                copyLines = True
+            if copyLines:
+                f.write(g)
+        f.close()
+        g.close()
     
 parser = argparse.ArgumentParser()
 
@@ -71,10 +92,12 @@ parser.add_argument('--archive', type=str)
 parser.add_argument('--msgf_unfiltered', type=str)
 parser.add_argument('--percolator_unfiltered', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
+parser.add_argument('--mix_max', action='store_true')
 parser.add_argument('--minLength', type=int, default=0)
 parser.add_argument('--maxLength', type=int, default=0)
 
-
+targetFasta = None
+decoyFasta = None
 args = parser.parse_args()
 print('args')
 print(args)
@@ -103,23 +126,28 @@ peptide_lengths = []
 
 tempDir = tempfile.mkdtemp(prefix='pipelineRun')
 
-outputPath = os.path.join(tempDir, 'search.mzid')
-revCatFastaPath = None
-pinOutputPath = os.path.join(tempDir, 'search.mzid.pin')
+target_outputPath = os.path.join(tempDir, 'search.mzid')
+decoy_outputPath = os.path.join(tempDir, 'search_decoy.mzid')
+
+target_pinOutputPath = os.path.join(tempDir, 'search.mzid.pin')
+decoy_pinOutputPath = os.path.join(tempDir, 'search_decoy.mzid.pin')
+combined_pinOutputPath = os.path.join(tempDir, 'search_combined.mzid.pin')
 mgf = os.path.join(tempDir, 'spectra.mgf')
 shutil.copyfile(args.mgf, mgf)
+mixMax = args.mix_max
+
+
+    
 msgfCommand = ['java', '-Xmx10000M', '-jar', MSGFPLUS,
                '-s', mgf,
                '-ignoreMetCleavage', '1',
                '-t', args.precursor_tolerance,
-               '-tda', '1',
                '-addFeatures', '1',
                '-n', str(args.num_matches_per_spectrum),
                '-m', args.frag_method,
-               '-inst', args.instrument,
-               '-o', outputPath
-               ]
-
+               '-inst', args.instrument]
+target_msgfCommand = []
+decoy_msgfCommand = []
 modPath = os.path.join(tempDir, 'mods.txt')
 with open(modPath, 'w') as f:
     if args.mod:
@@ -248,10 +276,14 @@ if filtered:
             
 
                 
-    fasta = os.path.join(tempDir, 'peptides.fasta')
-    revCatFastaPath  = addRevcat(fasta)
-    writePeptideHeaderMapToFasta(pepToHeaders, fasta)
-    msgfCommand.extend(['-d', fasta])
+    targetFasta = os.path.join(tempDir, 'peptides.fasta')
+    decoyFasta = os.path.join(tempDir, 'peptides_decoys.fasta')
+    writePeptideHeaderMapToFasta(pepToHeaders, targetFasta)
+    create_decoy_file(targetFasta, decoyFasta)
+    target_msgfCommand.extend(msgfCommand)
+    decoy_msgfCommand.extend(msgfCommand)
+    target_msgfCommand.extend(['-d', targetFasta, '-o', target_outputPath])
+    decoy_msgfCommand.extend(['-d', decoyFasta, '-o', decoy_outputPath ])
     
 else:
     msgfCommand.extend(['-e', '0'])
@@ -276,13 +308,20 @@ else:
         shutil.copyfile(args.additional_proteome, fasta)
     assert(fasta)
     assert(os.path.isfile(fasta))
-    revCatFastaPath  = addRevcat(fasta)
-    msgfCommand.extend(['-d', fasta])
+    decoy_fasta = os.path.join(tempDir, 'decoy.fasta')
+    create_decoy_file(fasta, decoy_fasta)
+    target_msgfCommand.extend(msgfCommand)
+    decoy_msgfCommand.extend(msgfCommand)    
+    target_msgfCommand.extend(['-d', fasta, '-o', target_outputPath])
+    decoy_msgfCommand.extend(['-d', decoy_fasta, '-o', decoy_outputPath])
+    
 print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(msgfCommand))
 if TEST:
     print('skipping RunMSGFPlusSearch because of TEST')
 else:
-    p = subprocess.Popen(msgfCommand, stderr=sys.stdout.fileno())
+    p = subprocess.Popen(target_msgfCommand, stderr=sys.stdout.fileno())
+    assert(p.wait() == 0)
+    p = subprocess.Popen(decoy_msgfCommand, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
 print('ran msgfplus search')
 
@@ -290,13 +329,21 @@ print('ran msgfplus search')
 Run msgf2pin
 """
 
-msgf2pinCommand = [MSGF2PIN, outputPath, '-o', pinOutputPath, '-e', 'no_enzyme', '-P', 'XXX_', '-m', str(args.num_matches_per_spectrum), '-F', revCatFastaPath]
-p = subprocess.Popen(msgf2pinCommand, stderr=sys.stdout.fileno())
+target_msgf2pinCommand = [MSGF2PIN, target_outputPath, '-o', target_pinOutputPath, '-e', 'no_enzyme', '-P', 'XXX_', '-m', str(args.num_matches_per_spectrum), '-F', targetFasta]
+p = subprocess.Popen(target_msgf2pinCommand, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
+
+decoy_msgf2pinCommand = [MSGF2PIN, decoy_outputPath, '-o', decoy_pinOutputPath, '-e', 'no_enzyme', '-P', 'XXX_', '-m', str(args.num_matches_per_spectrum), '-F', decoyFasta]
+p = subprocess.Popen(decoy_msgf2pinCommand, stderr=sys.stdout.fileno())
+assert(p.wait() == 0)
+
+shutil.copyfile(target_pinOutputPath, combined_pinOutputPath)
+combinedPIN = PINFile(combined_pinOutputPath)
+combinedPIN.addPin(decoy_pinOutputPath)
 
 #msgf unfiltered
 if args.msgf_unfiltered:
-    with open(pinOutputPath, 'r') as f:
+    with open(combined_pinOutputPath, 'r') as f:
         with open(args.msgf_unfiltered, 'w') as g:
             lines = f.readlines()
             #remove the direction row
@@ -306,10 +353,10 @@ if args.msgf_unfiltered:
 
 if args.mode == 'netMHCPercolator':
     print('NetMHC + Percolator')
-    print('Pin output path: ' + pinOutputPath)
-    pin = PINFile(pinOutputPath)
-    peptides = list(pin.peptides)
-    print('number of peptides: ' + str(len(peptides)))
+    print('Combined pin output path: ' + combined_pinOutputPath)
+    combinedPin = PINFile(combined_pinOutputPath)
+    peptides = list(combinedPin.peptides)
+    print('number of  peptides: ' + str(len(peptides)))
     scoreDict = defaultdict(list)
     for allele in args.allele:
         commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele.strip())
@@ -319,11 +366,11 @@ if args.mode == 'netMHCPercolator':
         for i in range(0, len(scores)):
             scoreDict[peptides[i]].append(scores[i])
     singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
-    pin.addScores(singleScoreDict, 'NetMHC', '-1')
-    
-    
+    combinedPin.addScores(singleScoreDict, 'NetMHC', '-1')
+
+
 percolatorOutputDir = os.path.join(tempDir, 'percolatorOutput')
-percolatorCommand = [CRUX, 'percolator', '--top-match', str(args.num_matches_per_spectrum), '--output-dir', percolatorOutputDir, pinOutputPath]
+percolatorCommand = [CRUX, 'percolator', '--top-match', str(args.num_matches_per_spectrum), '--tdc', 'F' if mixMax else 'T', '--output-dir', percolatorOutputDir, combined_pinOutputPath]
 p = subprocess.Popen(percolatorCommand, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 

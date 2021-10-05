@@ -22,7 +22,19 @@ class PINFile:
                 peptide = parse_peptide(row['Peptide'], self.peptide_regex, self.ptm_removal_regex)
                 assert(peptide)
                 self.peptides.add(peptide)
-
+    def addPin(self, additionalPath):
+        rows = []
+        with open(additionalPath, 'r') as f:
+            reader = csv.DictReader(f, self.fieldnames, delimiter='\t', restkey='Proteins')
+            next(reader)
+            for row in reader:
+                rows.append(row)
+            with open(self.path, 'w') as g:
+                writer = csv.DictWriter(g, self.fieldnames, delimiter='\t')
+                for row in rows:
+                    writer.writerow(row)
+                    
+            
     def addScores(self, scoreDict, columnHeader, columnDirection):
         #inserts the scores
         rows = []
