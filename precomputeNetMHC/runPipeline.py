@@ -292,28 +292,27 @@ else:
         msgfCommand.extend(['-minLength', str(args.minLength)])
     if args.maxLength > 0:
         msgfCommand.extend(['-maxLength', str(args.maxLength)])
-    fasta = None
     if usingBase:
-        fasta = os.path.join(args.baseDirectory, args.baseFasta)
+        targetFasta = os.path.join(args.baseDirectory, args.baseFasta)
         if args.additional_proteome:
             command = ['awk', '1', os.path.join(args.baseDirectory, args.baseFasta), args.additional_proteome]
-            fasta = os.path.join(tempDir, 'combined.fasta')
-            f = open(fasta, 'w')
+            targetFasta = os.path.join(tempDir, 'combined.fasta')
+            f = open(targetFasta, 'w')
             proc = subprocess.Popen(command, stdout=f)
             assert(proc.wait() == 0)
         else:
-            fasta = os.path.join(tempDir, 'base.fasta')
-            shutil.copyfile(os.path.join(args.baseDirectory, args.baseFasta), fasta)
+            targetFasta = os.path.join(tempDir, 'base.fasta')
+            shutil.copyfile(os.path.join(args.baseDirectory, args.baseFasta), targetFasta)
     else:
-        fasta = os.path.join(tempDir, 'additional.fasta')
-        shutil.copyfile(args.additional_proteome, fasta)
-    assert(fasta)
-    assert(os.path.isfile(fasta))
+        targetFasta = os.path.join(tempDir, 'additional.fasta')
+        shutil.copyfile(args.additional_proteome, targetFasta)
+    assert(targetFasta)
+    assert(os.path.isfile(targetFasta))
     decoyFasta = os.path.join(tempDir, 'decoy.fasta')
-    create_decoy_file(fasta, decoyFasta)
+    create_decoy_file(targetFasta, decoyFasta)
     target_msgfCommand.extend(msgfCommand)
     decoy_msgfCommand.extend(msgfCommand)    
-    target_msgfCommand.extend(['-d', fasta, '-o', target_outputPath])
+    target_msgfCommand.extend(['-d', targetFasta, '-o', target_outputPath])
     decoy_msgfCommand.extend(['-d', decoyFasta, '-o', decoy_outputPath])
     
 
