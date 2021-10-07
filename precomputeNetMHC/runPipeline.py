@@ -134,7 +134,7 @@ decoy_pinOutputPath = os.path.join(tempDir, 'search_decoy.mzid.pin')
 combined_pinOutputPath = os.path.join(tempDir, 'search_combined.mzid.pin')
 mgf = os.path.join(tempDir, 'spectra.mgf')
 shutil.copyfile(args.mgf, mgf)
-mixMax = args.mix_max
+mixMax = True#args.mix_max
 
 
     
@@ -145,6 +145,7 @@ msgfCommand = ['java', '-Xmx10000M', '-jar', MSGFPLUS,
                '-addFeatures', '1',
                '-n', str(args.num_matches_per_spectrum),
                '-m', args.frag_method,
+               '-tda', '0',
                '-inst', args.instrument]
 target_msgfCommand = []
 decoy_msgfCommand = []
@@ -308,12 +309,12 @@ else:
         shutil.copyfile(args.additional_proteome, fasta)
     assert(fasta)
     assert(os.path.isfile(fasta))
-    decoy_fasta = os.path.join(tempDir, 'decoy.fasta')
-    create_decoy_file(fasta, decoy_fasta)
+    decoyFasta = os.path.join(tempDir, 'decoy.fasta')
+    create_decoy_file(fasta, decoyFasta)
     target_msgfCommand.extend(msgfCommand)
     decoy_msgfCommand.extend(msgfCommand)    
     target_msgfCommand.extend(['-d', fasta, '-o', target_outputPath])
-    decoy_msgfCommand.extend(['-d', decoy_fasta, '-o', decoy_outputPath])
+    decoy_msgfCommand.extend(['-d', decoyFasta, '-o', decoy_outputPath])
     
 print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(msgfCommand))
 if TEST:
@@ -329,17 +330,17 @@ print('ran msgfplus search')
 Run msgf2pin
 """
 
-target_msgf2pinCommand = [MSGF2PIN, target_outputPath, '-o', target_pinOutputPath, '-e', 'no_enzyme', '-P', 'XXX_', '-m', str(args.num_matches_per_spectrum), '-F', targetFasta]
+target_msgf2pinCommand = [MSGF2PIN, target_outputPath, '-o', target_pinOutputPath, '-e', 'no_enzyme', '-m', str(args.num_matches_per_spectrum), '-F', targetFasta]
 p = subprocess.Popen(target_msgf2pinCommand, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
-decoy_msgf2pinCommand = [MSGF2PIN, decoy_outputPath, '-o', decoy_pinOutputPath, '-e', 'no_enzyme', '-P', 'XXX_', '-m', str(args.num_matches_per_spectrum), '-F', decoyFasta]
+decoy_msgf2pinCommand = [MSGF2PIN, decoy_outputPath, '-o', decoy_pinOutputPath, '-e', 'no_enzyme', '-m', str(args.num_matches_per_spectrum), '-F', decoyFasta]
 p = subprocess.Popen(decoy_msgf2pinCommand, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
 shutil.copyfile(target_pinOutputPath, combined_pinOutputPath)
 combinedPIN = PINFile(combined_pinOutputPath)
-combinedPIN.addPin(decoy_pinOutputPath)
+combinedPIN.addPin(decoy_pinOutputPath, decoy=True)
 
 #msgf unfiltered
 if args.msgf_unfiltered:
@@ -370,7 +371,7 @@ if args.mode == 'netMHCPercolator':
 
 
 percolatorOutputDir = os.path.join(tempDir, 'percolatorOutput')
-percolatorCommand = [CRUX, 'percolator', '--top-match', str(args.num_matches_per_spectrum), '--tdc', 'F' if mixMax else 'T', '--output-dir', percolatorOutputDir, combined_pinOutputPath]
+percolatorCommand = [CRUX, 'percolator', '--top-match', str(args.num_matches_per_spectrum), '--tdc', 'F', '--output-dir', percolatorOutputDir, combined_pinOutputPath]
 p = subprocess.Popen(percolatorCommand, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
@@ -386,7 +387,7 @@ with tempfile.NamedTemporaryFile() as f:
     p = subprocess.Popen(command, stdout=f)
     assert(p.wait() == 0)
     with tempfile.NamedTemporaryFile() as g:
-        command = ['awk', 'BEGIN {OFS="\t"} NR>1 {print -1, $0}', percolator_decoy_path]
+        command = ['awk', 'BEGIN {OFS="\t"} NR>1 {print -1, $0}', percolator_target_path]
         p = subprocess.Popen(command, stdout=g)
         assert(p.wait() == 0)
         command = ['cat', f.name, g.name]
