@@ -333,6 +333,8 @@ Run msgf2pin
 """
 
 target_msgf2pinCommand = [MSGF2PIN, target_outputPath, '-o', target_pinOutputPath, '-e', 'no_enzyme', '-m', str(args.num_matches_per_spectrum), '-F', targetFasta]
+print('Target msgf2pin command: ')
+print(target_msgf2pinCommand)
 p = subprocess.Popen(target_msgf2pinCommand, stderr=sys.stdout.fileno())
 assert(p.wait() == 0)
 
