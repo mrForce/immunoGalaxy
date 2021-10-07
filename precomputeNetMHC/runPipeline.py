@@ -49,7 +49,7 @@ def addRevcat(fastaPath):
 
 def create_decoy_file(targetFile, outputPath):
     with tempfile.TemporaryDirectory() as tempDir:
-        shutil.copyfile(targetFile, tempDir)
+        shutil.copy(targetFile, tempDir)
         buildSACommand = ['java', '-Xmx10000M', '-jar', MSGFPLUS, 'edu.ucsd.msjava.msdbsearch.BuildSA', '-d', os.path.join(tempDir, targetFile), '-tda', '1']
         p = subprocess.Popen(buildSACommand, stderr=sys.stdout.fileno())
         assert(p.wait() == 0)
