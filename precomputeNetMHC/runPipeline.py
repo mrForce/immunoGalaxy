@@ -64,7 +64,7 @@ def create_decoy_file(targetFile, outputPath):
             if (not copyLines) and line.startswith('>XXX_'):
                 copyLines = True
             if copyLines:
-                f.write(g)
+                f.write(line)
         f.close()
         g.close()
     
