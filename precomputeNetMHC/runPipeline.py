@@ -316,12 +316,14 @@ else:
     target_msgfCommand.extend(['-d', fasta, '-o', target_outputPath])
     decoy_msgfCommand.extend(['-d', decoyFasta, '-o', decoy_outputPath])
     
-print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(msgfCommand))
+
 if TEST:
     print('skipping RunMSGFPlusSearch because of TEST')
 else:
+    print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(target_msgfCommand))
     p = subprocess.Popen(target_msgfCommand, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
+    print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(decoy_msgfCommand))
     p = subprocess.Popen(decoy_msgfCommand, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
 print('ran msgfplus search')
