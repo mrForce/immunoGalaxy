@@ -319,10 +319,10 @@ else:
 if TEST:
     print('skipping RunMSGFPlusSearch because of TEST')
 else:
-    print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(target_msgfCommand))
+    print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(target_msgfCommand), flush=True)
     p = subprocess.Popen(target_msgfCommand, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
-    print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(decoy_msgfCommand))
+    print('going to call RunMSGFPlusSearch. Command: %s' % ' '.join(decoy_msgfCommand), flush=True)
     p = subprocess.Popen(decoy_msgfCommand, stderr=sys.stdout.fileno())
     assert(p.wait() == 0)
 print('ran msgfplus search')
