@@ -33,6 +33,8 @@ class PINFile:
                 writer = csv.DictWriter(g, self.fieldnames, delimiter='\t')
                 for row in rows:
                     if decoy:
+                        print('row')
+                        print(row)
                         assert('label' in row)
                         row['label'] = '-1'
                     writer.writerow(row)
