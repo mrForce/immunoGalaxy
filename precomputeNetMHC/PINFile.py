@@ -29,7 +29,7 @@ class PINFile:
             next(reader)
             for row in reader:
                 rows.append(row)
-            with open(self.path, 'w') as g:
+            with open(self.path, 'a') as g:
                 writer = csv.DictWriter(g, self.fieldnames, delimiter='\t')
                 for row in rows:
                     if decoy:
