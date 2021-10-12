@@ -24,7 +24,7 @@ class PINFile:
                 self.peptides.add(peptide)
     def addPin(self, additionalPath,*, decoy=False):
         with open(additionalPath, 'r') as f:
-            reader = csv.DictReader(f, self.fieldnames, delimiter='\t', restkey='Proteins')
+            reader = csv.DictReader(f, delimiter='\t', restkey='Proteins')
             next(reader)
             with open(self.path, 'a') as g:
                 writer = csv.DictWriter(g, self.fieldnames, delimiter='\t')
