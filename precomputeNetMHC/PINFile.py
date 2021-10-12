@@ -23,21 +23,20 @@ class PINFile:
                 assert(peptide)
                 self.peptides.add(peptide)
     def addPin(self, additionalPath,*, decoy=False):
-        rows = []
         with open(additionalPath, 'r') as f:
             reader = csv.DictReader(f, self.fieldnames, delimiter='\t', restkey='Proteins')
             next(reader)
-            for row in reader:
-                rows.append(row)
             with open(self.path, 'a') as g:
                 writer = csv.DictWriter(g, self.fieldnames, delimiter='\t')
-                for row in rows:
+                for row in reader:
                     if decoy:
                         print('row')
                         print(row)
-                        assert('Label' in row)
                         row['Label'] = '-1'
                     writer.writerow(row)
+                    peptide = parse_peptide(row['Peptide'], self.peptide_regex, self.ptm_removal_regex)
+                    assert(peptide)
+                    self.peptides.add(peptide)
                     
             
     def addScores(self, scoreDict, columnHeader, columnDirection):
