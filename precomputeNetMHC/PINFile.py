@@ -35,8 +35,8 @@ class PINFile:
                     if decoy:
                         print('row')
                         print(row)
-                        assert('label' in row)
-                        row['label'] = '-1'
+                        assert('Label' in row)
+                        row['Label'] = '-1'
                     writer.writerow(row)
                     
             
