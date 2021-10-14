@@ -421,7 +421,7 @@ if args.mode == 'percolatorFeature':
                 scores = runMHCFlurry(MHCFLURRY_COMPUTE_SCRIPT_LOCATION, allele, peptides)
                 assert(len(scores) == len(peptides))
                 for i in range(0, len(scores)):
-                    scoreDict[peptides[i]].append(scores[i])
+                    scoreDict[peptides[i]].append(scores[i][0])
             print('score dict')
             print(scoreDict)
             singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
