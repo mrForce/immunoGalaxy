@@ -367,6 +367,8 @@ if args.mode == 'netMHCPercolator':
         scorer = NetMHCScorer(5000, commandGen, 1)
         scores = [x[0] for x in scorer.scorePeptides(iter(peptides), ['Affinity(nM)'])]
         print('number of scores: ' + str(len(scores)))
+        print('scores: ')
+        print(scores)
         assert(len(scores) == len(peptides))
         for i in range(0, len(scores)):
             scoreDict[peptides[i]].append(scores[i])
