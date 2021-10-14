@@ -112,7 +112,7 @@ else:
     args.allele = []
 if args.panAllele:
     for x in args.panAllele:
-        assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly, netmhcPanPercolator'])
+        assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly', 'netmhcPanPercolator'])
         assert(x[2] in ['ba', 'elute'])
 else:
     args.panAllele = []
