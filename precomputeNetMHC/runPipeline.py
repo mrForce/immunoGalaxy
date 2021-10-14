@@ -366,10 +366,15 @@ if args.mode == 'netMHCPercolator':
         commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele.strip())
         scorer = NetMHCScorer(5000, commandGen, 1)
         scores = [x[0] for x in scorer.scorePeptides(iter(peptides), ['Affinity(nM)'])]
+        print('number of scores: ' + str(len(scores)))
         assert(len(scores) == len(peptides))
         for i in range(0, len(scores)):
             scoreDict[peptides[i]].append(scores[i])
+    print('score dict')
+    print(scoreDict)
     singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
+    print('single score dict')
+    print(singleScoreDict)
     singleScoreDictPath = os.path.join(os.path.split(combined_pinOutputPath)[0], 'singleScoreDict.pickle')
     print('single score dict being saved to disk with path: ' + singleScoreDictPath)
     print('size of score dict: ' + str(len(singleScoreDict.items())))
