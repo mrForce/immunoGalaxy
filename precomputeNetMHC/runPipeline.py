@@ -395,7 +395,7 @@ if args.mode == 'percolatorFeature':
             for typeAndAllele in args.allele:
                 allele = typeAndAllele[1]
                 print('allele: ' + allele)
-                commandGen = functools.partial(generateNetMHCCommand, NETMHCPAN, allele.strip())
+                commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele.strip())
                 scorer = NetMHCScorer(5000, commandGen, 1)
                 scores = [x[0] for x in scorer.scorePeptides(iter(peptides), ['Affinity(nM)'])]
                 print('number of scores: ' + str(len(scores)))
