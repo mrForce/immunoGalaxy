@@ -362,6 +362,8 @@ if args.mode == 'netMHCPercolator':
     peptides = list(combinedPin.peptides)
     print('number of  peptides: ' + str(len(peptides)))
     scoreDict = defaultdict(list)
+    print('alleles')
+    print(args.allele)
     for allele in args.allele:
         commandGen = functools.partial(generateNetMHCCommand, NETMHC, allele.strip())
         scorer = NetMHCScorer(5000, commandGen, 1)
