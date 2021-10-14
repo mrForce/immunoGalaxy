@@ -370,8 +370,9 @@ if args.mode == 'netMHCPercolator':
         for i in range(0, len(scores)):
             scoreDict[peptides[i]].append(scores[i])
     singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
-    print('single score dict being saved to disk')
-    with open(os.path.join(os.path.split(combined_pinOutputPath)[1], 'singleScoreDict.pickle'), 'wb') as f:
+    singleScoreDictPath = os.path.join(os.path.split(combined_pinOutputPath)[1], 'singleScoreDict.pickle')
+    print('single score dict being saved to disk with path: ' + singleScoreDictPath)
+    with open(singleScoreDictPath, 'wb') as f:
         pickle.dump(singleScoreDict, f)
     combinedPin.addScores(singleScoreDict, 'NetMHC', '-1')
 
