@@ -372,7 +372,7 @@ if args.mode == 'netMHCPercolator':
     singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
     singleScoreDictPath = os.path.join(os.path.split(combined_pinOutputPath)[1], 'singleScoreDict.pickle')
     print('single score dict being saved to disk with path: ' + singleScoreDictPath)
-    with open(singleScoreDictPath, 'wb') as f:
+    with open(singleScoreDictPath, 'wb+') as f:
         pickle.dump(singleScoreDict, f)
     combinedPin.addScores(singleScoreDict, 'NetMHC', '-1')
 
