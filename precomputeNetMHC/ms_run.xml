@@ -25,7 +25,7 @@
   #elif str($proteome_type.search_type.search_type_selector) == 'netmhcPanPercolator'
   --mode percolatorFeature
   #for $r in $proteome_type.search_type.mhcalleles
-  --panAllele '$r.source_type.source_type_selector' '$r.source_type.allele' '$r.source_type.score_type'
+  --panAllele '$proteome_type.search_type.search_type_selector' '$r.source_type.allele' '$r.source_type.score_type'
   #end for
   --minLength $proteome_type.search_type.minLength
   --maxLength $proteome_type.search_type.maxLength
@@ -34,7 +34,7 @@
   --minLength $proteome_type.search_type.minLength
   --maxLength $proteome_type.search_type.maxLength
   #for $r in $proteome_type.search_type.mhcalleles
-  --allele '$r.source_type.source_type_selector' '$r.source_type.allele'
+  --allele '$proteome_type.search_type.search_type_selector' '$r.source_type.allele'
   #end for
   #end if
 
