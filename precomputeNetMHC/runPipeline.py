@@ -416,7 +416,6 @@ if args.mode == 'percolatorFeature':
                 pickle.dump(singleScoreDict, f)
             combinedPin.addScores(singleScoreDict, 'NetMHC', '-1')
         elif args.allele[0][0] == 'mhcFlurryPercolator':
-            assert(False)
             for typeAndAllele in args.allele:
                 allele = typeAndAllele[1]
                 scores = runMHCFlurry(MHCFLURRY_COMPUTE_SCRIPT_LOCATION, allele, peptides)
