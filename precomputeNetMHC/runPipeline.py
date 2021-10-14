@@ -2,6 +2,7 @@
 import sys
 import argparse
 import pickle
+import numpy as np
 import re
 import functools
 import subprocess
@@ -27,13 +28,33 @@ THREADS=16
 PRECOMPUTE_SCRIPTS='/home/jordan/github/immunoGalaxy/precomputeNetMHC'
 MAX_HEADER_LENGTH=5000
 
-
-
+MHCFLURRY_COMPUTE_SCRIPT_LOCATION='/galaxy-prod/galaxy/tools-dependencies/bin/run_MHCFlurry_on_cd9.sh'
+KNOWN_AMINOS=set('ACDEFGHIKLMNPQRSTVWY')
 def generateNetMHCCommand(netmhcPath, allele, inputFilePath):
     return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath]
 
 def generateNetMHCPanCommand(netmhcPath, allele, inputFilePath):
     return [netmhcPath, '-a', allele, '-p', '-f', inputFilePath, '-BA']
+
+def unknownSub(peptides):
+    pep = []
+    for x in peptides:
+        sub = ''.join([y if y in KNOWN_AMINOS else 'X' for y in x])
+        pep.append(sub)
+    return pep
+def runMHCFlurry(mhcflurryScriptPath, allele, peptides):
+    peptidesWithUnknown = unknownSub(peptides)
+    peptidesFile = tempfile.NamedTemporaryFile(mode='wt')
+    for x in peptidesWithUnknown:
+        peptidesFile.write(x + '\n')
+    peptidesFile.flush()
+    scores = []
+    with tempfile.NamedTemporaryFile(mode='rb') as scoresFile:
+        command = [mhcflurryScriptPath, peptidesFile.name, scoresFile.name, allele]
+        proc = subprocess.Popen(command, stdout=subprocess.DEVNULL)
+        outs, errors = proc.communicate()
+        scores = list(np.load(scoresFile))
+    return scores
 
 
 
@@ -368,37 +389,57 @@ if args.mode == 'percolatorFeature':
     scoreDict = defaultdict(list)
     if args.allele:
         assert(len(args.panAllele) == 0)
-        assert(args.allele[0][0] == 'netmhcPercolator')
-        print('alleles')
-        print(args.allele)
-        for typeAndallele in args.allele:
-            allele = typeAndAllele[1]
-            print('allele: ' + allele)
-            commandGen = functools.partial(generateNetMHCCommand, NETMHCPAN, allele.strip())
-            scorer = NetMHCScorer(5000, commandGen, 1)
-            scores = [x[0] for x in scorer.scorePeptides(iter(peptides), ['Affinity(nM)'])]
-            print('number of scores: ' + str(len(scores)))
-            print('scores: ')
-            print(scores)
-            assert(len(scores) == len(peptides))
-            for i in range(0, len(scores)):
-                scoreDict[peptides[i]].append(scores[i])
-        print('score dict')
-        print(scoreDict)
-        singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
-        print('single score dict')
-        print(singleScoreDict)
-        singleScoreDictPath = os.path.join(os.path.split(combined_pinOutputPath)[0], 'singleScoreDict.pickle')
-        print('single score dict being saved to disk with path: ' + singleScoreDictPath)
-        print('size of score dict: ' + str(len(singleScoreDict.items())))
-        with open(singleScoreDictPath, 'wb+') as f:
-            pickle.dump(singleScoreDict, f)
-        combinedPin.addScores(singleScoreDict, 'NetMHC', '-1')
+        if args.allele[0][0] == 'netmhcPercolator':
+            print('alleles')
+            print(args.allele)
+            for typeAndAllele in args.allele:
+                allele = typeAndAllele[1]
+                print('allele: ' + allele)
+                commandGen = functools.partial(generateNetMHCCommand, NETMHCPAN, allele.strip())
+                scorer = NetMHCScorer(5000, commandGen, 1)
+                scores = [x[0] for x in scorer.scorePeptides(iter(peptides), ['Affinity(nM)'])]
+                print('number of scores: ' + str(len(scores)))
+                print('scores: ')
+                print(scores)
+                assert(len(scores) == len(peptides))
+                for i in range(0, len(scores)):
+                    scoreDict[peptides[i]].append(scores[i])
+            print('score dict')
+            print(scoreDict)
+            singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
+            print('single score dict')
+            print(singleScoreDict)
+            singleScoreDictPath = os.path.join(os.path.split(combined_pinOutputPath)[0], 'singleScoreDict.pickle')
+            print('single score dict being saved to disk with path: ' + singleScoreDictPath)
+            print('size of score dict: ' + str(len(singleScoreDict.items())))
+            with open(singleScoreDictPath, 'wb+') as f:
+                pickle.dump(singleScoreDict, f)
+            combinedPin.addScores(singleScoreDict, 'NetMHC', '-1')
+        elif args.allele[0][0] == 'mhcFlurryPercolator':
+            assert(False)
+            for typeAndAllele in args.allele:
+                allele = typeAndAllele[1]
+                scores = runMHCFlurry(MHCFLURRY_COMPUTE_SCRIPT_LOCATION, allele, peptides)
+                assert(len(scores) == len(peptides))
+                for i in range(0, len(scores)):
+                    scoreDict[peptides[i]].append(scores[i])
+            print('score dict')
+            print(scoreDict)
+            singleScoreDict = {k: min(v) for k,v in scoreDict.items()}
+            print('single score dict')
+            print(singleScoreDict)
+            singleScoreDictPath = os.path.join(os.path.split(combined_pinOutputPath)[0], 'singleScoreDict.pickle')
+            print('single score dict being saved to disk with path: ' + singleScoreDictPath)
+            print('size of score dict: ' + str(len(singleScoreDict.items())))
+            with open(singleScoreDictPath, 'wb+') as f:
+                pickle.dump(singleScoreDict, f)
+            combinedPin.addScores(singleScoreDict, 'MHCFlurry', '-1')
+                    
     else:
         assert(args.panAllele)
         assert(args.panAllele[0][0] == 'netmhcPanPercolator')
 
-        for typeAndallele in args.panAllele:
+        for typeAndAllele in args.panAllele:
             allele = typeAndAllele[1]
             scoreType = typeAndAllele[2]
             print('allele: ' + allele)
