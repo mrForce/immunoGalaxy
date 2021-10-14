@@ -101,14 +101,15 @@ decoyFasta = None
 args = parser.parse_args()
 print('args')
 print(args)
+
 if args.allele:
     for x in args.allele:
-        assert(x[0] in ['netmhcPrecompute', 'netmhcOnFly', 'MHCFlurryPrecompute', 'MHCFlurryOnFly'])
+        assert(x[0] in ['netmhcPrecompute', 'netmhcOnFly', 'MHCFlurryPrecompute', 'MHCFlurryOnFly', 'netmhcPercolator', 'mhcFlurryPercolator'])
 else:
     args.allele = []
 if args.panAllele:
     for x in args.panAllele:
-        assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly'])
+        assert(x[0] in ['netmhcPanPrecompute', 'netmhcPanOnFly, netmhcPanPercolator'])
         assert(x[2] in ['ba', 'elute'])
 else:
     args.panAllele = []
@@ -355,13 +356,14 @@ if args.msgf_unfiltered:
             for line in lines:
                 g.write(line)
 
-if args.mode == 'netMHCPercolator':
+if args.mode == 'percolatorFeature':
     print('NetMHC + Percolator')
     print('Combined pin output path: ' + combined_pinOutputPath)
     combinedPin = PINFile(combined_pinOutputPath)
     peptides = list(combinedPin.peptides)
     print('number of  peptides: ' + str(len(peptides)))
     scoreDict = defaultdict(list)
+    
     print('alleles')
     print(args.allele)
     for allele in args.allele:
