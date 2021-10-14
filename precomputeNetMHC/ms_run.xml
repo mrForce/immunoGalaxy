@@ -210,6 +210,8 @@
 	    <option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
 	    <option value="filtered">Filtered Peptide Search</option>
 	    <option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
+	    <option value="netmhcPanPercolator">Unspecific Cleavage, NetMHCPan as Percolator feature</option>
+	    <option value="mhcFlurryPercolator">Unspecific Cleavage, MHCFlurry as Percolator feature</option>
 	  </param>
           <when value="filtered">
 	    <repeat name="mhcalleles" title="Select MHC Alleles">
@@ -288,10 +290,34 @@
 	    <param name="minLength" type="integer" value="6" label="Minimum Peptide Length" />
 	    <param name="maxLength" type="integer" value="40" label="Max Peptide Length" />
 	  </when>
-	  <when value="netmhcPercolator">
+	  	  <when value="netmhcPercolator">
 	    <repeat name="mhcalleles" title="Select MHC Alleles">
 	      <param name="allele" type="select" label="Select an allele">
-		<options from_data_table="Alleles" />
+		<options from_data_table="Alleles" >
+		  <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		</options>
+	      </param>
+	    </repeat>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	  <when value="netmhcPanPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="NetMHCPanAlleles" >
+		  <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		</options>
+	      </param>
+	    </repeat>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	  <when value="mhcFlurryPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="MHCFlurryAlleles" >
+		  <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		</options>
 	      </param>
 	    </repeat>
 	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
