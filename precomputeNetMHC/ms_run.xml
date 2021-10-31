@@ -343,6 +343,131 @@
 	  </when>
 	</conditional>
       </when>
+      <when value="/gene-data/jordan/newPrecomputed/mouse_isoforms">
+	<conditional name="search_type">	
+	  <param name="search_type_selector" type="select" label="Choose search type">
+	    <option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
+	    <option value="filtered">Filtered Peptide Search</option>
+	    <option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
+	    <option value="netmhcPanPercolator">Unspecific Cleavage, NetMHCPan as Percolator feature</option>
+	    <option value="mhcFlurryPercolator">Unspecific Cleavage, MHCFlurry as Percolator feature</option>
+	  </param>
+          <when value="filtered">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <conditional name="source_type">
+		<param name="source_type_selector" type="select" label="Select scoring source for allele">
+		  <option value="netmhcPanPrecompute" selected="true">NetMHCPan Precomputed</option>
+		  <option value="netmhcPanOnFly">NetMHCPan on the fly</option>
+		  <option value="netmhcPrecompute">NetMHC Precomputed</option>
+		  <option value="netmhcOnFly">NetMHC on the fly</option>
+		  <option value="MHCFlurryPrecompute">MHCFlurry precomputed</option>
+		  <option value="MHCFlurryOnFly">MHCFlurry on the fly</option>
+		</param>
+		<when value="netmhcPanPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="NetMHCPanPrecomputeAlleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		    </options>
+		  </param>
+		  <param name="score_type" type="select" label="Select score type" display="radio">
+		    <option value="ba">Binding Affinity</option>
+		    <option value="elute">Elution Score</option>
+		  </param>
+		</when>
+		<when value="netmhcPanOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="NetMHCPanAlleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		    </options>
+		  </param>
+		  <param name="score_type" type="select" label="Select score type" display="radio">
+		    <option value="ba">Binding Affinity</option>
+		    <option value="elute">Elution Score</option>
+		  </param>
+		</when>
+		<when value="netmhcPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="Alleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		    </options>
+		  </param>
+		</when>
+		<when value="netmhcOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="Alleles" >
+		      <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		    </options>
+		  </param>
+		</when>
+		<when value="MHCFlurryPrecompute">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="MHCFlurryPrecomputeAlleles" >
+		    <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		  </options>
+		  </param>
+		</when>
+		<when value="MHCFlurryOnFly">
+		  <param name="allele" type="select" label="Select an allele">
+		    <options from_data_table="MHCFlurryAlleles" >
+		    <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		  </options>
+		  </param>
+		</when>
+	      </conditional>
+	    </repeat>
+	    <param name="length" type="select" display="checkboxes" label="Select peptide lengths" multiple="true">
+	      <option value="8"></option>
+	      <option value="9"></option>
+	      <option value="10"></option>
+	      <option value="11"></option>
+	      <option value="12"></option>
+	      <option value="13"></option>
+	    </param>
+	    <param name="rank_filter" type="float" min="0" max="100" value="2" label="Take top k percent of peptides from NetMHC" />
+	  </when>
+	  <when value="unfiltered">
+	    <param name="minLength" type="integer" value="6" label="Minimum Peptide Length" />
+	    <param name="maxLength" type="integer" value="40" label="Max Peptide Length" />
+	  </when>
+	  <when value="netmhcPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="Alleles" >
+		  <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		</options>
+	      </param>
+	    </repeat>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	  <when value="netmhcPanPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="NetMHCPanAlleles" >
+		  <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		</options>
+	      </param>
+	    </repeat>
+	    <param name="score_type" type="select" label="Select score type" display="radio">
+	      <option value="ba">Binding Affinity</option>
+	      <option value="elute">Elution Score</option>
+	    </param>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	  <when value="mhcFlurryPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="MHCFlurryAlleles" >
+		  <filter column="2" type="static_value" value="/gene-data/jordan/newPrecomputed/mouse_canonical"/>
+		</options>
+	      </param>
+	    </repeat>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	</conditional>
+      </when>
       <when value="None">
 	<conditional name="search_type">	
 	  <param name="search_type_selector" type="select" label="Choose search type">

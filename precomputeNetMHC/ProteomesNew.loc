@@ -1,4 +1,5 @@
 #value	name	fasta	netmhcScoreDir	netmhcPanScoresDir	mhcFlurryScoresDir	organism
 /gene-data/jordan/newPrecomputed/humanLatest	Human	Human.fasta	netmhcScores	netmhcPanScores	mhcFlurryScores	Human
 /gene-data/jordan/newPrecomputed/mouse_canonical	Mouse Canonical	Mouse.fasta	netmhcScores	netmhcPanScores	mhcFlurryScores	Mouse
+/gene-data/jordan/newPrecomputed/mouse_isoforms	Mouse Isoforms	Mouse.fasta	netmhcScores	netmhcPanScores	mhcFlurryScores	Mouse
 None	No Base Proteome	None	None	None	None	None
