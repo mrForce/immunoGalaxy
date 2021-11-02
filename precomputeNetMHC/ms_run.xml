@@ -474,6 +474,8 @@
 	    <option value="unfiltered" selected="true">Unspecific Cleavage Search</option>
 	    <option value="filtered">Filtered Peptide Search</option>
 	    <option value="netmhcPercolator">Unspecific Cleavage, NetMHC as Percolator feature</option>
+	    <option value="netmhcPanPercolator">Unspecific Cleavage, NetMHCPan as Percolator feature</option>
+	    <option value="mhcFlurryPercolator">Unspecific Cleavage, MHCFlurry as Percolator feature</option>
 	  </param>
           <when value="filtered">
 	    <repeat name="mhcalleles" title="Select MHC Alleles">
@@ -527,6 +529,29 @@
 	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
 	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
 	  </when>
+	  <when value="netmhcPanPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="NetMHCPanAlleles" />
+	      </param>
+	    </repeat>
+	    <param name="score_type" type="select" label="Select score type" display="radio">
+	      <option value="ba">Binding Affinity</option>
+	      <option value="elute">Elution Score</option>
+	    </param>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	  <when value="mhcFlurryPercolator">
+	    <repeat name="mhcalleles" title="Select MHC Alleles">
+	      <param name="allele" type="select" label="Select an allele">
+		<options from_data_table="MHCFlurryAlleles" />
+	      </param>
+	    </repeat>
+	    <param name="minLength" type="integer" value="8" label="Min Peptide Length" />
+	    <param name="maxLength" type="integer" value="11" label="Max Peptide Length" />
+	  </when>
+	  
 	</conditional>
       </when>
     </conditional>
