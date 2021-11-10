@@ -113,8 +113,8 @@ parser.add_argument('--instrument', type=str)
 parser.add_argument('--precursor_tolerance', type=str)
 parser.add_argument('--mgf', type=str)
 parser.add_argument('--archive', type=str)
-parser.add_argument('--msgf_unfiltered', type=str)
-parser.add_argument('--percolator_unfiltered', type=str)
+parser.add_argument('--percolator_psms_unfiltered', type=str)
+parser.add_argument('--percolator_peptides_unfiltered', type=str)
 parser.add_argument('--num_matches_per_spectrum', type=int)
 parser.add_argument('--mix_max', action='store_true')
 parser.add_argument('--minLength', type=int, default=0)
@@ -371,6 +371,7 @@ combinedPIN = PINFile(combined_pinOutputPath)
 combinedPIN.addPin(decoy_pinOutputPath, decoy=True)
 
 #msgf unfiltered
+"""
 if args.msgf_unfiltered:
     with open(combined_pinOutputPath, 'r') as f:
         with open(args.msgf_unfiltered, 'w') as g:
@@ -379,7 +380,7 @@ if args.msgf_unfiltered:
             lines.pop(1)
             for line in lines:
                 g.write(line)
-
+"""
 if args.mode == 'percolatorFeature':
     print('NetMHC + Percolator')
     print('Combined pin output path: ' + combined_pinOutputPath)
@@ -472,16 +473,23 @@ assert(p.wait() == 0)
 
 print('ran percolator')
 percolator_target_path = os.path.join(percolatorOutputDir, 'percolator.target.psms.txt')
+percolator_peptides_target_path = os.path.join(percolatorOutputDir, 'percolator.target.peptides.txt')
 percolator_decoy_path = os.path.join(percolatorOutputDir, 'percolator.decoy.psms.txt')
 assert(os.path.isfile(percolator_target_path))
+assert(os.path.isfile(percolator_peptides_target_path))
 assert(os.path.isfile(percolator_decoy_path))
 
+shutil.copyfile(percolator_target_path, args.percolator_psms_unfiltered)
+shutil.copyfile(percolator_peptides_target_path, args.percolator_peptides_unfiltered)
 
+
+"""
 with tempfile.NamedTemporaryFile() as f:
     command = ['awk', 'BEGIN {OFS="\t"} NR==1 {print "Label", $0} NR>1 {print 1, $0}', percolator_target_path]
     p = subprocess.Popen(command, stdout=f)
     assert(p.wait() == 0)
     with tempfile.NamedTemporaryFile() as g:
+#This should be the percolator_decoy_path, this is a serious bug
         command = ['awk', 'BEGIN {OFS="\t"} NR>1 {print -1, $0}', percolator_target_path]
         p = subprocess.Popen(command, stdout=g)
         assert(p.wait() == 0)
@@ -489,7 +497,7 @@ with tempfile.NamedTemporaryFile() as f:
         with open(args.percolator_unfiltered, 'w') as h:
             p = subprocess.Popen(command, stdout=h)
             assert(p.wait() == 0)
-
+"""
 if args.archive:
     subprocess.run(['zip', '-r', args.archive + '.zip', tempDir])
     shutil.move(args.archive + '.zip', args.archive)
