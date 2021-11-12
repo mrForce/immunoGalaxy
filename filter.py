@@ -74,11 +74,11 @@ if args.type == 'percolator':
         with open(args.output, 'w') as g:
             reader = csv.DictReader(f, delimiter='\t')
             fieldnames = list(reader.fieldnames)
-            assert('Q-Value' in reader.fieldnames)
+            assert('percolator q-value' in reader.fieldnames)
             writer = csv.DictWriter(g, fieldnames, delimiter='\t')
             writer.writeheader()
             for row in reader:
-                q_value = float(row['Q-Value'])
+                q_value = float(row['percolator q-value'])
                 if q_value <= args.threshold:
                     writer.writerow(row)
             """

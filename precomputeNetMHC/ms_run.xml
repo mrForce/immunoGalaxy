@@ -560,8 +560,8 @@
 
   </inputs>
   <outputs>
-    <data format="txt" name="percolatorPSMsUnfiltered" label="Percolator PSMs for search ${Name}" />
-    <data format="txt" name="percolatorPeptidesUnfiltered" label="Percolator Peptides for search ${Name}" />
+    <data format="tabular" name="percolatorPSMsUnfiltered" label="Percolator PSMs for search ${Name}" />
+    <data format="tabular" name="percolatorPeptidesUnfiltered" label="Percolator Peptides for search ${Name}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
     <data name="Archive" format="zip" label="Archive" />
   </outputs>
