@@ -4,3 +4,4 @@ Lysine Methylation	CH2,K,opt,any,Methyl
 Lysine Acetylation	C2H2O1,K,opt,any,Acetyl
 Phosphorylation		HO3P,STY,opt,any,Phospho
 Fixed Carbamidomethyl C	C2H3N1O1,C,fix,any,Carbamidomethyl
+Variable Carbamidomethyl C	C2H3N1O1,C,opt,any,Carbamidomethyl

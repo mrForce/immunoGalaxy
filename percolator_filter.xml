@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tool id="percolator_filter" name="Filter pipeline output by q-value" version="0.1.0">
+  <command interpreter="python3">percolatorFilter.py
+  --threshold $threshold
+  --output '$output'
+  
+  --input $input
+  </command>
+  <inputs>
+
+    <param name="name" type="text" label="Enter a name"/>
+    <param name="input" type="data" label="Select pipeline output" format="tabular" />
+    <param name="threshold" type="float" min="0" max="1" value="0.05" label="Q Value Threshold" />
+  </inputs>
+  <outputs>
+    <data format="tsv" name="output" label="${name}" />
+  </outputs>
+  
+  <help>
+    This tool takes in the TSV (tab-seperated values) output from Percolator, and filters by Q-value, then extracts the peptides.  
+  </help>
+
+</tool>
