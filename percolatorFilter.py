@@ -25,5 +25,6 @@ with open(args.input, 'r') as f:
         assert('sequence' in reader.fieldnames)
         for row in reader:
             q_value = float(row['percolator q-value'])
+            peptide = row['sequence'].strip()
             if q_value <= args.threshold:
                 g.write(peptide + '\n')
