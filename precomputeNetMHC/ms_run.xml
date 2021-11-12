@@ -51,7 +51,6 @@
 
   --precursor_tolerance '$precursorTolerance'
 
-  --msgf_unfiltered '$msgfUnfiltered'  
   --percolator_psms_unfiltered '$percolatorPSMsUnfiltered'
   --percolator_peptides_unfiltered '$percolatorPeptidesUnfiltered'
   
@@ -561,8 +560,6 @@
 
   </inputs>
   <outputs>
-    <!--- <data format="tabular" name="peptides" label="Peptides for search ${Name}"/> -->
-    <!--- <data format="tabular" name="PSMs" label="PSMs for search ${Name}" /> -->
     <data format="txt" name="percolatorPSMsUnfiltered" label="Percolator PSMs for search ${Name}" />
     <data format="txt" name="percolatorPeptidesUnfiltered" label="Percolator Peptides for search ${Name}" />
     <data name="Log" format="log"  label="Run MSGF+ Log" />
