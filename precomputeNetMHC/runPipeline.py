@@ -295,8 +295,8 @@ if filtered:
                 else:
                     assert(0)
                 baseScoreTable = ScoreTable.readExisting(baseScoreFile)
-            reverse = True if allele[0] in ['MHCFlurryPrecompute', 'MHCFlurryOnFly'] else False
-            pepToHeader = filterNetMHC(allele[1].strip(), x, baseScoreTable, baseChains, baseFasta, additionalScoreTable, additionalChains, args.additional_proteome,  args.rank_filter/100.0, reverse)
+            #reverse = True if allele[0] in ['MHCFlurryPrecompute', 'MHCFlurryOnFly'] else False
+            pepToHeader = filterNetMHC(allele[1].strip(), x, baseScoreTable, baseChains, baseFasta, additionalScoreTable, additionalChains, args.additional_proteome,  args.rank_filter/100.0, False)
             for k,v in pepToHeader.items():
                 pepToHeaders[k].update(v)
             
