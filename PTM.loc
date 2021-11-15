@@ -7,4 +7,4 @@ Fixed Carbamidomethyl C	C2H3N1O1,C,fix,any,Carbamidomethyl
 Variable Carbamidomethyl C	C2H3N1O1,C,opt,any,Carbamidomethyl
 Fixed Cysteinylation C	119.004099,C,fix,any,Cysteinylation
 Variable Cysteinylation	C	119.004099,C,opt,any,Cysteinylation
-Pyro-glu Q		H-3N-1,Q,opt,N-term,Gln->pyro-Glu
+Glutamine to Pyroglutamic Acid at peptide N-terminal		H-3N-1,Q,opt,N-term,Gln->pyro-Glu
