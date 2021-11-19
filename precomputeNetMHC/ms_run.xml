@@ -482,9 +482,9 @@
 	    <repeat name="mhcalleles" title="Select MHC Alleles">
 	      <conditional name="source_type">
 		<param name="source_type_selector" type="select" label="Select scoring source for allele">
-		  <option value="netmhcPan" selected="true">NetMHCPan</option>
-		  <option value="netmhc">NetMHC</option>
-		  <option value="MHCFlurry">MHCFlurry</option>
+		  <option value="netmhcPanOnFly" selected="true">NetMHCPan</option>
+		  <option value="netmhcOnFly">NetMHC</option>
+		  <option value="MHCFlurryOnFly">MHCFlurry</option>
 		</param>
 		<when value="netmhcPan">
 		  <param name="allele" type="select" label="Select an allele">
