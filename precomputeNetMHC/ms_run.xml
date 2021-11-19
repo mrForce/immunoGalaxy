@@ -486,7 +486,7 @@
 		  <option value="netmhcOnFly">NetMHC</option>
 		  <option value="MHCFlurryOnFly">MHCFlurry</option>
 		</param>
-		<when value="netmhcPan">
+		<when value="netmhcPanOnFly">
 		  <param name="allele" type="select" label="Select an allele">
 		    <options from_data_table="NetMHCPanAlleles" />
 		  </param>
@@ -495,12 +495,12 @@
 		    <option value="elute">Elution Score</option>
 		  </param>
 		</when>
-		<when value="netmhc">
+		<when value="netmhcOnFly">
 		  <param name="allele" type="select" label="Select an allele">
 		    <options from_data_table="Alleles" />
 		  </param>
 		</when>
-		<when value="MHCFlurry">
+		<when value="MHCFlurryOnFly">
 		  <param name="allele" type="select" label="Select an allele">
 		    <options from_data_table="MHCFlurryAlleles" />
 		  </param>
