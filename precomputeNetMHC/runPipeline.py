@@ -163,7 +163,7 @@ mixMax = True#args.mix_max
 
 
     
-msgfCommand = ['java', '-Xmx10000M', '-jar', MSGFPLUS,
+msgfCommand = ['java', '-Xmx20000M', '-jar', MSGFPLUS,
                '-s', mgf,
                '-ignoreMetCleavage', '1',
                '-t', args.precursor_tolerance,
