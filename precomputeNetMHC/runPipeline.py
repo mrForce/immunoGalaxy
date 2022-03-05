@@ -447,7 +447,7 @@ if args.mode == 'percolatorFeature':
             commandGen = functools.partial(generateNetMHCPanCommand, NETMHCPAN, allele.strip())
             scorer = NetMHCScorer(5000, commandGen, 1)
             index = 1 if scoreType == 'ba' else 0
-            scores = [x[index] for x in .scorePeptides(iter(peptides), ['Score_EL', 'Aff(nM)'])]
+            scores = [x[index] for x in scorer.scorePeptides(iter(peptides), ['Score_EL', 'Aff(nM)'])]
             print('number of scores: ' + str(len(scores)))
             print('scores: ')
             print(scores)
