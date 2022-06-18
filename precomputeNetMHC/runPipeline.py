@@ -20,12 +20,12 @@ import uuid
 
 #locations of needed tools
 NETMHC = '/home/jordan/netMHC-4.0/netMHC'
-NETMHCPAN = '/data5/jordan/netMHCpan-4.1/netMHCpan'
+NETMHCPAN = '/home/jordan/netMHCpan-4.1/netMHCpan'
 MSGFPLUS = '/home/jordan/MSGFPlus/MSGFPlus.jar'
 CRUX='/home/jordan/crux'
 MSGF2PIN='/home/jordan/msgf2pin'
 THREADS=16
-PRECOMPUTE_SCRIPTS='/home/jordan/github/immunoGalaxy/precomputeNetMHC'
+PRECOMPUTE_SCRIPTS='/home/jordan/git/immunoGalaxy/precomputeNetMHC'
 MAX_HEADER_LENGTH=5000
 
 MHCFLURRY_COMPUTE_SCRIPT_LOCATION='/galaxy-prod/galaxy/tools-dependencies/bin/run_MHCFlurry_on_cd9.sh'
