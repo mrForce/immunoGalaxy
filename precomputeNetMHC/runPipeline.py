@@ -228,9 +228,9 @@ if filtered:
                 baseFasta = os.path.join(args.baseDirectory, args.baseFasta)
                 if allele[0] == 'netmhcPanPrecompute':
                     if allele[2] == 'elute':
-                        baseScoreFile = open(os.path.join(args.baseDirectory, args.netmhcPanScoreDir, str(x) + '_elute.scores'), 'rb')
+                        baseScoreFile = open(os.path.join(args.baseDirectory, args.netmhcPanScoreDir, str(x) + '_top_alleles_elute.scores'), 'rb')
                     elif allele[2] == 'ba':
-                        baseScoreFile = open(os.path.join(args.baseDirectory, args.netmhcPanScoreDir, str(x) + '_ba.scores'), 'rb')
+                        baseScoreFile = open(os.path.join(args.baseDirectory, args.netmhcPanScoreDir, str(x) + '_top_alleles_ba.scores'), 'rb')
                     else:
                         assert(0)
                 elif allele[0] == 'netmhcPanOnFly':
